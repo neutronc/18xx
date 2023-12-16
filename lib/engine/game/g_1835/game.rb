@@ -208,13 +208,24 @@ module Engine
 
         HOME_TOKEN_TIMING = :float
 
+        def pre_pru_corporations
+          # Priority ordered list of pre-PRU corporations
+          @pre_pru_corps ||= %w[P1 P2 P3 P4 P5 P6].map { |id| corporation_by_id(id) }
+        end
+
         def setup
           corporations.each do |i|
             @stock_market.set_par(i, @stock_market.par_prices.find do |p|
                                        p.price == PAR_PRICES[i.id]
                                      end)
             i.ipoed = true
+
+            pru.shares.select { |s| s.percent == 10 && !s.president }.each { |s| s.double_cert = true }
           end
+        end
+        def event_pru_formation!
+          @log << "-- Event: #{EVENTS_TEXT['pru_formation'][1]} --"
+          @ready_to_form_pru = true
         end
 
         def init_round
@@ -223,7 +234,182 @@ module Engine
                                   reverse_order: true)
         end
 
-        def operating_round(round_num)
+        def form_PRU!
+          @log << '-- Event: PRU forms --'
+
+          @stock_market.set_par(PRU, @stock_market.share_prices_with_types(%i[par_1]).first)
+          PRU.floatable = true
+          PRU.ipoed = true
+          PRU.floated = true
+
+          #@bank.spend(400, PRU)
+          @PRU_train.owner = PRU
+          PRU.trains << @PRU_train
+          @log << "#{PRU.name} starts with #{format_currency(400)} and a #{@PRU_train.name} train"
+
+          previous_owners = []
+          pre_pru_corporations.each do |corp|
+            @log << "#{corp.name} merging into #{PRU.name}"
+            previous_owners << corp.owner
+
+            @log << "#{PRU.name} receives #{format_currency(corp.cash)}"
+            corp.spend(corp.cash, PRU) if corp.cash.positive?
+
+            place_PRU_tokens!(corp)
+
+            num_trains = corp.trains.size
+            if num_trains.positive?
+              @log << "#{PRU.name} receives #{num_trains} train#{num_trains == 1 ? '' : 's'}:" \
+                " #{corp.trains.map(&:name).join(', ')}"
+              transfer(:trains, corp, PRU)
+            end
+
+            PRU_share_exchange!(corp)
+
+            close_corporation(corp, quiet: true)
+          end
+
+          PRU.tokens.sort_by! { |t| t.used ? 0 : 1 }
+
+          determine_PRU_president!(previous_owners.uniq)
+        end
+
+        def determine_pru_president!(president_priority_order)
+          player_share_percent = pru.player_share_holders
+          max_percent = player_share_percent.values.max || 0
+          return if max_percent < 10
+
+          # Determine president
+          candidates = player_share_percent.select { |_, percent| percent == max_percent }.keys
+          if candidates.size > 1
+            candidates.sort_by! { |player| president_priority_order.index(player) || president_priority_order.size }
+          end
+          president = candidates.first
+
+          # Make sure president has a 10% cert
+          if (president_shares = president.shares_of(pru)).none? { |share| share.percent == 10 }
+            ten_percent_share = @share_pool.shares_of(pru).find { |share| share.percent == 10 } ||
+              president_priority_order[-1].shares_of(pru).find { |share| share.percent == 10 }
+            @share_pool.transfer_shares(ShareBundle.new([ten_percent_share]), president, allow_president_change: false)
+            @share_pool.transfer_shares(ShareBundle.new(president_shares.take(2)), share.owner, allow_president_change: false)
+          end
+
+          # Make sure president has the presidents cert
+          if (presidents_share_owner = pru.presidents_share.owner) != president
+            @share_pool.transfer_shares(ShareBundle.new([pru.presidents_share]), president)
+            @share_pool.transfer_shares(
+              ShareBundle.new([president_shares.find { |share| !share.president && share.percent == 10 }]),
+              presidents_share_owner
+            )
+          end
+
+          pru.owner = president
+          @log << "#{president.name} becomes the president of #{pru.name}"
+        end
+
+        def place_pru_tokens!(corporation)
+          locations = corporation.tokens.map { |token| token.used ? token.hex.full_name : 'Unused' }.join(', ')
+          @log << "#{pru.name} receives #{corporation.tokens.size} tokens: #{locations}"
+          corporation.tokens.each do |token|
+            pru.tokens << Token.new(pru, price: 100)
+            next unless token.used
+
+            if token.city.tokened_by?(pru)
+              @log << "#{pru.name} already has a token on #{token.hex.full_name}, placing token on charter instead"
+              token.remove!
+            else
+              token.swap!(pru.tokens.last, check_tokenable: false)
+            end
+          end
+        end
+
+        def pru_share_exchange!(corporation)
+          corporation.share_holders.keys.each do |share_holder|
+            pru_shares = pru.shares_of(pru)
+            shares = share_holder.shares_of(corporation).map do |corp_share|
+              percent = corp_share.president ? 10 : 5
+              share = pru_shares.find { |pru_share| pru_share.percent == percent }
+              pru_shares.delete(share)
+              share
+            end
+            next if shares.empty?
+
+            share_holder = @share_pool if share_holder.corporation?
+            bundle = ShareBundle.new(shares)
+            @share_pool.transfer_shares(bundle, share_holder, allow_president_change: false)
+
+            cash_per_share = corporation.par_price ? corporation.share_price.price - pru.share_price.price : 0
+            cash = cash_per_share * bundle.percent / 5
+            msg = share_holder.name.to_s
+            if cash.zero? || share_holder == @share_pool
+              msg += ' receives'
+            elsif cash.positive?
+              msg += " receives #{format_currency(cash)} and"
+              @bank.spend(cash, share_holder)
+            else
+              msg += " pays #{format_currency(cash.abs)} and receives"
+              share_holder.spend(cash.abs, @bank, check_cash: false)
+            end
+
+            msg += " #{bundle.percent}% of #{pru.name}"
+            @log << msg
+            next if !share_holder.player? || !share_holder.cash.negative?
+
+            debt = share_holder.cash.abs
+            share_holder.debt += debt
+            share_holder.cash += debt
+            @log << "#{share_holder.name} takes #{format_currency(debt)} of debt to complete payment"
+          end
+        end
+            def init_stock_market
+              G1835::StockMarket.new(game_market, self.class::CERT_LIMIT_TYPES,
+                                     multiple_buy_types: self.class::MULTIPLE_BUY_TYPES)
+            end
+
+            def initial_auction_companies
+              privates
+            end
+
+            def unowned_purchasable_companies(_entity)
+              @companies.select { |c| c.owner == @bank }
+            end
+
+            def next_round!
+              @round =
+                case @round
+                when Engine::Round::Auction
+                  init_round_finished
+                  reorder_players(log_player_order: true)
+                  new_stock_round
+                when Engine::Round::Stock
+                  @operating_rounds = @phase.operating_rounds
+                  new_operating_round
+                when G1835::Round::Operating
+                  next_round =
+                    if @round.round_num < @operating_rounds
+                      or_round_finished
+                      -> { new_operating_round(@round.round_num + 1) }
+                    else
+                      @turn += 1
+                      or_round_finished
+                      or_set_finished
+                      -> { new_stock_round }
+                    end
+                  if @ready_to_form_pru
+                    @post_pru_formation_round = next_round
+                    new_pru_formation_round
+                  else
+                    next_round.call
+                  end
+                when G1835::Round::pruFormation
+                  next_round = @post_pru_formation_round
+                  @ready_to_form_pru = false
+                  @post_pru_formation_round = nil
+                  next_round.call
+                end
+            end
+
+            def operating_round(round_num)
           Engine::Round::Operating.new(self, [
             Engine::Step::Bankrupt,
             Engine::Step::SpecialTrack,
