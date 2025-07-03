@@ -30,7 +30,7 @@ module Engine
             min_price: 1,
             max_price: 45,
             desc: 'When this private is bought by a company, the president of the company may choose to add or remove '\
-                  'a 3/4/5/6 train to/from the depot. If a train is added, it must be of the '\
+                  'a 2/3/4/5/6 train to/from the depot. If a train is added, it must be of the '\
                   'current phase or later. This will close the company. Can be sold to a corporation for ₡1-₡45.',
             abilities: [],
             color: nil,
@@ -44,7 +44,7 @@ module Engine
             max_price: 60,
             desc: 'The corporation owning the SBC can build and upgrade road tiles crossing the rift. '\
                   'The owning company receives a bonus of 60 credits after the connection across the rift is '\
-                  'made for the first time. Can be sold to a corporation for ₡1-₡60.',
+                  'made and the SBC will close. Can be sold to a corporation for ₡1-₡60.',
             abilities: [],
             color: nil,
           },
@@ -72,7 +72,7 @@ module Engine
             name: 'Terminal',
             sym: 'T',
             value: 80,
-            revenue: 20,
+            revenue: 15,
             min_price: 1,
             max_price: 120,
             desc: 'The owning corporation may teleport place the T tile, then may place its cheapest supply '\
@@ -81,7 +81,8 @@ module Engine
               {
                 type: 'teleport',
                 owner_type: 'corporation',
-                tiles: ['X30'],
+                extra_action: true,
+                tiles: ['X29'],
                 hexes: ['F8'],
               },
             ],

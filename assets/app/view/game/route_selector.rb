@@ -10,6 +10,8 @@ module View
       include Actionable
       include Lib::Settings
 
+      needs :autorouter, store: true, default: nil
+      needs :autorouter_running, store: true, default: false
       needs :last_entity, store: true, default: nil
       needs :last_round, store: true, default: nil
       needs :last_company, store: true, default: nil
@@ -226,6 +228,7 @@ module View
       def cleanup
         store(:selected_route, nil, skip: true)
         store(:routes, [], skip: true)
+        @autorouter&.running = false
       end
 
       def actions(render_halts)
@@ -236,7 +239,8 @@ module View
           process_action(Engine::Action::RunRoutes.new(
             @game.current_entity,
             routes: routes,
-            extra_revenue: @game.extra_revenue(@game.current_entity, routes)
+            extra_revenue: @game.extra_revenue(@game.current_entity, routes),
+            subsidy: @game.routes_subsidy(routes),
           ))
           cleanup
         end
@@ -265,15 +269,27 @@ module View
 
         auto = lambda do
           router = Engine::AutoRouter.new(@game, flash)
-          @routes = router.compute(
+          store(:autorouter_running, true, skip: true)
+          store(:autorouter, router)
+          router.compute(
             @game.current_entity,
             routes: @routes.reject { |r| r.paths.empty? },
             path_timeout: setting_for(:path_timeout).to_i,
             route_timeout: setting_for(:route_timeout).to_i,
+            callback: lambda do |routes|
+              @routes = routes
+              @selected_route = @routes.first
+              store(:autorouter_running, router.running, skip: true)
+              store(:selected_route, @selected_route, skip: true)
+              store(:routes, @routes)
+            end
           )
-          @selected_route = @routes.first
-          store(:selected_route, @selected_route, skip: true)
-          store(:routes, @routes)
+        end
+
+        auto_stop = lambda do
+          @autorouter.running = false
+          store(:autorouter, nil)
+          store(:autorouter_running, false)
         end
 
         add_train = lambda do
@@ -319,11 +335,15 @@ module View
 
         buttons = [
           h('button.small', { on: { click: clear } }, 'Clear Train'),
-          h('button.small', { on: { click: clear_all } }, 'Clear All'),
+          h('button.small', { attrs: { id: 'clearall' }, on: { click: clear_all } }, 'Clear All'),
           h('button.small', { on: { click: reset_all } }, 'Reset'),
         ]
         if @game_data.dig('settings', 'auto_routing') || @game_data['mode'] == :hotseat
-          buttons << h('button.small', { on: { click: auto } }, 'Auto')
+          buttons << if @autorouter_running
+                       h('button.small', { attrs: { id: 'autoroute' }, on: { click: auto_stop } }, 'Stop Auto')
+                     else
+                       h('button.small', { attrs: { id: 'autoroute' }, on: { click: auto } }, 'Auto')
+                     end
         end
         if @game.adjustable_train_list?(current_entity)
           buttons << h('button.small', { on: { click: add_train } }, "+#{@game.adjustable_train_label(current_entity)}")
@@ -335,7 +355,7 @@ module View
         end
         h(:div, { style: { overflow: 'auto', marginBottom: '1rem' } }, [
           h(:div, buttons),
-          h(:button, { style: submit_style, on: { click: submit } }, 'Submit ' + revenue_str),
+          h(:button, { style: submit_style, attrs: { id: 'submit' }, on: { click: submit } }, 'Submit ' + revenue_str),
         ])
       end
 

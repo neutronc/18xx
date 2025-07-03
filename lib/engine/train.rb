@@ -44,8 +44,6 @@ module Engine
     end
 
     def init_variants(variants)
-      variants ||= []
-
       @variant = {
         name: @name,
         distance: @distance,
@@ -56,11 +54,13 @@ module Engine
         discount: @discount,
         salvage: @salvage,
         track_type: @track_type,
+        buyable: @buyable,
       }
 
       # Primary variant should be at the head of the list.
-      variants.unshift(@variant)
-      @variants = variants.group_by { |h| h[:name] }.transform_values(&:first)
+      @variants = Array([@variant, *variants])
+                       .group_by { |v| v[:name] }
+                       .transform_values(&:first)
     end
 
     def variant=(new_variant)
@@ -71,6 +71,16 @@ module Engine
 
       # Remove the @local variable, this to get the local? method evaluate the new variant
       remove_instance_variable(:@local) if defined?(@local)
+    end
+
+    def add_variant(new_variant)
+      return if @variants.include?(new_variant[:name])
+
+      variant = {
+        **@variant,
+        **new_variant,
+      }
+      @variants[variant[:name]] = variant
     end
 
     # remove unused variants, i.e., the physical train card is not allowed to be
@@ -96,9 +106,12 @@ module Engine
     # if set ability must be a :train_discount ability
     def min_price(ability: nil)
       return 1 unless from_depot?
-      return @price unless ability
 
-      Array(ability).map { |a| a.discounted_price(self, @price) }.min
+      variants.keys.map do |v|
+        variant = clone
+        variant.variant = v
+        Array(ability).map { |a| a.discounted_price(variant, variant.price) }.min || variant.price
+      end.min
     end
 
     def from_depot?

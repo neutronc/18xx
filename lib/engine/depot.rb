@@ -106,10 +106,12 @@ module Engine
 
     def depot_trains(clear: false)
       @depot_trains = nil if clear
-      @depot_trains ||= [
-        @upcoming.first,
-        *@upcoming.select { |t| @game.phase.available?(t.available_on) },
-      ].compact.uniq(&:name) + @discarded.uniq(&:name)
+      @depot_trains ||= available_upcoming_trains + @discarded.uniq(&:name)
+    end
+
+    def available_upcoming_trains
+      [@upcoming.first,
+       *@upcoming.select { |t| @game.phase.available?(t.available_on) }].compact.uniq(&:name)
     end
 
     def available(corporation)
@@ -117,6 +119,8 @@ module Engine
     end
 
     def other_trains(corporation)
+      return [] unless @game.can_buy_train_from_others?
+
       all_others = @trains.reject do |train|
         !train.buyable(allow_obsolete_buys: @game.class::ALLOW_OBSOLETE_TRAIN_BUY) ||
           [corporation, self, nil].include?(train.owner)

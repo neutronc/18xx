@@ -39,6 +39,7 @@ module Engine
         BANK_CASH = 10_000
         STARTING_CASH = { 2 => 30, 3 => 30, 4 => 30, 5 => 30, 6 => 25 }.freeze
 
+        MARKET_SHARE_LIMIT = 100
         MARKET = [
           %w[0c
              5
@@ -94,7 +95,7 @@ module Engine
         SELL_BUY_ORDER = :sell_buy
         GAME_END_CHECK = { custom: :immediate }.freeze
         SOLD_OUT_INCREASE = false
-        EBUY_OTHER_VALUE = false
+        EBUY_FROM_OTHERS = :never
         PRESIDENT_SALES_TO_MARKET = false
         CAPITALIZATION = :incremental
 

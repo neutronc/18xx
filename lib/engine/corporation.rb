@@ -241,8 +241,14 @@ module Engine
       "<#{self.class.name}: #{id}>"
     end
 
+    def to_s
+      inspect
+    end
+
     # Is it legal to hold percent shares in this corporation?
     def holding_ok?(share_holder, extra_percent = 0)
+      return true if share_holder == self
+
       common_percent = share_holder.common_percent_of(self) + extra_percent
       %i[multiple_buy unlimited].include?(@share_price&.type) || common_percent <= @max_ownership_percent
     end
@@ -260,7 +266,7 @@ module Engine
     end
 
     def remove_ability(ability)
-      return super if ability.owner == self
+      return super if ability&.owner == self
 
       @companies.each { |company| company.remove_ability(ability) }
     end

@@ -55,6 +55,7 @@ module Engine
             entity = action.entity
             spender = entity.minor? ? entity.owner : nil
             lay_tile_action(action, spender: spender)
+            @game.after_lay_tile(action.hex, action.tile, action.entity)
             # Automatically pass if another tile cannot be placed. Do not check
             # whether there are any legal tile placements as this slows down
             # loading games (Graph.compute would be called), just whether the
@@ -64,7 +65,7 @@ module Engine
 
           def potential_tiles(entity, hex)
             tiles = super
-            return tiles unless @game.phase.name == '2'
+            return tiles unless @game.phase.status.include?('broad_gauge')
 
             # Metre gauge track is not available until phase 3.
             tiles.reject { |tile| tile.paths.map(&:track).include?(:narrow) }

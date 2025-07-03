@@ -351,7 +351,7 @@ module Engine
         end
 
         def select(collection)
-          collection[rand % collection.size]
+          collection.min_by { rand }
         end
 
         def find_company(companies, collection)
@@ -557,6 +557,11 @@ module Engine
 
           def name
             "Bot:#{@receivership.name}"
+          end
+
+          # GUI calls player? on this entity, so this method is needed. See issue #9895.
+          def player?
+            false
           end
         end
 
@@ -783,10 +788,8 @@ module Engine
             return
           end
 
-          # Merge the corporation with highest share price, and use the first operated as tie break
-          merged = candidates.max_by { |c| [c.share_price.price, -@round.entities.find_index(c)] }
-
-          nationalize_major(merged)
+          # nationalizes the highest-valued trainless corp (which has already operated) after a rusting event
+          nationalize_major(candidates.min)
         end
 
         # If there are 2 station markers on the same city the
@@ -839,10 +842,9 @@ module Engine
           upgrades
         end
 
-        def requisit_corporation(name)
-          requisited = corporation_by_id(name)
+        def requisit_corporation(requisited)
           @log << "#{operator_for_edelsward_requisition.name} selects #{requisited.name} to be requisited by #{@edelsward.name}"
-          shares = requisited.shares_of(requisited)
+          shares = requisited.ipo_shares
           @share_pool.transfer_shares(Engine::ShareBundle.new(shares), @edelsward, price: 0)
           @stock_market.set_par(requisited, @stock_market.par_prices.find { |p| p.price == 67 })
 

@@ -46,7 +46,7 @@ module Engine
 
         CAPITALIZATION = :full
 
-        MUST_SELL_IN_BLOCKS = false
+        MUST_SELL_IN_BLOCKS = true
 
         EBUY_PRES_SWAP = false
 
@@ -737,6 +737,13 @@ module Engine
         end
 
         # recievership
+
+        def timeline
+          @timeline = [
+            'On the 2nd and 5th corporations to enter receivership, the next permanent train is removed as if purchased \
+            (may trigger a phase change)',
+          ]
+        end
 
         def close_corporation(corporation, quiet: false)
           @close_corp_count += 1

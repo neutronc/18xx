@@ -15,7 +15,7 @@ module Engine
         GAME_INFO_URL = 'https://github.com/tobymao/18xx/wiki/1860'
         GAME_LOCATION = 'Isle of Wight'
         GAME_PUBLISHER = :all_aboard_games
-        GAME_RULES_URL = 'https://www.dropbox.com/s/usfbqtdjzx6ug8f/1860-rules.pdf'
+        GAME_RULES_URL = 'https://boardgamegeek.com/filepage/238952/third-edition-rules'
 
         PLAYER_RANGE = [2, 4].freeze
         OPTIONAL_RULES = [
@@ -28,6 +28,11 @@ module Engine
             sym: :original_insolvency,
             short_name: 'Original insolvency',
             desc: 'Use the original (first edition) insolvency rules',
+          },
+          {
+            sym: :simplified_insolvency,
+            short_name: 'Simplified insolvency',
+            desc: 'Insolvent corporations run trains for fixed amounts',
           },
           {
             sym: :no_skip_towns,
@@ -44,7 +49,22 @@ module Engine
             short_name: 'Re-enter hexes',
             desc: 'Routes may enter the same hex more than once, so long as no track is re-used.',
           },
+          {
+            sym: :non_operated_full_value,
+            short_name: 'Non-operated shares worth full value',
+            desc: 'Shares of unoperated corps sell for full value',
+          },
         ].freeze
+
+        def self.check_options(options, _min_players, _max_players)
+          optional_rules = (options || []).map(&:to_sym)
+
+          if optional_rules.include?(:simplified_insolvency) &&
+             (optional_rules.include?(:original_insolvency) ||
+              optional_rules.include?(:original_game))
+            { error: "Can't combine Simplified Insolvency with Original Insolvency or First edition rules" }
+          end
+        end
       end
     end
   end

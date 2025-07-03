@@ -11,23 +11,15 @@ module Engine
           def buyable_trains(entity)
             # Cannot buy F train
             trains = super
-            trains.reject! { |t| t.track_type == :narrow } if entity.type == :minor
             trains.reject! { |t| t.name == '2P' }
-            trains.select!(&:from_depot?) unless @game.can_buy_trains
+            trains.select!(&:from_depot?) unless @game.phase.status.include?('can_buy_trains')
             trains
           end
 
           def buyable_train_variants(train, entity)
-            trains = super
-
-            trains.reject! { |v| type?(v[:name], :narrow) } if entity.type == :minor
-            trains.reject! { |v| type?(v[:name], :broad) } if @game.north_corp?(entity) && entity.operatable_trains.empty?
-            trains.reject! { |v| type?(v[:name], :narrow) } if !@game.north_corp?(entity) && entity.operatable_trains.empty?
-            trains
-          end
-
-          def type?(name, type)
-            (name.include?('+') && type == :narrow) || (!name.include?('+') && type == :broad)
+            variants = super
+            variants.reject! { |t| t[:track_type] == :narrow } if entity.type == :minor
+            variants
           end
 
           def try_take_player_loan(entity, cost)

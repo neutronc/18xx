@@ -7,11 +7,35 @@ module Engine
   class StockMarket
     attr_reader :market, :par_prices, :has_close_cell, :zigzag
 
-    def initialize(market, unlimited_types, multiple_buy_types: [], zigzag: nil, ledge_movement: nil)
+    def initialize(market, unlimited_types, **opts)
+      multiple_buy_types = opts[:multiple_buy_types] || []
+      ledge_movement = opts[:ledge_movement]
       @par_prices = []
       @has_close_cell = false
-      @zigzag = zigzag
-      @market = market.map.with_index do |row, r_index|
+      @zigzag = opts[:zigzag]
+      @sold_out_top_row_movement = opts[:sold_out_top_row_movement]
+      @hex_market = opts[:hex_market]
+      @market = init_market(market, unlimited_types, multiple_buy_types)
+      # note, a lot of behavior depends on the par prices being in descending price order
+      @par_prices.sort_by! do |p|
+        r, c = p.coordinates
+        [p.price, c, r]
+      end.reverse!
+
+      @movement =
+        if @hex_market
+          HexMovement.new(self)
+        elsif @zigzag
+          ZigZagMovement.new(self, ledge_movement)
+        elsif one_d?
+          OneDimensionalMovement.new(self)
+        else
+          TwoDimensionalMovement.new(self)
+        end
+    end
+
+    def init_market(market, unlimited_types, multiple_buy_types)
+      market.map.with_index do |row, r_index|
         row.map.with_index do |code, c_index|
           price = if code.instance_of?(Hash)
                     SharePrice.new([r_index, c_index], unlimited_types: unlimited_types, multiple_buy_types: multiple_buy_types,
@@ -28,24 +52,18 @@ module Engine
           price
         end
       end
-      # note, a lot of behavior depends on the par prices being in descending price order
-      @par_prices.sort_by! do |p|
-        r, c = p.coordinates
-        [p.price, c, r]
-      end.reverse!
+    end
 
-      @movement =
-        if @zigzag
-          ZigZagMovement.new(self, ledge_movement)
-        elsif one_d?
-          OneDimensionalMovement.new(self)
-        else
-          TwoDimensionalMovement.new(self)
-        end
+    def hex_market?
+      !@hex_market.nil?
     end
 
     def one_d?
       @one_d ||= @market.one?
+    end
+
+    def two_d?
+      @two_d ||= !@zigzag && @market.size > 1
     end
 
     def set_par(corporation, share_price)
@@ -58,6 +76,14 @@ module Engine
     def right_ledge?(coordinates)
       row, col = coordinates
       col + 1 == @market[row].size
+    end
+
+    def top_row?(coordinates)
+      coordinates.first.zero? && two_d?
+    end
+
+    def max_share_price?(coordinates)
+      coordinates == [0, @market[0].size - 1]
     end
 
     def move_right(corporation)
@@ -73,7 +99,11 @@ module Engine
     end
 
     def up(corporation, coordinates)
-      @movement.up(corporation, coordinates)
+      if @sold_out_top_row_movement == :down_right && top_row?(coordinates) && !max_share_price?(coordinates)
+        @movement.right(corporation, @movement.down(corporation, coordinates))
+      else
+        @movement.up(corporation, coordinates)
+      end
     end
 
     def move_down(corporation)
@@ -90,6 +120,38 @@ module Engine
 
     def left(corporation, coordinates)
       @movement.left(corporation, coordinates)
+    end
+
+    def move_diagonally_up_left(corporation)
+      move(corporation, diagonally_up_left(corporation, corporation.share_price.coordinates))
+    end
+
+    def diagonally_up_left(corporation, coordinates)
+      @movement.diagonally_up_left(corporation, coordinates)
+    end
+
+    def move_diagonally_down_left(corporation)
+      move(corporation, diagonally_down_left(corporation, corporation.share_price.coordinates))
+    end
+
+    def diagonally_down_left(corporation, coordinates)
+      @movement.diagonally_down_left(corporation, coordinates)
+    end
+
+    def move_diagonally_up_right(corporation)
+      move(corporation, diagonally_up_right(corporation, corporation.share_price.coordinates))
+    end
+
+    def diagonally_up_right(corporation, coordinates)
+      @movement.diagonally_up_right(corporation, coordinates)
+    end
+
+    def move_diagonally_down_right(corporation)
+      move(corporation, diagonally_down_right(corporation, corporation.share_price.coordinates))
+    end
+
+    def diagonally_down_right(corporation, coordinates)
+      @movement.diagonally_down_right(corporation, coordinates)
     end
 
     def find_share_price(corporation, directions)
@@ -111,6 +173,14 @@ module Engine
           coordinates = down(corporation, coordinates)
         when :up
           coordinates = up(corporation, coordinates)
+        when :diagonally_up_left
+          coordinates = diagonally_up_left(corporation, coordinates)
+        when :diagonally_up_right
+          coordinates = diagonally_up_right(corporation, coordinates)
+        when :diagonally_down_left
+          coordinates = diagonally_down_left(corporation, coordinates)
+        when :diagonally_down_right
+          coordinates = diagonally_down_right(corporation, coordinates)
         end
         price = share_price(coordinates) || price
       end

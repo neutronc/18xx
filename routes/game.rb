@@ -25,6 +25,14 @@ class Api
             halt(400, 'Cannot join game because it is full') if users.size >= game.max_players
             halt(400, 'Cannot join because game has started') unless game.status == 'new'
 
+            if users.size == game.max_players - 1
+              # Generate a message to the game owner
+              type = 'Game Full'
+              user_ids = [game.user_id]
+              force = true
+              publish_turn(user_ids, game, r.base_url, type, force)
+            end
+
             GameUser.create(game: game, user: user)
             game.players(reload: true)
             game.to_h
@@ -115,11 +123,16 @@ class Api
               end
             end
 
+            other_users = users.reject { |u| u.id == user&.id }
             type, user_ids, force =
               if action['type'] == 'message'
-                pinged = users.select do |user|
-                  action['message'].include?("@#{user.name}")
-                end
+                pinged = if action['message'].include?('@all')
+                           other_users
+                         else
+                           other_users.select do |u|
+                             action['message'].include?("@#{u.name}")
+                           end
+                         end
                 ['Received Message', pinged.map(&:id), false]
               elsif game.status == 'finished'
                 ['Game Finished', users.map(&:id), true]

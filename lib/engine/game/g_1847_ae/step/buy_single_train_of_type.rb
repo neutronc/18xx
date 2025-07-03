@@ -16,11 +16,11 @@ module Engine
           end
 
           def process_buy_train(action)
-            from_depot = action.train.from_depot?
+            new_train = @depot.upcoming.include?(action.train)
             super
 
             lfk = @game.lfk
-            return if @game.train_bought_this_round || !lfk.floated? || !from_depot
+            return if @game.train_bought_this_round || !lfk.floated? || !new_train
 
             lfk_owner = lfk.owner
             if lfk_owner.player?

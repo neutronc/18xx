@@ -21,6 +21,8 @@ module View
       needs :interactive, default: true
 
       def selected?
+        return @step.company_selected?(@company) if @step.respond_to?(:company_selected?)
+
         @company == @selected_company
       end
 
@@ -32,6 +34,11 @@ module View
         if selected_company && @game.round.actions_for(entity).include?('assign') &&
           (@game.class::ALL_COMPANIES_ASSIGNABLE || entity.respond_to?(:assign!))
           return process_action(Engine::Action::Assign.new(entity, target: selected_company))
+        end
+
+        if @game.round.actions_for(entity).include?('select_multiple_companies')
+          @step.select_company(entity, @company)
+          return store(:selected_company, nil)
         end
 
         store(:tile_selector, nil, skip: true)
@@ -81,6 +88,7 @@ module View
       end
 
       def render
+        @step = @game.round.active_step
         # use alternate view of corporation if needed
         if @game.respond_to?(:company_view) && (view = @game.company_view(@company))
           return send("render_#{view}")
@@ -156,19 +164,18 @@ module View
             h(:div, company_name_str),
             h(:div, { style: description_style }, @company.desc),
           ]
-          children << h(:div, { style: value_style }, "Value: #{@game.format_currency(@company.value)}") if @company.value
+          company_value = @game.company_value(@company)
+          children << h(:div, { style: value_style }, "Value: #{@game.format_currency(company_value)}") if company_value
           children << h(:div, { style: revenue_style }, "Revenue: #{revenue_str}") if @company.revenue
-          children << render_bidders if @bids&.any?
-
           unless @company.discount.zero?
-            children << h(
-            :div,
-            { style: { float: 'center' } },
-            "Price: #{@game.format_currency(@company.value - @company.discount)}"
-          )
+            children << h(:div, { style: { float: 'center' } }, "Price: #{@game.format_currency(@company.min_bid)}")
           end
+          children << render_bidders if @bids && !@bids.empty?
 
-          children << h('div.nowrap', { style: bidders_style }, "Owner: #{@company.owner.name}") if @company.owner
+          if @company.owner && @game.show_company_owners?
+            children << h('div.nowrap', { style: bidders_style },
+                          "Owner: #{@company.owner.name}")
+          end
           if @game.company_status_str(@company)
             status_style = {
               marginTop: '0.5rem',
@@ -226,7 +233,8 @@ module View
           },
           on: { click: ->(event) { toggle_desc(event, company) } },
         }
-        is_possessed = @company.owner&.player? || @game.players.any? { |p| p.unsold_companies.include?(@company) }
+        is_possessed = @company.owner&.player? || @game.players.any? { |p| p.unsold_companies.include?(@company) } ||
+                       @game.show_value_of_companies?(@company.owner)
         hidden_props = {
           style: {
             display: 'none',
@@ -244,7 +252,7 @@ module View
                       end
 
         [h(:div, name_props, [h('span.nowrap', company_name_str), h(:span, extra)]),
-         @game.show_value_of_companies?(company.owner) ? h('div.right', @game.format_currency(company.value)) : '',
+         @game.show_value_of_companies?(company.owner) ? h('div.right', @game.format_currency(@game.company_value(company))) : '',
          h('div.padded_number', revenue_str),
          @hidden_divs[company.sym]]
       end

@@ -11,6 +11,13 @@ module Engine
 
           def setup
             @connected_destination_nodes = []
+            @dest_checked = false
+          end
+
+          def actions(entity)
+            return [] if @game.destinated?(entity)
+
+            super
           end
 
           def auto_actions(entity)
@@ -74,6 +81,8 @@ module Engine
           end
 
           def destination_node_check?(entity)
+            return !@connected_destination_nodes.empty? if @dest_checked
+
             destination_hex = @game.hex_by_id(entity.destination_coordinates)
             home_node = entity.tokens.first.city
 
@@ -83,14 +92,37 @@ module Engine
               nodes_connected?(destination_node, home_node, entity)
             end
 
+            @dest_checked = true
+
             !@connected_destination_nodes.empty?
           end
 
           def nodes_connected?(node_a, node_b, entity)
-            node_a&.walk(corporation: entity) do |path, _, _|
-              return true if path.nodes.include?(node_b)
+            LOGGER.debug { "    nodes_connected?(#{node_a}, #{node_b}, #{entity.name})" }
+            walk_calls = Hash.new(0)
+
+            node_a&.walk(corporation: entity, walk_calls: walk_calls) do |path, _, _|
+              if path.nodes.include?(node_b)
+                LOGGER.debug do
+                  "    nodes_connected? returning true after #{walk_calls[:not_skipped]} "\
+                    "walk calls (#{walk_calls[:skipped]} skipped)"
+                end
+                return true
+              end
             end
+
+            LOGGER.debug do
+              "    nodes_connected? returning false after #{walk_calls[:not_skipped]} "\
+                "walk calls (#{walk_calls[:skipped]} skipped)"
+            end
+
             false
+          end
+
+          # not actually replacing a token, but ICR sometimes needs to choose
+          # its home and it might need to choose a city that is full of tokens
+          def can_replace_token?(entity, _token)
+            entity == @game.icr
           end
         end
       end

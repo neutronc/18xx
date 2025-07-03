@@ -24,13 +24,18 @@ module Engine
         super
       end
 
+      def initial_auction_entities
+        entities.rotate(@round.entity_index)
+      end
+
       def active_entities
-        if @auctioning
-          winning_bid = highest_bid(@auctioning)
-          return [@active_bidders[(@active_bidders.index(winning_bid.entity) + 1) % @active_bidders.size]] if winning_bid
+        return super unless auctioning
+
+        if (winning_bid = highest_bid(@auctioning))
+          return [@active_bidders[(@active_bidders.index(winning_bid.entity) + 1) % @active_bidders.size]]
         end
 
-        super
+        [@active_bidders[0]]
       end
 
       def process_pass(action)
@@ -52,21 +57,28 @@ module Engine
       def next_entity!
         @round.next_entity_index!
         entity = entities[entity_index]
-        entity.pass! if @auctioning && max_bid(entity, @auctioning) < min_bid(@auctioning)
+        if @auctioning
+          entity.pass! if max_bid(entity, @auctioning) < min_bid(@auctioning)
+        elsif @companies.none? { |c| max_bid(entity, c) >= min_bid(c) }
+          @log << "#{entity.name} has no valid actions and passes"
+          entity.pass!
+          entity = nil if entities.all?(&:passed?)
+        end
         next_entity! if entity&.passed?
       end
 
       def process_bid(action)
         action.entity.unpass!
 
-        if auctioning
-          add_bid(action)
+        if !auctioning
+          selection_bid(action)
+          next_entity! if auctioning
         elsif @active_bidders.length == 1
           add_bid(action)
           resolve_bids
         else
-          selection_bid(action)
-          next_entity! if auctioning
+          auctioning
+          add_bid(action)
         end
       end
 
@@ -84,12 +96,8 @@ module Engine
         setup_auction
         @companies = @game.initial_auction_companies.dup
         @cheapest = @companies.first
-        auction_entity(@companies.first)
+        auction_entity(initial_auction_entity) if initial_auction_entity
         @auction_triggerer = current_entity
-      end
-
-      def selection_bid(bid)
-        add_bid(bid)
       end
 
       def starting_bid(company)
@@ -113,10 +121,30 @@ module Engine
         player.cash
       end
 
+      protected
+
+      def active_auction
+        company = @auctioning
+        bids = @bids[company]
+        yield company, bids if company
+      end
+
+      def initial_auction_entity
+        @companies.first
+      end
+
+      def resolve_bids
+        if @auctioning && @active_bidders.none? && @bids[auctioning].empty?
+          all_passed!
+        else
+          super
+        end
+      end
+
       private
 
       def add_bid(bid)
-        super(bid)
+        super
         company = bid.company
         entity = bid.entity
         price = bid.price
@@ -130,12 +158,11 @@ module Engine
         price = winner.price
         assign_company(company, player)
 
-        player.spend(price, @game.bank) if price.positive?
-        @game.after_buy_company(player, company, price)
-
-        @companies.delete(company)
         @log << "#{player.name} wins the auction for #{company.name} "\
                 "with a bid of #{@game.format_currency(price)}"
+        player.spend(price, @game.bank) if price.positive?
+        @game.after_buy_company(player, company, price)
+        @companies.delete(company)
       end
 
       def forced_win(player, company)

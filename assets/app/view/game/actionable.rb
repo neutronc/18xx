@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+# backtick_javascript: true
+
 require 'game_manager'
 require 'lib/params'
 require 'lib/storage'
@@ -21,6 +23,7 @@ module View
         base.needs :app_route, default: nil, store: true
         base.needs :round_history, default: nil, store: true
         base.needs :selected_action_id, default: nil, store: true
+        base.needs :show_hand, default: false, store: true
       end
 
       def save_user_settings(settings)
@@ -149,6 +152,7 @@ module View
         clear_ui_state
         store(:game, game)
       rescue StandardError => e
+        LOGGER.error(e)
         clear_ui_state
         store(:flash_opts, e.message)
         `setTimeout(function() { self['$store']('game', Opal.nil) }, 10)`
@@ -160,6 +164,7 @@ module View
         store(:selected_corporation, nil, skip: true)
         store(:tile_selector, nil, skip: true)
         store(:selected_action_id, nil, skip: true)
+        store(:show_hand, false, skip: true)
       end
 
       def history_link(text, title, action_id = nil, style_extra = {}, as_button = false, hotkey = nil)

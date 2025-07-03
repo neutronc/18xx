@@ -30,9 +30,19 @@ module Engine
             desc: 'The Georgia & Florida Railroad home is moved from Albany to Columbus',
           },
           {
+            sym: :remove_cog_token,
+            short_name: 'Reduce CoG token',
+            desc: 'CoG has one fewer station token than normal',
+          },
+          {
             sym: :soft_rust_4t,
             short_name: 'Soft rust',
             desc: '4 trains run once more after 8 train is bought',
+          },
+          {
+            sym: :cotton_port,
+            short_name: 'Cotton Port',
+            desc: 'Adds a few new hexes and a second home for Georgia Railroad',
           },
         ].freeze
       end

@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+# backtick_javascript: true
+
 require 'user_manager'
 
 module View
@@ -75,6 +77,7 @@ module View
         <a href='https://github.com/tysen'>tysen</a>
         <a href='https://github.com/daniel-sousa-me'>daniel-sousa-me</a>
         <a href='https://github.com/benjaminxscott'>benjaminxscott (dstar)</a>
+        <a href='https://github.com/philcampeau'>philcampeau</a>
 
         <p>This website will always be open-source and free to play. If you'd like support this project, you can become a patron on
         <a href='https://www.patreon.com/18xxgames'>Patreon</a>.</p>

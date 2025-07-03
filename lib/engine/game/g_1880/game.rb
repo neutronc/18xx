@@ -24,10 +24,11 @@ module Engine
         TILE_RESERVATION_BLOCKS_OTHERS = :single_slot_cities
         TILE_UPGRADES_MUST_USE_MAX_EXITS = %i[cities].freeze
         HOME_TOKEN_TIMING = :operating_round
+        TOKEN_PLACEMENT_ON_TILE_LAY_ENTITY = :owner
         SELL_BUY_ORDER = :sell_buy
         SELL_MOVEMENT = :down_per_10
         EBUY_PRES_SWAP = false
-        EBUY_OTHER_VALUE = false
+        EBUY_FROM_OTHERS = :never
         CURRENCY_FORMAT_STR = '¥%s'
         SOLD_SHARES_DESTINATION = :corporation
         MINORS_CAN_OWN_SHARES = true
@@ -461,7 +462,7 @@ module Engine
 
         def operating_round(round_num)
           G1880::Round::Operating.new(self, [
-            G1880::Step::HomeToken,
+            Engine::Step::HomeToken,
             G1880::Step::RocketPurchaseTrain,
             Engine::Step::Exchange,
             Engine::Step::DiscardTrain,
@@ -569,6 +570,15 @@ module Engine
 
         def player_value(player)
           super - player_debt(player)
+        end
+
+        def value_for_dumpable(player, corporation)
+          return 0 if @communism && corporation.owner == player
+
+          max_bundle = bundles_for_corporation(player, corporation)
+            .select { |bundle| bundle.can_dump?(player) && @share_pool&.fit_in_bank?(bundle) }
+            .max_by(&:price)
+          max_bundle ? max_bundle.price - (max_bundle.num_shares * 5) : 0
         end
 
         def player_debt(player)

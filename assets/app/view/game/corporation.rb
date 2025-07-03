@@ -13,6 +13,7 @@ module View
       include Lib::Settings
 
       needs :user, default: nil, store: true
+      needs :bids, default: nil
       needs :corporation
       needs :selected_company, default: nil, store: true
       needs :selected_corporation, default: nil, store: true
@@ -80,6 +81,7 @@ module View
         end
         abilities_to_display = @corporation.all_abilities.select(&:description)
         children << render_abilities(abilities_to_display) if abilities_to_display.any?
+        children << render_bidders if @bids && !@bids.empty?
 
         extras = []
         if @game.corporation_show_loans?(@corporation)
@@ -110,7 +112,7 @@ module View
           }
 
           subchildren = render_operating_order
-          subchildren << render_revenue_history if @corporation.operating_history.any?
+          subchildren << render_revenue_history if @game.render_revenue_history?(@corporation)
           children << h(:div, props, subchildren)
         end
 
@@ -145,6 +147,59 @@ module View
         end
 
         h('div.corp.card', { style: card_style, on: { click: select_corporation } }, children)
+      end
+
+      def render_bidders
+        table_props = {
+          style: {
+            margin: '0 auto',
+            borderSpacing: '0 1px',
+            fontWeight: 'normal',
+          },
+        }
+
+        # almost identical to render_bidders in view/game/company
+        # except for  minor CSS tweaks for padding/text alignment
+        header_props = {
+          style: {
+            clear: 'both',
+            textAlign: 'center',
+            fontWeight: 'bold',
+            padding: '0.5rem',
+          },
+        }
+
+        rows = @bids
+          .sort_by(&:price)
+          .reverse.map.with_index do |bid, i|
+            bg_color =
+              if setting_for(:show_player_colors, @game)
+                player_colors(@game.players)[bid.entity]
+              elsif @user && bid.entity.name == @user['name']
+                color_for(i.zero? ? :green : :yellow)
+              else
+                color_for(:bg)
+              end
+            props = {
+              style: {
+                backgroundColor: bg_color,
+                color: contrast_on(bg_color),
+              },
+            }
+            h(:tr, props, [
+              h('td.left', bid.entity.name.truncate(20)),
+              h('td.right', bid.price >= 0 ? @game.format_currency(bid.price) : '--'),
+            ])
+          end
+
+        h(:div, header_props, [
+           h(:label, 'Bidders:'),
+           h(:table, table_props, [
+             h(:tbody, [
+               *rows,
+             ]),
+           ]),
+        ])
       end
 
       def render_title(bg = nil)
@@ -385,12 +440,12 @@ module View
         }
 
         if @game.corporations_can_ipo?
-          player_rows = entities_rows(@game.players + @game.operating_order.reject do |c|
-                                                        c == @corporation && !c.treasury_as_holding
-                                                      end.sort, true)
+          player_rows = entities_rows(@game.share_owning_players + @game.operating_order.reject do |c|
+                                                                     c == @corporation && !c.treasury_as_holding
+                                                                   end.sort, true)
           other_corp_rows = []
         else
-          player_rows = entities_rows(@game.players, true)
+          player_rows = entities_rows(@game.share_owning_players, true)
           other_corp_rows = entities_rows(@game.corporations.reject { |c| c == @corporation && !c.treasury_as_holding })
         end
 
@@ -585,7 +640,7 @@ module View
 
         [
           h('tr.ipo', loan_props, [
-            h('td.right', 'Loans'),
+            h('td.right', @game.corp_loans_text),
             h('td.padded_number', "#{@corporation.loans.size}/"\
                                   "#{@game.maximum_loans(@corporation)}"),
           ]),

@@ -70,7 +70,7 @@ module Engine
         PHASES = [
           {
             name: '3',
-            train_limit: 3,
+            train_limit: 4,
             tiles: [:yellow],
             operating_rounds: 1,
             status: ['two_yellow_tracks'],
@@ -78,7 +78,7 @@ module Engine
           {
             name: '3+3',
             on: '3+3',
-            train_limit: 3,
+            train_limit: 4,
             tiles: [:yellow],
             operating_rounds: 1,
             status: %w[investor_exchange two_yellow_tracks can_buy_trains],
@@ -401,6 +401,14 @@ module Engine
 
         def or_round_finished
           @recently_floated = []
+        end
+
+        def after_par(corporation)
+          # Remove the information "ability" when it's no longer relevant
+          ability = corporation.all_abilities.find { |a| a.description&.include?('May not be started until') }
+          corporation.remove_ability(ability)
+
+          super
         end
 
         def after_buy_company(player, company, _price)

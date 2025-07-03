@@ -38,6 +38,7 @@ module View
         if @show_companies
           divs << h(Companies, owner: @player, game: @game, show_hidden: @show_hidden) if @player.companies.any? || @show_hidden
           divs << h(UnsoldCompanies, owner: @player, game: @game) unless @player.unsold_companies.empty?
+          divs << h(HiddenHand, player: @player, game: @game, user: @user) if @game.show_hidden_hand?
         end
 
         unless (minors = @game.player_card_minors(@player)).empty?
@@ -83,7 +84,13 @@ module View
       end
 
       def render_info
-        num_certs = @game.num_certs(@player)
+        num_certs =
+          if @game.active_step.respond_to?(:num_certs_with_bids)
+            @game.active_step.num_certs_with_bids(@player)
+          else
+            @game.num_certs(@player)
+          end
+
         cert_limit = @game.cert_limit(@player)
 
         td_cert_props = {
@@ -99,7 +106,7 @@ module View
           ]),
         ]
 
-        if @game.active_step&.current_actions&.include?('bid')
+        if @game.active_step&.current_actions&.include?('bid') || @game.active_step&.auctioneer?
           committed = @game.active_step.committed_cash(@player, @show_hidden)
           if committed.positive?
             trs.concat([
@@ -183,7 +190,8 @@ module View
         order = @game.next_sr_player_order
         trs << render_priority_deal(priority_props) if @game.show_priority_deal_player?(order) &&
                                                        @player == @game.priority_deal_player
-        trs << render_next_sr_position(priority_props) if %i[first_to_pass most_cash least_cash].include?(order) &&
+        trs << render_next_sr_position(priority_props) if %i[first_to_pass most_cash least_cash next_clockwise
+                                                             max_cash_keep_order].include?(order) &&
                                                           @game.next_sr_position(@player)
 
         h(:table, trs)

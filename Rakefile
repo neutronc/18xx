@@ -102,7 +102,7 @@ desc 'Precompile assets for production'
 task :precompile do
   require_relative 'lib/assets'
   assets = Assets.new(cache: false, compress: true, gzip: true)
-  assets.combine
+  assets.combine(:all)
 
   # Copy to the pin directory
   git_rev = `git rev-parse --short HEAD`.strip
@@ -139,4 +139,31 @@ task 'migrate_json', [:json] do |_task, args|
   require_relative 'lib/engine'
   require_relative 'migrate_game'
   migrate_json(args[:json])
+end
+
+desc 'Compress and anonymize JSON game file under public/fixtures/'
+task 'fixture_format', [:json, :pretty] do |_task, args|
+  filename = File.join('public', 'fixtures', args[:json])
+  data = JSON.parse(File.read(filename))
+
+  # remove player names
+  data['players'].each.with_index do |player, index|
+    player['name'] = "Player #{index}"
+  end
+
+  # remove chats
+  data['actions'].filter! do |action|
+    action['type'] != 'message'
+  end
+
+  # TODO: get rid of undone actions
+
+  # if second arg is given, any value other than "0" will produce
+  # readable/diffable JSON; if arg is not given or is "0", the JSON will be
+  # compressed to a single line with minimal whitespace
+  if !args[:pretty].nil? && args[:pretty] != '0'
+    File.write(filename, JSON.pretty_generate(data))
+  else
+    File.write(filename, data.to_json)
+  end
 end

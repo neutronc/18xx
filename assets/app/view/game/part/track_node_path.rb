@@ -23,7 +23,7 @@ module View
         STRAIGHT_CROSSOVER = '1 55 63 56'
         GENTLE_CROSSOVER = '1 55 47 56'
 
-        PARALLEL_SPACING = [8, 7, 6].freeze
+        PARALLEL_SPACING = [8, 7, 6, 5].freeze
 
         EDGE_PERP_ANGLES = [90, 30, -30, -90, -150, 150].freeze
 
@@ -268,7 +268,7 @@ module View
             @end_edge = @path.edges.last.num
             @end_x = edge_x_pos(@end_edge, 87)
             @end_y = edge_y_pos(@end_edge, 87)
-            lanes = @path.lanes
+            lanes = @path.lanes.dup
 
             if @tile.crossover? && @path.straight?
               @crossover_dash = STRAIGHT_CROSSOVER
@@ -299,7 +299,7 @@ module View
                                  ]
                                end
             end
-            lanes = @path.lanes
+            lanes = @path.lanes.dup
             lanes.reverse! if @path.b.edge?
 
             if @tile.crossover? && @path.straight?
@@ -332,7 +332,7 @@ module View
                                    calculate_stop_y(@ct_edge1, @tile),
                                  ]
                                end
-              lanes = @path.lanes
+              lanes = @path.lanes.dup
               lanes.reverse! if @path.b == @stop0
             else
               @begin_edge = @ct_edge1
@@ -353,7 +353,7 @@ module View
                                    calculate_stop_y(@ct_edge0, @tile),
                                  ]
                                end
-              lanes = @path.lanes
+              lanes = @path.lanes.dup
               lanes.reverse! if @path.b == @stop1
             end
           end

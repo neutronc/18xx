@@ -42,6 +42,7 @@ module View
             h(:div, [
               render_turn_bid,
               render_show_button,
+              render_confirm_selections,
               *render_companies,
               *render_minors,
               *render_corporations,
@@ -107,6 +108,25 @@ module View
           }
 
           h(:button, props, "#{hidden? ? 'Show' : 'Hide'} #{@step.visible? ? 'Player' : 'Companies'}")
+        end
+
+        def render_confirm_selections
+          return nil if hidden? && !@step.visible?
+          return nil unless @current_actions.include?('select_multiple_companies')
+
+          mutiple_companies = lambda do
+            hide!
+            process_action(Engine::Action::SelectMultipleCompanies.new(
+              @current_entity,
+              companies: @step.selected_companies
+            ))
+          end
+          select_button = [h(:button, { on: { click: mutiple_companies } }, 'Confirm Selections')]
+
+          children = []
+          children << h(:div, @step.selection_note.map { |text_block| h(:p, text_block) })
+          children << h(:div, select_button) if @step.selections_completed?
+          h(:div, children)
         end
 
         def render_companies
@@ -181,8 +201,15 @@ module View
 
           buttons = []
           if @step.may_bid?(company) && @step.min_bid(company) <= @step.max_place_bid(@current_entity, company)
-            bid_str = @step.respond_to?(:bid_str) ? @step.bid_str(company) : 'Place Bid'
-            buttons << h(:button, { on: { click: -> { create_bid(company, input) } } }, bid_str)
+            if @step.respond_to?(:bid_choices) && (choices = @step.bid_choices(company))
+              choices.map do |choice, label|
+                bid_lambda = -> { create_assigned_bid(company, choice, input) }
+                buttons << h(:button, { on: { click: bid_lambda } }, label)
+              end
+            else
+              bid_str = @step.respond_to?(:bid_str) ? @step.bid_str(company) : 'Place Bid'
+              buttons << h(:button, { on: { click: -> { create_bid(company, input) } } }, bid_str)
+            end
           end
           buttons.concat(render_move_bid_buttons(company, input))
 
@@ -273,7 +300,7 @@ module View
           }
 
           @step.available.select(&:minor?).map do |minor|
-            children = [h(Corporation, corporation: minor)]
+            children = [h(Corporation, corporation: minor, bids: @step&.bids&.dig(minor))]
             children << render_minor_input(minor) if @selected_corporation == minor
             h(:div, props, children)
           end
@@ -438,6 +465,27 @@ module View
           process_action(Engine::Action::Bid.new(
             @current_entity,
             company: target,
+            price: price,
+          ))
+          store(:selected_company, nil, skip: true)
+        end
+
+        # Creates and processes an Action::Bid where a company is being
+        # auctioned and a corporation is associated with the bid.  Used by
+        # {Engine::Game::G18Ardennes::Step::MajorAuction} for the auctions where
+        # players bid for the right to start a major (a company of type
+        # +:concession+) in exchange for a minor (a corporation of type
+        # +:minor+).
+        # @param company [Engine::Company] The company being bid for.
+        # @param corporation [Engine::Corporation] The corporation associated with the bid.
+        # @param input [Snabberb::Component] The input element containing the bid price.
+        def create_assigned_bid(company, corporation, input)
+          hide!
+          price = input.JS['elm'].JS['value'].to_i
+          process_action(Engine::Action::Bid.new(
+            @current_entity,
+            company: company,
+            corporation: corporation,
             price: price,
           ))
           store(:selected_company, nil, skip: true)

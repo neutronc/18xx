@@ -21,6 +21,19 @@ module Engine
             'Issue/Sell then Buy Shares'
           end
 
+          def round_state
+            super.merge(
+              {
+                issued: {},
+              }
+            )
+          end
+
+          def setup
+            super
+            @round.issued = {}
+          end
+
           def auto_actions(_entity); end
 
           def can_sell_any?(entity)
@@ -67,7 +80,8 @@ module Engine
           end
 
           # FIXME: move to common location
-          def buy_shares(entity, shares, exchange: nil, swap: nil, allow_president_change: true, borrow_from: nil)
+          def buy_shares(entity, shares, exchange: nil, swap: nil, allow_president_change: true, borrow_from: nil,
+                         discounter: nil)
             corp = shares.corporation
             if shares.owner == corp.ipo_owner
               # IPO shares pay corporation
@@ -95,6 +109,7 @@ module Engine
             end
 
             super
+            @round.recalculate_order
           end
 
           def issue_shares(action)
@@ -109,7 +124,8 @@ module Engine
                                              @game.share_pool,
                                              spender: @game.bank,
                                              receiver: corp)
-            @game.stock_market.move_down(corp) if floated
+            @game.stock_market.move_down(corp) if floated && !@round.issued[corp.name]
+            @round.issued[corp.name] = true
             @game.log_share_price(corp, old_price)
             @game.float_corporation(corp) if corp.floatable && floated != corp.floated?
 

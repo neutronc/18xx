@@ -8,6 +8,8 @@ module Engine
 
     def share_price(coordinates)
       row, column = coordinates
+      return if row.negative? || column.negative?
+
       @market.market[row]&.[](column)
     end
 
@@ -24,6 +26,22 @@ module Engine
     end
 
     def up(corporation, coordinates)
+      raise NotImplementedError
+    end
+
+    def diagonally_down_left(_corporation, coordinates)
+      raise NotImplementedError
+    end
+
+    def diagonally_up_left(_corporation, coordinates)
+      raise NotImplementedError
+    end
+
+    def diagonally_down_right(_corporation, coordinates)
+      raise NotImplementedError
+    end
+
+    def diagonally_up_right(_corporation, coordinates)
       raise NotImplementedError
     end
   end
@@ -79,6 +97,65 @@ module Engine
 
     def up(corporation, coordinates)
       @market.right(corporation, coordinates)
+    end
+  end
+
+  class HexMovement < BaseMovement
+    def left(corporation, coordinates)
+      r, c = coordinates
+      new_coords = [r, c - 1]
+      return new_coords if share_price(new_coords)
+
+      @market.diagonally_down_left(corporation, coordinates)
+    end
+
+    def right(corporation, coordinates)
+      r, c = coordinates
+      new_coords = [r, c + 1]
+      return new_coords if share_price(new_coords)
+
+      @market.diagonally_up_right(corporation, coordinates)
+    end
+
+    def up(corporation, coordinates)
+      diagonally_up_right(corporation, coordinates)
+    end
+
+    def down(corporation, coordinates)
+      diagonally_down_left(corporation, coordinates)
+    end
+
+    def diagonally_down_left(_corporation, coordinates)
+      r, c = coordinates
+      new_coords = [r + 1, c]
+      x = share_price(new_coords)
+      return new_coords if x
+
+      coordinates
+    end
+
+    def diagonally_up_left(_corporation, coordinates)
+      r, c = coordinates
+      new_coords = [r - 1, c - 1]
+      return new_coords if share_price(new_coords)
+
+      coordinates
+    end
+
+    def diagonally_down_right(_corporation, coordinates)
+      r, c = coordinates
+      new_coords = [r + 1, c + 1]
+      return new_coords if share_price(new_coords)
+
+      coordinates
+    end
+
+    def diagonally_up_right(_corporation, coordinates)
+      r, c = coordinates
+      new_coords = [r - 1, c]
+      return new_coords if share_price(new_coords)
+
+      coordinates
     end
   end
 

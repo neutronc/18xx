@@ -8,7 +8,7 @@ module Engine
       module Meta
         include Game::Meta
 
-        DEV_STAGE = :alpha
+        DEV_STAGE = :production
 
         GAME_SUBTITLE = nil
         GAME_DESIGNER = 'Federico Vallani and Manlio Manzini'
@@ -34,6 +34,11 @@ module Engine
             sym: :version_1,
             short_name: 'Version 1',
             desc: 'Original auction, map and corporations',
+          },
+          {
+            sym: :sfli_run_variant,
+            short_name: 'Use Version 2 SFLi formation',
+            desc: 'For Version 1 rules, allow SFLi to run during the OR it is formed the same as Version 2',
           },
         ].freeze
       end

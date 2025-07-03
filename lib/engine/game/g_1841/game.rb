@@ -59,6 +59,7 @@ module Engine
         CAPITALIZATION = :incremental
         MUST_SELL_IN_BLOCKS = false
         SELL_MOVEMENT = :down_share
+        SELL_AFTER = :operate
         SOLD_OUT_INCREASE = true
         POOL_SHARE_DROP = :down_block
         TRACK_RESTRICTION = :semi_restrictive
@@ -379,10 +380,6 @@ module Engine
           @border_paths = nil
         end
 
-        def clear_token_graph_for_entity(entity)
-          clear_graph_for_entity(entity)
-        end
-
         def event_phase4_regions!
           modify_regions(2, false)
           modify_regions(4, true)
@@ -454,7 +451,7 @@ module Engine
           sfma_idx = @round.entities.find_index(sfma)
           ssfl_idx = @round.entities.find_index(ssfl)
 
-          will_run = true
+          will_run = (version == 2) || sfli_run_variant?
           will_run = false if sflp_idx && sflp_idx <= @round.entity_index
           will_run = false if sfma_idx && sfma_idx <= @round.entity_index
           will_run = false if ssfl_idx && ssfl_idx <= @round.entity_index
@@ -1111,6 +1108,10 @@ module Engine
           @lite ||= @optional_rules&.include?(:lite)
         end
 
+        def sfli_run_variant?
+          @sfli_run_variant ||= @optional_rules&.include?(:sfli_run_variant)
+        end
+
         def event_close_companies!
           @log << '-- Event: Concessions close --'
           @companies.each do |company|
@@ -1155,7 +1156,7 @@ module Engine
 
           president = majority_share_holders
             .select { |p| p.percent_of(corporation) >= corporation.presidents_percent }
-            .min_by { |p| @share_pool.distance(previous_president, p) }
+            .min_by { |p| player_distance_for_president(previous_president, p) }
           return unless president
 
           corporation.owner = president
@@ -1963,7 +1964,8 @@ module Engine
           min = current_token_cnt == 1 ? 1 : 0
 
           first_price = min.zero? ? XFORM_OPT_TOKEN_COST : XFORM_REQ_TOKEN_COST
-          max_opt_tokens = [((@transform_target.cash - first_price) / XFORM_OPT_TOKEN_COST).to_i, 0].max
+          required_payment = min.zero? ? 0 : XFORM_REQ_TOKEN_COST
+          max_opt_tokens = [((@transform_target.cash - required_payment) / XFORM_OPT_TOKEN_COST).to_i, 0].max
           max = [max_opt_tokens + min, 5 - current_token_cnt].min
 
           if max.zero?
@@ -2084,10 +2086,10 @@ module Engine
           tshares.each_with_index do |share, i|
             if i.even?
               @log << "Moving #{share.percent}% share of #{share.corporation.name} from #{old.name} to #{newa.name} treasury"
-              @share_pool.transfer_shares(share.to_bundle, newa, allow_president_change: true)
+              @share_pool.transfer_shares(share.to_bundle, newa, allow_president_change: true, corporate_transfer: true)
             else
               @log << "Moving #{share.percent}% share of #{share.corporation.name} from #{old.name} to #{newb.name} treasury"
-              @share_pool.transfer_shares(share.to_bundle, newb, allow_president_change: true)
+              @share_pool.transfer_shares(share.to_bundle, newb, allow_president_change: true, corporate_transfer: true)
             end
           end
         end
@@ -2470,8 +2472,13 @@ module Engine
           event_tuscan_merge!
         end
 
+        # Return corp first in operating order:
+        # 1. Highest price, then
+        # 2. Rightmost price, then
+        # 3. Highest in stack within a price
+        #
         def best_stock_value(corps)
-          corps.compact.select(&:floated?).max_by { |c| c.share_price.price }
+          corps.compact.select(&:floated?).min
         end
 
         def tuscan_merge_start(sflp, sfma, ssfl, sfli, holding, will_run)
@@ -2480,6 +2487,7 @@ module Engine
           @tuscan_merge_run = will_run
 
           decider = best_stock_value([sflp, sfma, ssfl])
+          @log << "#{decider.name} has best stock value"
           @tuscan_merge_decider = decider.player || @round.current_entity.player
           @log << "#{@tuscan_merge_decider.name} will perform Tuscan Merge operations"
           @tuscan_merge_ssfl = ssfl
@@ -2540,8 +2548,7 @@ module Engine
           @round.recalculate_order if @round.respond_to?(:recalculate_order)
         end
 
-        # can sell any amount?
-        def can_dump?(owner, corp, active)
+        def can_sell_any_amount?(owner, corp, active)
           # can dump IPO stock
           owner == corp ||
             # can dump stock if not president of corp
@@ -2558,7 +2565,7 @@ module Engine
         end
 
         def corp_minimum_to_retain(owner, corp, active)
-          return 0 if can_dump?(owner, corp, active)
+          return 0 if can_sell_any_amount?(owner, corp, active)
           return 0 if historical?(corp)
 
           corp.player_share_holders.reject { |s_h, _| s_h == owner }.values.max || 0
@@ -2569,7 +2576,7 @@ module Engine
           corp = bundle.corporation
 
           return false if bundle.partial? && !can_sell_partial?(owner, corp)
-          return true if can_dump?(owner, corp, active)
+          return true if can_sell_any_amount?(owner, corp, active)
 
           corp_minimum_to_retain(owner, corp, active) <= (owner.percent_of(corp) - bundle.percent) &&
             !bundle.presidents_share
@@ -2581,7 +2588,7 @@ module Engine
           bundles = all_bundles_for_corporation(owner, corp)
           bundles.each { |b| b.share_price = corp.share_price.price / 2.0 }
           max = owner.percent_of(corp) - corp_minimum_to_retain(owner, corp, active)
-          bundles.reject!(&:presidents_share) unless can_dump?(owner, corp, active)
+          bundles.reject!(&:presidents_share) unless can_sell_any_amount?(owner, corp, active)
           bundles.reject { |b| b.percent > max }
         end
 
@@ -2847,22 +2854,33 @@ module Engine
 
         def liquidity(player, emergency: false)
           return player.cash unless sellable_turn?
-          return super unless emergency
-          return liquidity(player) unless @round
 
-          value = player.cash
-          value += player.shares_by_corporation.sum do |corporation, shares|
-            next 0 if shares.empty?
+          sellable_value =
+            if emergency && @round
+              lambda do |player_, corporation|
+                (value_for_sellable(player_, corporation) / 2.0).to_i
+              end
+            else
+              lambda do |player_, corporation|
+                value_for_dumpable(player_, corporation)
+              end
+            end
 
-            (value_for_sellable(player, corporation) / 2.0).to_i
+          player.cash + player.shares_by_corporation.sum do |corporation, shares|
+            next 0 if shares.empty? || !operated?(corporation)
+
+            sellable_value.call(player, corporation)
           end
-          value
         end
 
         def priority_deal_player
           return @players.reject(&:bankrupt)[0] if @round.is_a?(Round::Operating)
 
           super
+        end
+
+        def render_revenue_history?(corporation)
+          operated?(corporation) && super
         end
       end
     end

@@ -147,8 +147,8 @@ module View
       end
 
       def rust_obsolete_schedule
-        rust_schedule = {}
-        obsolete_schedule = {}
+        rust_schedule = Hash.new { |h, k| h[k] = [] }
+        obsolete_schedule = Hash.new { |h, k| h[k] = [] }
         @depot.trains.group_by(&:name).each do |_name, trains|
           first = trains.first
 
@@ -165,13 +165,11 @@ module View
             train_variant[:rusts_on] ||= base_rust
             train_variant[:obsolete_on] ||= base_obsolete
 
-            unless Array(rust_schedule[train_variant[:rusts_on]]).include?(name)
-              rust_schedule[train_variant[:rusts_on]] =
-                Array(rust_schedule[train_variant[:rusts_on]]).append(name)
+            Array(train_variant[:rusts_on]).each do |rusts_on|
+              rust_schedule[rusts_on].append(name) unless rust_schedule[rusts_on].include?(name)
             end
-            unless Array(obsolete_schedule[train_variant[:obsolete_on]]).include?(name)
-              obsolete_schedule[train_variant[:obsolete_on]] =
-                Array(obsolete_schedule[train_variant[:obsolete_on]]).append(name)
+            Array(train_variant[:obsolete_on]).each do |obsolete_on|
+              obsolete_schedule[obsolete_on].append(name) unless obsolete_schedule[obsolete_on].include?(name)
             end
           end
         end
@@ -223,7 +221,7 @@ module View
               event_text << if index.zero?
                               event_name
                             else
-                              "#{event_name}(on #{ordinal(train2.index + 1)} train)"
+                              "#{event_name} (on #{ordinal(train2.index + 1)} train)"
                             end
             end
           end
@@ -256,7 +254,7 @@ module View
 
           train_content << h(:td, obsolete_schedule[train.name]&.join(', ') || '') if show_obsolete_schedule
           train_content << if show_rusts_inline
-                             h(:td, rusts&.join(', ') || '')
+                             h(:td, rusts&.reject(&:empty?)&.join(', ') || '')
                            else
                              h(:td, rusts&.map { |value| h(:div, value) } || '')
                            end

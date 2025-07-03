@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+# backtick_javascript: true
+
 require 'game_manager'
 require 'lib/connection'
 require 'lib/params'
@@ -75,7 +77,15 @@ module View
       return @game.process_to_action(cursor) if game_id == @game&.id && cursor && cursor > @game.last_game_action_id
 
       load_game_with_class = lambda do
+        LOGGER.debug do
+          @_logger ||= {}
+          @_logger[:process] = Time.now
+          'Processing game actions...'
+        end
         @game = Engine::Game.load(@game_data, at_action: cursor, user: @user&.dig('id'))
+        LOGGER.debug do
+          "Done processing game actions: #{Time.now - @_logger[:process]} seconds"
+        end
         store(:game, @game, skip: true)
       end
 
@@ -97,6 +107,11 @@ module View
 
       return h('div.padded', 'Loading game...') unless @game
 
+      LOGGER.debug do
+        @_logger ||= {}
+        @_logger[:render] = Time.now
+        'Rendering game view...'
+      end
       page =
         case route_anchor
         when nil
@@ -118,6 +133,9 @@ module View
         when 'auto'
           h(Game::Auto, game: @game, game_data: @game_data, user: @user)
         end
+      LOGGER.debug do
+        "Done rendering game view: #{Time.now - @_logger[:render]} seconds"
+      end
 
       @connection = nil if @game_data[:mode] == :hotseat || cursor
 
@@ -254,6 +272,15 @@ module View
           change_anchor('#tools')
         when 'a'
           change_anchor('#auto')
+        when '1'
+          button_click('pass')
+        when '2'
+          button_click('clearall')
+        when '3'
+          button_click('autoroute')
+        when 'Enter'
+          button_click('submit')
+          button_click('pay_out')
         when 'c'
           if (chatbar = Native(`document.getElementById('chatbar')`))
             chatbar.focus

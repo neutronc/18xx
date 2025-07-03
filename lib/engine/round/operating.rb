@@ -24,6 +24,9 @@ module Engine
         @home_token_timing = @game.class::HOME_TOKEN_TIMING
         @game.payout_companies
         @entities.each { |c| @game.place_home_token(c) } if @home_token_timing == :operating_round
+        @entities.each do |entity|
+          entity.trains.each { |train| train.operated = false } if entity.operator?
+        end
         (@game.corporations + @game.minors + @game.companies).each(&:reset_ability_count_this_or!)
         after_setup
       end
@@ -51,7 +54,9 @@ module Engine
         next_entity! unless @game.finished
       end
 
-      def after_end_of_turn(operator); end
+      def after_end_of_turn(operator)
+        @game.after_end_of_operating_turn(operator)
+      end
 
       def force_next_entity!
         @steps.each(&:pass!)
@@ -80,7 +85,6 @@ module Engine
 
         @current_operator = entity
         @current_operator_acted = false
-        entity.trains.each { |train| train.operated = false }
         @log << "#{@game.acting_for_entity(entity).name} operates #{entity.name}" unless finished?
         @game.place_home_token(entity) if @home_token_timing == :operate
         skip_steps

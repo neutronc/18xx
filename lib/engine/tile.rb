@@ -118,6 +118,7 @@ module Engine
                               route: params['route'],
                               format: params['format'],
                               boom: params['boom'],
+                              outline: params['outline'],
                               loc: params['loc'])
         cache << city
         city
@@ -165,7 +166,8 @@ module Engine
                                       hide: params['hide'],
                                       visit_cost: params['visit_cost'],
                                       route: params['route'],
-                                      format: params['format'])
+                                      format: params['format'],
+                                      rows: params['rows'])
         cache << offboard
         offboard
       when 'label'
@@ -345,9 +347,14 @@ module Engine
       end
     end
 
-    def add_blocker!(private_company, hidden: false)
-      @blockers << private_company
-      @hidden_blockers << private_company if hidden
+    def add_blocker!(entity, hidden: false)
+      @blockers << entity
+      @hidden_blockers << entity if hidden
+    end
+
+    def remove_blocker!(entity)
+      @blockers.delete(entity)
+      @hidden_blockers.delete(entity)
     end
 
     def inspect
@@ -568,6 +575,36 @@ module Engine
 
     def label
       @labels.last
+    end
+
+    def modify_borders(edges = nil, type: nil, cost: nil, color: nil)
+      edges ||= ALL_EDGES
+
+      modified = edges.map do |edge|
+        border = @borders.find { |e| e.edge == edge }
+        next unless border
+
+        modified_border = Part::Border.new(edge, type || border.type, cost || border.cost, color || border.color)
+        next if border == modified_border
+
+        @borders.delete(border)
+        @borders << modified_border
+
+        if border.type != modified_border.type
+          if border.type == :impassable
+            @hex.neighbors[edge] = @hex.all_neighbors[edge]
+          elsif modified_border.type == :impassable && @hex.all_neighbors[edge]
+            @hex.neighbors.delete(edge)
+          end
+        end
+
+        edge
+      end
+
+      modified.each do |edge|
+        neighbor = @hex.all_neighbors[edge]&.tile
+        neighbor&.modify_borders([Hex.invert(edge)], type: type, cost: cost, color: color)
+      end
     end
 
     def restore_borders(edges = nil)

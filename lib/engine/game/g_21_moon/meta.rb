@@ -8,8 +8,8 @@ module Engine
       module Meta
         include Game::Meta
 
-        DEV_STAGE = :beta
-        PROTOTYPE = true
+        DEV_STAGE = :production
+        PROTOTYPE = false
 
         GAME_DESIGNER = 'Jonas Jones and Scott Petersen'
         GAME_LOCATION = 'The Moon'

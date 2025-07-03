@@ -218,12 +218,11 @@ module Engine
         MUST_BUY_TRAIN = :always
         SELL_BUY_ORDER = :sell_buy
         SELL_AFTER = :operate
-        EBUY_OTHER_VALUE = true
+        EBUY_FROM_OTHERS = :value
         EBUY_DEPOT_TRAIN_MUST_BE_CHEAPEST = true
         CLOSED_CORP_TRAINS_REMOVED = false
         ONLY_HIGHEST_BID_COMMITTED = true
         BANKRUPTCY_ENDS_GAME_AFTER = :all_but_one
-        CERT_LIMIT_COUNTS_BANKRUPTED = true
         MUST_BID_INCREMENT_MULTIPLE = true
         CMD_HEXES = %w[A6 A12].freeze
         MINE_HEXES = %w[B5 B7 B9 B11 B13].freeze

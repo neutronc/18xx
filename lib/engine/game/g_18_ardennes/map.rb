@@ -211,6 +211,12 @@ module Engine
           },
         }.freeze
 
+        MAJOR_TILE_LAYS = [
+          { lay: true, upgrade: true },
+          { lay: :not_if_upgraded, upgrade: false },
+        ].freeze
+        MINOR_TILE_LAYS = [{ lay: true, upgrade: true }].freeze
+
         NORTH_HEXES = %w[B8 B16].freeze
         SOUTH_HEXES = %w[M7 M27].freeze
         EAST_HEXES = %w[D18 E25 G25 H26].freeze
@@ -240,8 +246,8 @@ module Engine
         }.freeze
 
         def setup_tokens
-          @mine_corp = dummy_corp('Mines', '18_ardennes/mine', MINE_HEXES)
-          @port_corp = dummy_corp('Ports', '18_ardennes/port', PORT_HEXES)
+          @mine_corp = dummy_corp('mine', '18_ardennes/mine', MINE_HEXES)
+          @port_corp = dummy_corp('port', '18_ardennes/port', PORT_HEXES)
           FORT_HEXES.each { |fort, coord| hex_by_id(coord).assign!(fort) }
         end
 
@@ -262,6 +268,8 @@ module Engine
             token = corp.next_token
             if city.tokenable?(corp)
               city.place_token(corp, token)
+              # Show which public companies can be started here.
+              change_token_icon(city, token, corp)
             else
               hex.place_token(token)
             end
@@ -338,8 +346,17 @@ module Engine
           super
         end
 
+        def tile_lays(entity)
+          entity.type == :minor ? MINOR_TILE_LAYS : MAJOR_TILE_LAYS
+        end
+
         def after_lay_tile(hex, tile, entity)
-          # Move mine/port tokens from hex into city if possible.
+          move_hex_tokens(hex, tile, entity)
+          tile.cities.each { |city| add_slot_icons(city) }
+        end
+
+        # Move mine/port tokens from hex into city if possible.
+        def move_hex_tokens(hex, tile, entity)
           return if hex.tokens.empty?
 
           city = tile.cities.first
@@ -351,7 +368,26 @@ module Engine
                            token,
                            free: true,
                            same_hex_allowed: true)
+          change_token_icon(city, token, token.corporation)
           clear_graph_for_entity(entity)
+        end
+
+        def place_home_token(corporation)
+          # Public companies get their starting tokens by exchange.
+          return unless corporation.type == :minor
+
+          super
+        end
+
+        # Returns true if there is a route between one of the minor's tokens
+        # and one of the major's tokens, or if they both have tokens co-located
+        # on the same tile.
+        def major_minor_connected?(major, minor)
+          minor_cities = minor.placed_tokens.map(&:city)
+          major_cities = major.placed_tokens.map(&:city)
+
+          minor_cities.map(&:hex).intersect?(major_cities.map(&:hex)) ||
+            minor_cities.any? { |city| @graph.connected_nodes(major)[city] }
         end
       end
     end

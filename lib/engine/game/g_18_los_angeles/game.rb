@@ -83,7 +83,7 @@ module Engine
         BOOMTOWN_REVENUE_DESC = 'RKO'
 
         EVENTS_TEXT = G1846::Game::EVENTS_TEXT.merge(
-          'remove_markers' => ['Remove Tokens & Markers', 'Remove RJ token and LA Steamship, LA Citrus, and RKO Pictures markers']
+          'remove_bonuses' => ['Remove Tokens & Bonuses', 'Remove RJ token and LA Steamship, LA Citrus, and RKO Pictures bonuses']
         ).freeze
 
         CORPORATION_START_LIMIT = {
@@ -105,6 +105,11 @@ module Engine
         DUMP_PENALTY = 20
         DUMP_PENALTY_WESTMINSTER = 10
         WESTMINSTER_HEX = 'F9'
+
+        TRAIN_AUTOROUTE_GROUPS = [
+          %w[2 4 5 6],
+          %w[3/5 4/6 7/8],
+        ].freeze
 
         def setup
           super
@@ -406,10 +411,10 @@ module Engine
           'E/W or N/S'
         end
 
-        def event_remove_markers!
+        def event_remove_bonuses!
           super
 
-          # piggy-back on the markers event to avoid redefining all the trains
+          # piggy-back on the bonuses event to avoid redefining all the trains
           # from 1846 just for the sake of adding a single new event
           event_remove_rj_token!
         end
@@ -450,6 +455,10 @@ module Engine
           str = super
           str += ' - $20 (Dump)' if dump_penalty(route, route.stops).positive?
           str
+        end
+
+        def unowned_purchasable_companies
+          []
         end
       end
     end

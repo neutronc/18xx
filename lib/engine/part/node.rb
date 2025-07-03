@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative 'base'
+
 module Engine
   module Part
     class Node < Base
@@ -34,6 +36,8 @@ module Engine
       # counter: a hash tracking edges and junctions to avoid reuse
       # skip_track: If passed, don't walk on track of that type (ie: :broad track for 1873)
       # converging_path: When true, some predecessor path was part of a converging switch
+      # walk_calls: a hash tracking the number of walk calls
+      # backtracking: If true, allow walks to backtrack along the same edge
       #
       # This method recursively bubbles up yielded values from nested Node::Walk and Path::Walk calls
       def walk(
@@ -44,9 +48,15 @@ module Engine
         counter: Hash.new(0),
         skip_track: nil,
         converging_path: true,
+        walk_calls: Hash.new(0),
+        backtracking: false,
         &block
       )
+        walk_calls[:all] += 1
+
         return if visited[self]
+
+        walk_calls[:not_skipped] += 1
 
         visited[self] = true
 
@@ -60,6 +70,8 @@ module Engine
             skip_track: skip_track,
             counter: counter,
             converging: converging_path,
+            walk_calls: walk_calls,
+            backtracking: backtracking,
           ) do |path, vp, ct, converging|
             ret = yield path, vp, visited
             next if ret == :abort
@@ -77,6 +89,8 @@ module Engine
                 skip_track: skip_track,
                 skip_paths: skip_paths,
                 converging_path: converging_path || converging,
+                walk_calls: walk_calls,
+                backtracking: backtracking,
                 &block
               )
             end

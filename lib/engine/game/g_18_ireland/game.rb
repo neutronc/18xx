@@ -17,9 +17,8 @@ module Engine
         SELL_BUY_ORDER = :sell_buy
         MUST_BUY_TRAIN = :always
         EBUY_DEPOT_TRAIN_MUST_BE_CHEAPEST = false
-        EBUY_SELL_MORE_THAN_NEEDED_LIMITS_DEPOT_TRAIN = true
-        EBUY_OTHER_VALUE = false
-        CERT_LIMIT_COUNTS_BANKRUPTED = true
+        EBUY_SELL_MORE_THAN_NEEDED_SETS_PURCHASE_MIN = true
+        EBUY_FROM_OTHERS = :never
         MUST_BID_INCREMENT_MULTIPLE = true
         MIN_BID_INCREMENT = 5
 

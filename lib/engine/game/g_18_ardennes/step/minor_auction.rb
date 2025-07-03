@@ -14,7 +14,7 @@ module Engine
           def actions(entity)
             return [] unless entity == current_entity
             # Nothing left to buy, auction is over.
-            return [] if @minors.empty?
+            return [] if all_sold?
             # Something is currently being auctioned.
             return %w[bid pass] if @auctioning
             # Picking a new minor to auction.
@@ -28,8 +28,7 @@ module Engine
 
           def setup
             setup_auction
-            @minors = @game.companies +
-                      @game.corporations.select { |corp| corp.type == :minor }
+            @minors = @game.minor_companies + @game.minor_corporations
           end
 
           def description
@@ -109,6 +108,7 @@ module Engine
                     "#{minor_name(bid_target(bid))} " \
                     "with a bid of #{@game.format_currency(price)}"
             purchase_minor(minor, player, price)
+            @winner = player
           end
 
           def post_win_bid(_bid, _minor)
@@ -116,7 +116,12 @@ module Engine
           end
 
           def next_entity!
-            if discount_mode?
+            if all_sold?
+              # End of the auction round. Priority goes to the player to the
+              # right of the one who bought the last item.
+              @round.goto_entity!(@winner)
+              @round.next_entity_index!
+            elsif discount_mode?
               # Go to the player with the most cash. If there is a tie then
               # choose the one who is next in table order.
               @round.goto_entity!(entities.rotate(entity_index + 1).max_by(&:cash))
@@ -132,6 +137,7 @@ module Engine
 
           def process_bid(action)
             action.entity.unpass!
+            @round.last_to_act = action.entity
 
             if discount_mode?
               # GL has been purchased
@@ -150,6 +156,7 @@ module Engine
           end
 
           def process_par(action)
+            @round.last_to_act = action.entity
             process_purchase(action)
           end
 
@@ -164,6 +171,7 @@ module Engine
             @log << "#{player.name} purchases #{minor.name} " \
                     "for #{@game.format_currency(price)}"
             purchase_minor(minor, player, price)
+            @winner = player
             next_entity!
           end
 
@@ -196,6 +204,12 @@ module Engine
             @game.stock_market.par_prices.find do |pp|
               pp.types.include?(:par_1) && (pp.price * 2 <= cert_cost)
             end
+          end
+
+          private
+
+          def all_sold?
+            @minors.empty?
           end
         end
       end

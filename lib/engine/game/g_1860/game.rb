@@ -4,7 +4,7 @@ require_relative 'entities'
 require_relative 'map'
 require_relative 'meta'
 require_relative '../base'
-require_relative '../trainless_shares_half_value'
+require_relative 'trainless_shares_half_value'
 require_relative '../../distance_graph'
 
 module Engine
@@ -214,7 +214,7 @@ module Engine
         ].freeze
 
         EBUY_PRES_SWAP = false # allow presidential swaps of other corps when ebuying
-        EBUY_OTHER_VALUE = false # allow ebuying other corp trains for up to face
+        EBUY_FROM_OTHERS = :never # allow ebuying other corp trains for up to face
         HOME_TOKEN_TIMING = :float
         SELL_AFTER = :any_time
         SELL_BUY_ORDER = :sell_buy
@@ -322,6 +322,10 @@ module Engine
 
         def option_no_skip_towns?
           @optional_rules&.include?(:no_skip_towns) || @optional_rules&.include?(:original_game)
+        end
+
+        def option_simplified_insolvency?
+          @optional_rules&.include?(:simplified_insolvency)
         end
 
         def optional_hexes
@@ -834,8 +838,13 @@ module Engine
 
           if trains.select { |t| t.owner == @depot }.any? && !option_original_insolvency?
             help << 'Leased trains ignore town/halt allowance.'
-            help << "Revenue = #{format_currency(40)} + number_of_stops * #{format_currency(20)}"
-            help << "Max revenue possible: #{format_currency(40 + (@depot.min_depot_train.distance[0]['pay'] * 20))}"
+            if option_simplified_insolvency?
+              help << "Simplified insolvency revenue: #{@depot.min_depot_train.name} train runs
+                       for #{format_currency(40 + (@depot.min_depot_train.distance[0]['pay'] * 20))}"
+            else
+              help << "Revenue = #{format_currency(40)} + number_of_stops * #{format_currency(20)}"
+              help << "Max revenue possible: #{format_currency(40 + (@depot.min_depot_train.distance[0]['pay'] * 20))}"
+            end
           end
           if trains.select { |t| t.owner == @depot }.any? && option_original_insolvency?
             help << 'Leased trains run for half revenue (but full subsidies).'
@@ -987,8 +996,11 @@ module Engine
 
         def check_other(route)
           check_hex_reentry(route) unless @optional_rules&.include?(:re_enter_hexes)
-          check_home_token(current_entity, route.routes) unless route.routes.empty?
-          check_intersection(route.routes) unless route.routes.empty?
+        end
+
+        def check_route_combination(routes)
+          check_home_token(current_entity, routes) unless routes.empty?
+          check_intersection(routes) unless routes.empty?
         end
 
         # must stop at all towns on route or must maximize revenue
@@ -1004,8 +1016,12 @@ module Engine
           route.train.owner == @depot
         end
 
+        def loaner_simplified_insolvency?(route)
+          loaner?(route) && option_simplified_insolvency?
+        end
+
         def loaner_new_rules?(route)
-          loaner?(route) && !option_original_insolvency?
+          loaner?(route) && !option_original_insolvency? && !option_simplified_insolvency?
         end
 
         def loaner_orig_rules?(route)
@@ -1108,6 +1124,8 @@ module Engine
             40 + (20 * stops.size)
           elsif loaner_orig_rules?(route)
             (stops.sum { |stop| stop.route_base_revenue(route.phase, route.train) } / 2).ceil
+          elsif loaner_simplified_insolvency?(route)
+            40 + (20 * route.train.distance[0]['pay'])
           else
             stops.sum { |stop| stop.route_base_revenue(route.phase, route.train) }
           end

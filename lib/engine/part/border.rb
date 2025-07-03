@@ -14,8 +14,16 @@ module Engine
         @color = color&.to_sym
       end
 
+      def ==(other)
+        other.edge == edge && other.type == type && other.cost == cost && other.color == color
+      end
+
       def border?
         true
+      end
+
+      def inspect
+        "<#{self.class.name}: hex: #{hex&.name} edge: #{edge} type: #{type} cost: #{cost}>"
       end
     end
   end

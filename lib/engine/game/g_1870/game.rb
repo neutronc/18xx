@@ -34,9 +34,23 @@ module Engine
           4 => { 10 => 16, 9 => 14 },
           5 => { 10 => 13, 9 => 11 },
           6 => { 10 => 11, 9 => 9 },
+          7 => { 10 => 9, 9 => 7 },
         }.freeze
 
-        STARTING_CASH = { 2 => 1050, 3 => 700, 4 => 525, 5 => 420, 6 => 350 }.freeze
+        ORIG_CERT_LIMIT = {
+          2 => { 10 => 28, 9 => 24, 8 => 21 },
+          3 => { 10 => 20, 9 => 17, 8 => 15 },
+          4 => { 10 => 16, 9 => 14, 8 => 12 },
+          5 => { 10 => 13, 9 => 11, 8 => 9 },
+          6 => { 10 => 11, 9 => 9, 8 => 8 },
+          7 => { 10 => 9, 9 => 7, 8 => 6 },
+        }.freeze
+
+        def game_cert_limit
+          original_rules? ? self.class::ORIG_CERT_LIMIT : self.class::CERT_LIMIT
+        end
+
+        STARTING_CASH = { 2 => 1050, 3 => 700, 4 => 525, 5 => 420, 6 => 350, 7 => 300 }.freeze
 
         CAPITALIZATION = :full
 
@@ -55,6 +69,27 @@ module Engine
           %w[0c 0c 10b 20b 30b 40o 50y],
           %w[0c 0c 0c 10b 20b 30b 40o],
         ].freeze
+
+        STANDARD_GAME_END_CHECK = { bankrupt: :immediate, bank: :full_or }.freeze
+        VARIANT_GAME_END_CHECK = { bankrupt: :immediate, bank: :full_or, stock_market: :immediate }.freeze
+
+        OPTION_TILES_REMOVE_ORIGINAL_GAME = %w[
+          4-0 4-1 7-0 7-1 8-0 8-1 9-0 9-1 9-2 16-0 17-0 18-0 19-0 20-0 25-0
+          25-1 26-0 27-0 28-0 29-0 141-0 142-0 40-0 70-0 145-0 146-0 147-0
+        ].freeze
+
+        def optional_tiles
+          return unless original_tiles?
+
+          OPTION_TILES_REMOVE_ORIGINAL_GAME.each do |ot|
+            @tiles.reject! { |t| t.id == ot }
+            @all_tiles.reject! { |t| t.id == ot }
+          end
+        end
+
+        def game_end_check_values
+          @optional_rules&.include?(:finish_on_400) ? self.class::VARIANT_GAME_END_CHECK : self.class::STANDARD_GAME_END_CHECK
+        end
 
         STANDARD_PHASES = [
           {
@@ -230,7 +265,7 @@ module Engine
           },
         ].freeze
 
-        EBUY_OTHER_VALUE = false
+        EBUY_FROM_OTHERS = :never
 
         CLOSED_CORP_TRAINS_REMOVED = false
 
@@ -306,8 +341,28 @@ module Engine
         end
 
         def init_stock_market
-          G1870::StockMarket.new(self.class::MARKET, self.class::CERT_LIMIT_TYPES,
+          G1870::StockMarket.new(market_values, self.class::CERT_LIMIT_TYPES,
                                  multiple_buy_types: self.class::MULTIPLE_BUY_TYPES)
+        end
+
+        def market_values
+          modified_market = MARKET.dup
+
+          if finish_on_400?
+            first_row_modified = modified_market[0].dup
+            first_row_modified[-1] = '400e'
+            modified_market[0] = first_row_modified
+          end
+
+          if original_market?
+            { 4 => { 0 => '40o' }, 6 => { 5 => '60' }, 7 => { 6 => '60' } }.each do |row_index, changes|
+              row_modified = modified_market[row_index].dup
+              changes.each { |position, value| row_modified[position] = value }
+              modified_market[row_index] = row_modified
+            end
+          end
+
+          modified_market
         end
 
         def ipo_reserved_name(_entity = nil)
@@ -430,8 +485,12 @@ module Engine
           destination_stop.route_revenue(route.phase, route.train)
         end
 
+        def can_gain_from_player?(entity, _bundle)
+          self.class::CORPORATE_BUY_SHARE_ALLOW_BUY_FROM_PRESIDENT && entity.corporation?
+        end
+
         def sell_shares_and_change_price(bundle, allow_president_change: true, swap: nil, movement: nil)
-          @sell_queue << [bundle, bundle.corporation.owner]
+          @sell_queue << [bundle, bundle.corporation.owner, bundle.owner] if bundle.corporation.ipoed
 
           @share_pool.sell_shares(bundle)
         end
@@ -471,11 +530,14 @@ module Engine
           border.type == :water
         end
 
-        def check_other(route)
+        def check_route_combination(routes)
+          return if routes.empty?
+
+          route = routes.first
           return unless (destination = @round.connection_runs[route.corporation])
 
           home = home_hex(route.corporation)
-          return if route.routes.any? do |r|
+          return if routes.any? do |r|
             next if r.visited_stops.size < 2
 
             (r.visited_stops.values_at(0, -1).map(&:hex) - [home, destination]).none?
@@ -486,6 +548,34 @@ module Engine
 
         def reissued?(corporation)
           @reissued[corporation]
+        end
+
+        def finish_on_400?
+          @finish_on_400 ||= @optional_rules&.include?(:finish_on_400)
+        end
+
+        def original_rules?
+          @original_rules ||= @optional_rules&.include?(:original_rules)
+        end
+
+        def station_wars?
+          @optional_rules&.include?(:original_rules) || @optional_rules&.include?(:station_wars)
+        end
+
+        def original_tiles?
+          @optional_rules&.include?(:original_rules) || @optional_rules&.include?(:original_tiles)
+        end
+
+        def max_reissue_200?
+          @optional_rules&.include?(:original_rules) || @optional_rules&.include?(:max_reissue_200)
+        end
+
+        def can_protect_if_sold?
+          @optional_rules&.include?(:original_rules) || @optional_rules&.include?(:can_protect_if_sold)
+        end
+
+        def original_market?
+          @optional_rules&.include?(:original_rules) || @optional_rules&.include?(:original_market)
         end
 
         # allows implementation of diesels variant

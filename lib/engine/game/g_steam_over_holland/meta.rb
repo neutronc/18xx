@@ -8,8 +8,9 @@ module Engine
       module Meta
         include Game::Meta
 
-        DEV_STAGE = :prealpha
+        DEV_STAGE = :alpha
 
+        GAME_TITLE = 'Steam Over Holland'
         GAME_DESIGNER = 'Bart van Dijk'
         GAME_LOCATION = 'The Netherlands'
         GAME_RULES_URL = 'https://boardgamegeek.com/filepage/47246/corrected-english-manual-v2'

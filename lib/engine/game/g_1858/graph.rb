@@ -14,23 +14,39 @@ module Engine
         # array.
         # 2. Where a home hex only has plain track then a dummy node is created
         # to allow routes to be traced out from this hex.
-        def home_hex_nodes(entity)
+        def home_hex_nodes(minor)
+          return {} unless minor.minor?
+
           nodes = {}
-          hexes = Array(entity.coordinates).map { |h| @game.hex_by_id(h) }
-          cities = Array(entity.city)
-          hexes.zip(cities).each do |hex, city_idx|
-            if city_idx
-              nodes[hex.tile.cities[city_idx]] = true
-            elsif hex.tile.city_towns.empty?
+          company = @game.private_company(minor)
+
+          minor.coordinates.each do |coord|
+            tile = @game.hex_by_id(coord).tile
+            if tile.city_towns.empty?
               # Plain track in a home hex (or no tile or track). Create a
               # node for each track path to allow routes to be traced out
               # from this hex.
-              hex.tile.paths.each { |path| nodes[G1858::Part::PathNode.new(path)] = true }
+              tile.paths.each do |path|
+                node = path_node(path, minor)
+                nodes[node] = true if node
+              end
+            elsif tile.cities.size > 1
+              tile.cities.each do |city|
+                next unless city.reserved_by?(company)
+
+                nodes[city] = true
+              end
             else
-              hex.tile.city_towns.each { |ct| nodes[ct] = true }
+              tile.city_towns.each { |ct| nodes[ct] = true }
             end
           end
           nodes
+        end
+
+        private
+
+        def path_node(path, _entity)
+          G1858::Part::PathNode.new(path)
         end
       end
     end

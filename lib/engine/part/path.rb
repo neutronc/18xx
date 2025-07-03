@@ -17,7 +17,7 @@ module Engine
 
       def self.decode_lane_spec(x_lane)
         if x_lane
-          [x_lane.to_i, ((x_lane.to_f - x_lane.to_i) * 10).to_i]
+          [x_lane.to_i, ((x_lane.to_f - x_lane.to_i) * 10).round.to_i]
         else
           [1, 0]
         end
@@ -128,6 +128,8 @@ module Engine
       # counter: a hash tracking edges and junctions to avoid reuse
       # skip_track: If passed, don't walk on track of that type (ie: :broad track for 1873)
       # converging: When true, some predecessor path was part of a converging switch
+      # walk_calls: A hash tracking the number of calls to walk
+      # backtracking: If true, allow walks to backtrack along the same edge
       def walk(
         skip: nil,
         jskip: nil,
@@ -136,13 +138,19 @@ module Engine
         counter: Hash.new(0),
         skip_track: nil,
         converging: true,
+        walk_calls: Hash.new(0),
+        backtracking: false,
         &block
       )
+        walk_calls[:all] += 1
+
         return if visited[self] || skip_paths&.key?(self)
         return if @junction && counter[@junction] > 1
         return if edges.sum { |edge| counter[edge.id] }.positive?
         return if track == skip_track
         return if @junction && @terminal
+
+        walk_calls[:not_skipped] += 1
 
         visited[self] = true
         counter[@junction] += 1 if @junction
@@ -151,7 +159,16 @@ module Engine
 
         if @junction && @junction != jskip
           @junction.paths.each do |jp|
-            jp.walk(jskip: @junction, visited: visited, skip_paths: skip_paths, counter: counter, converging: converging, &block)
+            jp.walk(
+              jskip: @junction,
+              visited: visited,
+              skip_paths: skip_paths,
+              counter: counter,
+              converging: converging,
+              walk_calls: walk_calls,
+              backtracking: backtracking,
+              &block
+            )
           end
         end
 
@@ -159,6 +176,17 @@ module Engine
           edge_id = edge.id
           edge = edge.num
           next if edge == skip
+
+          if backtracking
+            hex.paths[edge].reject { |p| visited[p] || skip_paths&.key?(p) }.each do |p|
+              next unless lane_match?(@exit_lanes[edge], p.exit_lanes[edge])
+
+              p.walk(skip: edge, visited: visited, skip_paths: skip_paths, counter: counter, skip_track: skip_track,
+                     converging: converging || @tile.converging_exit?(edge), walk_calls: walk_calls,
+                     backtracking: backtracking, &block)
+            end
+          end
+
           next unless (neighbor = hex.neighbors[edge])
 
           counter[edge_id] += 1
@@ -169,7 +197,8 @@ module Engine
             next if !@ignore_gauge_walk && !tracks_match?(np, dual_ok: true)
 
             np.walk(skip: np_edge, visited: visited, skip_paths: skip_paths, counter: counter, skip_track: skip_track,
-                    converging: converging || @tile.converging_exit?(edge), &block)
+                    converging: converging || @tile.converging_exit?(edge), walk_calls: walk_calls,
+                    backtracking: backtracking, &block)
           end
 
           counter[edge_id] -= 1
