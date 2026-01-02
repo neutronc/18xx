@@ -288,9 +288,14 @@ module Engine
 
           case @units.keys.sort.map(&:to_s).join
           when '1'
-            add_train_list(trains, { '2' => 6, '3' => 4, '4' => 3, '5' => 4  })
+            add_train_list(trains, { '2' => 6, '3' => 4, '4' => 3, '5' => 4 })
           when '2'
-            add_train_list(trains, { '2' => 5, '3' => 3, '4' => 2, '5' => 3, '6' => 2 })
+            if @kits[3]
+              # Special exception: don't use 6-trains included in Unit 2 when using Kit 3
+              add_train_list(trains, { '2' => 5, '3' => 3, '4' => 2, '5' => 3 })
+            else
+              add_train_list(trains, { '2' => 5, '3' => 3, '4' => 2, '5' => 3, '6' => 2 })
+            end
           when '3'
             # extra 5/3T/U3 for minors
             add_train_list(trains, { '2' => 5, '3' => 3, '4' => 1, '5' => 3, '7' => 2, '3T' => 1, 'U3' => 1 })
@@ -567,9 +572,8 @@ module Engine
           certs
         end
 
-        def init_bank
-          # amount doesn't matter here
-          Bank.new(BANK_CASH, log: @log, check: false)
+        def init_bank_kwargs
+          { check: false }
         end
 
         def bank_cash
@@ -1105,15 +1109,14 @@ module Engine
           else
             super(route, visits, build_dummy_train(route, num))
           end
-          return if %w[3T 4T].include?(route.train.name)
 
-          node_hexes = {}
-          visits.each do |node|
-            raise GameError, 'Cannot visit multiple towns/cities in same hex' if node_hexes[node.hex]
-
-            node_hexes[node.hex] = true
+          # A train route cannot visit more than one stop on the same hex,
+          # unless it is a 3T or a 4T and all the stops are towns.
+          raise GameError, 'Cannot visit multiple towns/cities in same hex' if visits.group_by(&:hex).any? do |_, stops|
+            stops.size > 1 && !(%w[3T 4T].include?(route.train.name) && stops.all?(&:town?))
           end
-          return if %w[U3 2+2].include?(route.train.name)
+
+          return if %w[3T 4T U3 2+2].include?(route.train.name)
 
           raise GameError, 'Route cannot begin/end in a town' if visits.first.town? && visits.last.town?
 

@@ -231,7 +231,7 @@ module Engine
                 'place a bid. One extra slot is needed for each public ' \
                 'company being started.'
               when :minors
-                "#{player.name} does have any minor companies that could " \
+                "#{player.name} does not have any minor companies that could " \
                 'be used to place a bid on a public company.'
               when :winning
                 "#{player.name} already is leading the auctions on all " \
@@ -304,6 +304,7 @@ module Engine
           # company concession.
           def qualifying_minor?(minor, concession)
             return false if minor.closed?
+            return false if minor.share_price.price.zero?
             return true unless restricted?
 
             coords = Entities::PUBLIC_COMPANY_HEXES[concession.id]

@@ -15,6 +15,17 @@ module Engine
         include G1822CA::Map
         include G1822CA::Trains
 
+        CERT_LIMIT = { 2 => 40, 3 => 26, 4 => 20, 5 => 16, 6 => 13, 7 => 11 }.freeze
+        STARTING_CASH = { 2 => 1000, 3 => 700, 4 => 525, 5 => 420, 6 => 350, 7 => 300 }.freeze
+        BIDDING_TOKENS = {
+          '2': 7,
+          '3': 6,
+          '4': 5,
+          '5': 4,
+          '6': 3,
+          '7': 3,
+        }.freeze
+
         DOUBLE_HEX = %w[G13 I15 AB22 AG13 AH10].freeze
 
         BIDDING_BOX_START_MINOR = 'M6'
@@ -34,6 +45,8 @@ module Engine
         COMPANY_CHPR = 'P28' # Station Swap
         COMPANY_5X_REVENUE = 'P9'
         COMPANY_HSBC = nil # Grimsby/Hull Bridge
+        ENGLISH_CHANNEL_HEX = nil
+        FRANCE_HEX = nil
 
         COMPANY_WINNIPEG_TOKEN = 'P10'
 
@@ -50,7 +63,8 @@ module Engine
 
         GAME_END_REASONS_TIMING_TEXT = {
           current_or: 'Next end of an OR',
-          full_or: 'Next end of a complete OR set, with one additional OR added on',
+          full_or: 'Next end of a complete OR set, with one additional OR added on ' \
+                   '(if bank breaks during an OR). Next end of an OR (if bank breaks during an SR).',
         }.freeze
 
         PRIVATE_MAIL_CONTRACTS = %w[P22 P23].freeze
@@ -339,10 +353,10 @@ module Engine
 
         def operating_round(round_num)
           Engine::Round::Operating.new(self, [
+            G1822CA::Step::DiscardTrain,
             G1822CA::Step::PendingToken,
             G1822::Step::FirstTurnHousekeeping,
-            Engine::Step::AcquireCompany,
-            G1822CA::Step::DiscardTrain,
+            G1822::Step::AcquireCompany,
             G1822CA::Step::AssignSawmill,
             G1822::Step::SpecialChoose,
             G1822CA::Step::SpecialTrack,
@@ -357,14 +371,13 @@ module Engine
             G1822CA::Step::MinorAcquisition,
             G1822CA::Step::AcquisitionTrack,
             G1822CA::Step::PendingToken,
-            G1822CA::Step::DiscardTrain,
             G1822CA::Step::IssueShares,
           ], round_num: round_num)
         end
 
         def stock_round
           G1822CA::Round::Stock.new(self, [
-            Engine::Step::DiscardTrain,
+            G1822CA::Step::DiscardTrain,
             G1822::Step::BuySellParShares,
           ])
         end
@@ -521,13 +534,8 @@ module Engine
           "/icons/1822_ca/sawmill_#{token_type}.svg"
         end
 
-        def game_end_check
-          @game_end_reason ||=
-            begin
-              reason = compute_game_end
-              @operating_rounds += 1 if reason == %i[bank full_or]
-              reason
-            end
+        def game_end_set_final_turn!(reason, after)
+          @operating_rounds += 1 if [reason, after] == %i[bank full_or]
         end
 
         def grain_train?(train)

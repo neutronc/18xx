@@ -15,10 +15,11 @@ module Engine
 
         attr_accessor :ndem_acting_player, :number_ndem_shares, :ndem_state
 
-        CERT_LIMIT = { 3 => 16, 4 => 13, 5 => 10 }.freeze
+        CERT_LIMIT = { 2 => 27, 3 => 16, 4 => 13, 5 => 10 }.freeze
         CERT_LIMIT_INCREASED = { 3 => 18, 4 => 14, 5 => 11 }.freeze
 
         BIDDING_TOKENS = {
+          '2': 7,
           '3': 6,
           '4': 5,
           '5': 4,
@@ -34,7 +35,7 @@ module Engine
           'IRM' => 3,
         }.freeze
 
-        STARTING_CASH = { 3 => 500, 4 => 375, 5 => 300 }.freeze
+        STARTING_CASH = { 2 => 750, 3 => 500, 4 => 375, 5 => 300 }.freeze
 
         STARTING_COMPANIES = %w[P1 P2 P3 P4 P5 P6 P7 P8 P9 P10 P11 P12 P13 P14 P15 P16 P17 P18
                                 C1 C2 C3 C4 C5 C6 C7 M1 M2 M3 M4 M5 M6 M7 M8 M9 M10 M11 M12 M13 M14 M15
@@ -51,7 +52,6 @@ module Engine
         ].freeze
 
         MUST_SELL_IN_BLOCKS = true
-        SELL_MOVEMENT = :left_per_10_if_pres_else_left_one
         PRIVATE_TRAINS = %w[P1 P2 P3 P4 P5 P6].freeze
         EXTRA_TRAINS = %w[2P P+ LP 3/2P].freeze
         EXTRA_TRAIN_PERMANENTS = %w[2P LP 3/2P].freeze
@@ -62,6 +62,9 @@ module Engine
         # Don't run 1822 specific code for certain private companies
         COMPANY_LCDR = nil
         COMPANY_OSTH = nil
+        COMPANY_LUR = nil # Move Card
+        ENGLISH_CHANNEL_HEX = nil
+        FRANCE_HEX = nil
 
         PRIVATE_COMPANIES_ACQUISITION = {
           'P1' => { acquire: %i[major], phase: 5 },
@@ -150,10 +153,6 @@ module Engine
         MINOR_14_ID = nil
 
         DOUBLE_HEX = %w[L19 M22 M26].freeze
-
-        def init_graph
-          Graph.new(self, home_as_token: true)
-        end
 
         TRAINS = [
           {
@@ -306,10 +305,10 @@ module Engine
 
         def operating_round(round_num)
           Engine::Round::Operating.new(self, [
+            G1822::Step::DiscardTrain,
             G1822::Step::PendingToken,
             G1822::Step::FirstTurnHousekeeping,
-            Engine::Step::AcquireCompany,
-            G1822::Step::DiscardTrain,
+            G1822::Step::AcquireCompany,
             G1822MX::Step::SpecialChoose,
             G1822MX::Step::SpecialTrack,
             G1822::Step::SpecialToken,
@@ -321,7 +320,6 @@ module Engine
             G1822::Step::BuyTrain,
             G1822MX::Step::MinorAcquisition,
             G1822::Step::PendingToken,
-            G1822::Step::DiscardTrain,
             G1822MX::Step::IssueShares,
             G1822MX::Step::CashOutNdem,
             G1822MX::Step::AuctionNdemTokens,
@@ -356,7 +354,7 @@ module Engine
 
         def stock_round
           G1822MX::Round::Stock.new(self, [
-            Engine::Step::DiscardTrain,
+            G1822::Step::DiscardTrain,
             G1822MX::Step::BuySellParShares,
           ])
         end
@@ -385,8 +383,11 @@ module Engine
           # Replace token
           city = hex_by_id(corporation.coordinates).tile.cities.find { |c| c.reserved_by?(corporation) }
           city.remove_reservation!(corporation)
-          city.place_token(ndem, ndem.find_token_by_type, check_tokenable: false)
-          graph.clear
+          # Don't double up on NdeM tokens
+          unless city.tokened_by?(ndem)
+            city.place_token(ndem, ndem.find_token_by_type, check_tokenable: false)
+            graph.clear
+          end
 
           # Add a stock certificate
           new_share = Share.new(ndem, percent: 10, index: @number_ndem_shares)
@@ -456,9 +457,9 @@ module Engine
           concessions = @companies.select { |c| c.id[0] == self.class::COMPANY_CONCESSION_PREFIX }
           privates = @companies.select { |c| c.id[0] == self.class::COMPANY_PRIVATE_PREFIX }
 
-          c1 = concessions.find { |c| c.id == bidbox_start_concession }
-          concessions.delete(c1)
-          concessions.unshift(c1)
+          @c1 = concessions.find { |c| c.id == bidbox_start_concession }
+          concessions.delete(@c1)
+          concessions.unshift(@c1)
 
           p1 = privates.find { |c| c.id == bidbox_start_private }
           privates.delete(p1)
@@ -508,6 +509,10 @@ module Engine
 
           ndem = @round.entities.pop
           @round.entities.insert(@round.entity_index + 1, ndem)
+        end
+
+        def sell_movement(_corporation)
+          @sell_movement ||= @players.size == 2 ? :left_share_pres : :left_per_10_if_pres_else_left_one
         end
 
         def sell_shares_and_change_price(bundle, allow_president_change: true, swap: nil, movement: nil)
@@ -691,11 +696,43 @@ module Engine
           company.close!
         end
 
-        def company_status_str(company)
-          index = bidbox_minors.index(company) || bidbox_concessions.index(company) || bidbox_privates.index(company)
-          return "Bid box #{index + 1}" if index
+        def company_status_game_specific(_company); end
 
-          nil
+        def bidbox_status_str(company)
+          if company == @c1 && !company.owner.player?
+            if @round.highest_bid(company)
+              [
+                'Bid box 1',
+                "M18 Float Order: #{minor_float_index(company) + 1}",
+                "Share Price: #{format_currency(50)}",
+                "Starting Cash: #{format_currency(100)}",
+              ]
+            else
+              ['Bid box 1']
+            end
+          else
+            super
+          end
+        end
+
+        def minor_float_index(company)
+          return super unless bidbox_concessions.first&.id == bidbox_start_concession
+          return super unless @round.highest_bid(@c1)
+
+          c1_par = self.class::MINOR_START_PAR_PRICE
+
+          if company == @c1
+            will_float = minors_to_float
+            will_float.find_index { |mb, _index| minor_float_share_price(mb).price == c1_par } || will_float.size
+          elsif minor_float_share_price(@round.highest_bid(company)).price == c1_par
+            super + 1
+          else
+            super
+          end
+        end
+
+        def minor_float_train_export_verb
+          'give NDEM'
         end
 
         def terrain?(tile, terrain)
