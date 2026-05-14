@@ -102,6 +102,26 @@
 <div class="stat-chip stat-partial">Partial <span>3</span></div>
 <div class="stat-chip stat-todo">To do <span>10</span></div>
 </div>
+<h2 id="overall-status">Overall Status</h2>
+<table class="map-status-table">
+<thead><tr><th>Area</th><th>Status</th><th>Notes</th></tr></thead>
+<tbody>
+<tr class="ms-row ms-done"><td class="ms-area">Grid coverage</td><td class="ms-status"><span class="ms-sym ms-sym-done">✓</span></td><td class="ms-desc">651 blue hexes</td></tr>
+<tr class="ms-row ms-done"><td class="ms-area">Regional home city coordinates</td><td class="ms-status"><span class="ms-sym ms-sym-done">✓</span></td><td class="ms-desc">All 24</td></tr>
+<tr class="ms-row ms-done"><td class="ms-area">National region hex lists</td><td class="ms-status"><span class="ms-sym ms-sym-done">✓</span></td><td class="ms-desc">All 8 (UK, SC, FR, PHS, AH, IT, SP, RU) — <code>NATIONAL_REGION_HEXES_COMPLETE = true</code></td></tr>
+<tr class="ms-row ms-done"><td class="ms-area">Location names</td><td class="ms-status"><span class="ms-sym ms-sym-done">✓</span></td><td class="ms-desc">All 255</td></tr>
+<tr class="ms-row ms-done"><td class="ms-area">Sea zones</td><td class="ms-status"><span class="ms-sym ms-sym-done">✓</span></td><td class="ms-desc">19 named zones with hex lists; borders encoded as <code>type:province</code>; port stubs on 37 sea tiles</td></tr>
+<tr class="ms-row ms-done"><td class="ms-area">Custom tile codes</td><td class="ms-status"><span class="ms-sym ms-sym-done">✓</span></td><td class="ms-desc">OE1–OE8, OE12–OE18, OE23–OE44</td></tr>
+<tr class="ms-row ms-done"><td class="ms-area">Standard tile quantities</td><td class="ms-status"><span class="ms-sym ms-sym-done">✓</span></td><td class="ms-desc">Complete</td></tr>
+<tr class="ms-row ms-done"><td class="ms-area">Terrain costs</td><td class="ms-status"><span class="ms-sym ms-sym-done">✓</span></td><td class="ms-desc">UK, FR, SP, SC, Alps, IT, Adriatic, Carpathians, Balkans, Caucasus, river crossings</td></tr>
+<tr class="ms-row ms-done"><td class="ms-area">Station revenues</td><td class="ms-status"><span class="ms-sym ms-sym-done">✓</span></td><td class="ms-desc">All 255 named locations have correct starting revenue</td></tr>
+<tr class="ms-row ms-done"><td class="ms-area">Pre-printed yellows</td><td class="ms-status"><span class="ms-sym ms-sym-done">✓</span></td><td class="ms-desc">Liverpool J25, Manchester J27, Athinai AE72</td></tr>
+<tr class="ms-row ms-partial"><td class="ms-area">Pre-printed whites (path edges)</td><td class="ms-status"><span class="ms-sym ms-sym-partial">~</span></td><td class="ms-desc">Several cities missing path edges — see §3</td></tr>
+<tr class="ms-row ms-partial"><td class="ms-area">Port icons</td><td class="ms-status"><span class="ms-sym ms-sym-partial">~</span></td><td class="ms-desc">Stubs present; public/private classification outstanding</td></tr>
+<tr class="ms-row ms-todo"><td class="ms-area">Ferry paths / distances</td><td class="ms-status"><span class="ms-sym ms-sym-todo">?</span></td><td class="ms-desc">Outstanding</td></tr>
+<tr class="ms-row ms-todo"><td class="ms-area">Double-town tile orientations</td><td class="ms-status"><span class="ms-sym ms-sym-todo">?</span></td><td class="ms-desc">OE9–11, OE20–22 outstanding</td></tr>
+<tr class="ms-row ms-todo"><td class="ms-area">Logo SVGs</td><td class="ms-status"><span class="ms-sym ms-sym-todo">?</span></td><td class="ms-desc">Company logos not yet added</td></tr>
+</tbody></table>
 <div class="coverage-map" style="margin-bottom:1.5rem">
 <div class="cov-chapter" data-chapter-scope="mixed">
 <div class="cov-chapter-title" id="cov-map--components">Map &amp; Components</div>

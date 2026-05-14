@@ -828,3 +828,26 @@ article:has(.coverage-map) { max-width: 1200px; }
 .gap-row-partial { background: rgba(42,31,0,0.06); }
 
 .gap-none { color: #2d7a2d; font-style: italic; margin: 0.3rem 0 1rem; }
+
+/* ---- Map Status Table ---- */
+.map-status-table { width: 100%; border-collapse: collapse; margin: 0.8rem 0 1.4rem; }
+.map-status-table thead th {
+  background: rgba(13,31,56,0.55); color: #c9a843;
+  font-family: 'Cinzel', serif; font-size: 0.68rem; letter-spacing: 0.12em;
+  text-transform: uppercase; padding: 0.45rem 0.7rem; text-align: left;
+}
+.map-status-table td { padding: 0.35rem 0.7rem; vertical-align: top; }
+.map-status-table tr + tr td { border-top: 1px solid rgba(201,168,67,0.07); }
+.ms-area  { font-weight: 500; white-space: nowrap; width: 22%; }
+.ms-status { width: 2.5rem; text-align: center; }
+.ms-sym { display: inline-block; width: 1.4rem; text-align: center;
+  font-weight: 700; font-size: 1rem; border-radius: 2px; }
+.ms-sym-done    { color: #2d7a2d; }
+.ms-sym-needs-pr{ color: #2a4ab0; }
+.ms-sym-partial { color: #b87800; }
+.ms-sym-todo    { color: rgba(13,31,56,0.35); }
+.ms-row-done    { background: rgba(45,122,45,0.04); }
+.ms-row-partial { background: rgba(184,120,0,0.05); }
+.ms-row-todo    { }
+.ms-row-needs-pr{ background: rgba(42,74,176,0.05); }
+.ms-desc code   { font-size: 0.82em; }

@@ -663,6 +663,32 @@ COVERAGE_DATA = [
     ]),
 ]
 
+# ---------------------------------------------------------------------------
+# Map status overview table  (drives the "Overall Status" section of
+# 18oe-map-status.html — edit here, regenerate, done)
+# status: "done" | "needs-pr" | "partial" | "todo"
+# ---------------------------------------------------------------------------
+
+MAP_STATUS_TABLE = [
+    ("Grid coverage",                   "done",    "651 blue hexes"),
+    ("Regional home city coordinates",  "done",    "All 24"),
+    ("National region hex lists",       "done",    "All 8 (UK, SC, FR, PHS, AH, IT, SP, RU) — "
+                                                   "<code>NATIONAL_REGION_HEXES_COMPLETE = true</code>"),
+    ("Location names",                  "done",    "All 255"),
+    ("Sea zones",                       "done",    "19 named zones with hex lists; borders encoded as "
+                                                   "<code>type:province</code>; port stubs on 37 sea tiles"),
+    ("Custom tile codes",               "done",    "OE1–OE8, OE12–OE18, OE23–OE44"),
+    ("Standard tile quantities",        "done",    "Complete"),
+    ("Terrain costs",                   "done",    "UK, FR, SP, SC, Alps, IT, Adriatic, Carpathians, "
+                                                   "Balkans, Caucasus, river crossings"),
+    ("Station revenues",                "done",    "All 255 named locations have correct starting revenue"),
+    ("Pre-printed yellows",             "done",    "Liverpool J25, Manchester J27, Athinai AE72"),
+    ("Pre-printed whites (path edges)", "partial", "Several cities missing path edges — see §3"),
+    ("Port icons",                      "partial", "Stubs present; public/private classification outstanding"),
+    ("Ferry paths / distances",         "todo",    "Outstanding"),
+    ("Double-town tile orientations",   "todo",    "OE9–11, OE20–22 outstanding"),
+    ("Logo SVGs",                       "todo",    "Company logos not yet added"),
+]
 
 # ---------------------------------------------------------------------------
 # Weighted progress system
@@ -2080,6 +2106,29 @@ article:has(.coverage-map) { max-width: 1200px; }
 .gap-row-partial { background: rgba(42,31,0,0.06); }
 
 .gap-none { color: #2d7a2d; font-style: italic; margin: 0.3rem 0 1rem; }
+
+/* ---- Map Status Table ---- */
+.map-status-table { width: 100%; border-collapse: collapse; margin: 0.8rem 0 1.4rem; }
+.map-status-table thead th {
+  background: rgba(13,31,56,0.55); color: #c9a843;
+  font-family: 'Cinzel', serif; font-size: 0.68rem; letter-spacing: 0.12em;
+  text-transform: uppercase; padding: 0.45rem 0.7rem; text-align: left;
+}
+.map-status-table td { padding: 0.35rem 0.7rem; vertical-align: top; }
+.map-status-table tr + tr td { border-top: 1px solid rgba(201,168,67,0.07); }
+.ms-area  { font-weight: 500; white-space: nowrap; width: 22%; }
+.ms-status { width: 2.5rem; text-align: center; }
+.ms-sym { display: inline-block; width: 1.4rem; text-align: center;
+  font-weight: 700; font-size: 1rem; border-radius: 2px; }
+.ms-sym-done    { color: #2d7a2d; }
+.ms-sym-needs-pr{ color: #2a4ab0; }
+.ms-sym-partial { color: #b87800; }
+.ms-sym-todo    { color: rgba(13,31,56,0.35); }
+.ms-row-done    { background: rgba(45,122,45,0.04); }
+.ms-row-partial { background: rgba(184,120,0,0.05); }
+.ms-row-todo    { }
+.ms-row-needs-pr{ background: rgba(42,74,176,0.05); }
+.ms-desc code   { font-size: 0.82em; }
 """
 
 # ---------------------------------------------------------------------------
@@ -2787,6 +2836,25 @@ def build_map_status_html():
     # Drop the H1 (we emit it explicitly below)
     body_html = re.sub(r'<h1[^>]*>.*?</h1>\n?', '', body_html, count=1, flags=re.DOTALL)
 
+    # Overall Status table from MAP_STATUS_TABLE
+    STATUS_SYMBOL = {'done': '✓', 'needs-pr': '→', 'partial': '~', 'todo': '?'}
+    table_lines = [
+        '<h2 id="overall-status">Overall Status</h2>',
+        '<table class="map-status-table">',
+        '<thead><tr><th>Area</th><th>Status</th><th>Notes</th></tr></thead>',
+        '<tbody>',
+    ]
+    for area, status, desc in MAP_STATUS_TABLE:
+        sym = STATUS_SYMBOL.get(status, '?')
+        table_lines.append(
+            f'<tr class="ms-row ms-{status}">'
+            f'<td class="ms-area">{_html.escape(area)}</td>'
+            f'<td class="ms-status"><span class="ms-sym ms-sym-{status}">{sym}</span></td>'
+            f'<td class="ms-desc">{desc}</td>'  # desc may contain <code> tags — no escaping
+            f'</tr>'
+        )
+    table_lines += ['</tbody></table>']
+
     p = []
     p.append('<h1>18OE — Map Implementation Status</h1>')
     p.append('<p class="page-crosslink">For full rulebook picture → '
@@ -2794,6 +2862,7 @@ def build_map_status_html():
              'All open gaps → <a href="alpha-gaps.html">Open for Alpha</a></p>')
     p.append('<p class="bar-note">Bar weighted by section effort (L1 data = 1×).</p>')
     p.append(bar_html)
+    p.append('\n'.join(table_lines))
     p.append('\n'.join(cov_lines))
     p.append('<hr>')
     p.append(body_html)
