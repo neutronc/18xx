@@ -37,7 +37,7 @@ Alpha milestone progress
 §12A Track Rights Chit     ████████████████████  Complete  ✅
 §13a Consolidation Scaffold ████████████████████  Complete  ✅
 §14 Token Transfer         ░░░░░░░░░░░░░░░░░░░░  0%  (not started)
-§15 End Game               ████████████████░░░░  ~80%  (abbreviated OR beta)
+§15 End Game               ████████████████████  ~80% overall  (alpha-scope done; second final OR → beta)
 §16 Tests                  ░░░░░░░░░░░░░░░░░░░░  0%  (not started)
 
 Bug tracker  ██████████████████░░  19 / 25 bugs closed  (76%)
