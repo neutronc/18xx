@@ -424,9 +424,9 @@ COVERAGE_DATA = [
         ("Pre-printed ferry paths",           "done",    "alpha"),
         ("Sea zones (19)",                    "done",    "alpha"),
         ("Ferry sea hexes (partial)",         "partial", "beta"),
-        ("Port icons",                        "partial", "alpha"),
+        ("Port icons",                        "done",    "alpha"),
         ("Sea zone borders / ferry distances","todo",    "beta"),
-        ("Logo SVGs",                         "todo",    "alpha"),
+        ("Logo SVGs",                         "done",    "alpha"),
     ]),
     ("Track Rights", [
         ("8 zones defined",                  "done", "alpha"),
@@ -683,11 +683,13 @@ MAP_STATUS_TABLE = [
                                                    "Balkans, Caucasus, river crossings"),
     ("Station revenues",                "done",    "All 255 named locations have correct starting revenue"),
     ("Pre-printed yellows",             "done",    "Liverpool J25, Manchester J27, Athinai AE72"),
-    ("Pre-printed whites (path edges)", "partial", "Several cities missing path edges — see §3"),
-    ("Port icons",                      "partial", "Stubs present; public/private classification outstanding"),
+    ("Pre-printed whites (path edges)", "partial", "U24 Bordeaux: no edges (BUG-028); "
+                                                   "N31 Lille: edge 0 missing (BUG-029). "
+                                                   "M28/AA82/I20/O28/X33 edges added — verify moved to <code>yellow:</code>"),
+    ("Port icons",                      "done",    "33 instances in map.rb; public/private classification is beta scope"),
     ("Ferry paths / distances",         "todo",    "Outstanding"),
     ("Double-town tile orientations",   "todo",    "OE9–11, OE20–22 outstanding"),
-    ("Logo SVGs",                       "todo",    "Company logos not yet added"),
+    ("Logo SVGs",                       "done",    "All 36 corporations (minors A–M + all majors)"),
 ]
 
 # ---------------------------------------------------------------------------

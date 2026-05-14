@@ -88,19 +88,19 @@
 <div class="bar-row">
 <span class="bar-label-left">Map & Components</span>
 <div class="progress-track">
-<div class="pb-done"    style="width:66.7%"></div>
+<div class="pb-done"    style="width:83.3%"></div>
 <div class="pb-pr"      style="width:0.0%"></div>
-<div class="pb-partial" style="width:8.3%"></div>
-<div class="pb-todo"    style="width:25.0%"></div>
+<div class="pb-partial" style="width:4.2%"></div>
+<div class="pb-todo"    style="width:12.5%"></div>
 </div>
-<span class="bar-label-right"><strong>67%</strong> · 20 / 33 items across map sections</span>
+<span class="bar-label-right"><strong>83%</strong> · 22 / 33 items across map sections</span>
 </div>
 </div>
 <div class="status-summary" style="margin:0.5rem 0 1.2rem">
-<div class="stat-chip stat-done">Done <span>20</span></div>
+<div class="stat-chip stat-done">Done <span>22</span></div>
 <div class="stat-chip stat-pr">Needs PR <span>0</span></div>
-<div class="stat-chip stat-partial">Partial <span>3</span></div>
-<div class="stat-chip stat-todo">To do <span>10</span></div>
+<div class="stat-chip stat-partial">Partial <span>2</span></div>
+<div class="stat-chip stat-todo">To do <span>9</span></div>
 </div>
 <h2 id="overall-status">Overall Status</h2>
 <table class="map-status-table">
@@ -116,11 +116,11 @@
 <tr class="ms-row ms-done"><td class="ms-area">Terrain costs</td><td class="ms-status"><span class="ms-sym ms-sym-done">✓</span></td><td class="ms-desc">UK, FR, SP, SC, Alps, IT, Adriatic, Carpathians, Balkans, Caucasus, river crossings</td></tr>
 <tr class="ms-row ms-done"><td class="ms-area">Station revenues</td><td class="ms-status"><span class="ms-sym ms-sym-done">✓</span></td><td class="ms-desc">All 255 named locations have correct starting revenue</td></tr>
 <tr class="ms-row ms-done"><td class="ms-area">Pre-printed yellows</td><td class="ms-status"><span class="ms-sym ms-sym-done">✓</span></td><td class="ms-desc">Liverpool J25, Manchester J27, Athinai AE72</td></tr>
-<tr class="ms-row ms-partial"><td class="ms-area">Pre-printed whites (path edges)</td><td class="ms-status"><span class="ms-sym ms-sym-partial">~</span></td><td class="ms-desc">Several cities missing path edges — see §3</td></tr>
-<tr class="ms-row ms-partial"><td class="ms-area">Port icons</td><td class="ms-status"><span class="ms-sym ms-sym-partial">~</span></td><td class="ms-desc">Stubs present; public/private classification outstanding</td></tr>
+<tr class="ms-row ms-partial"><td class="ms-area">Pre-printed whites (path edges)</td><td class="ms-status"><span class="ms-sym ms-sym-partial">~</span></td><td class="ms-desc">U24 Bordeaux: no edges (BUG-028); N31 Lille: edge 0 missing (BUG-029). M28/AA82/I20/O28/X33 edges added — verify moved to <code>yellow:</code></td></tr>
+<tr class="ms-row ms-done"><td class="ms-area">Port icons</td><td class="ms-status"><span class="ms-sym ms-sym-done">✓</span></td><td class="ms-desc">33 instances in map.rb; public/private classification is beta scope</td></tr>
 <tr class="ms-row ms-todo"><td class="ms-area">Ferry paths / distances</td><td class="ms-status"><span class="ms-sym ms-sym-todo">?</span></td><td class="ms-desc">Outstanding</td></tr>
 <tr class="ms-row ms-todo"><td class="ms-area">Double-town tile orientations</td><td class="ms-status"><span class="ms-sym ms-sym-todo">?</span></td><td class="ms-desc">OE9–11, OE20–22 outstanding</td></tr>
-<tr class="ms-row ms-todo"><td class="ms-area">Logo SVGs</td><td class="ms-status"><span class="ms-sym ms-sym-todo">?</span></td><td class="ms-desc">Company logos not yet added</td></tr>
+<tr class="ms-row ms-done"><td class="ms-area">Logo SVGs</td><td class="ms-status"><span class="ms-sym ms-sym-done">✓</span></td><td class="ms-desc">All 36 corporations (minors A–M + all majors)</td></tr>
 </tbody></table>
 <div class="coverage-map" style="margin-bottom:1.5rem">
 <div class="cov-chapter" data-chapter-scope="mixed">
@@ -135,9 +135,9 @@
 <div class="cov-item cov-done" data-scope="alpha" title="Pre-printed ferry paths">Pre-printed ferry paths</div>
 <div class="cov-item cov-done" data-scope="alpha" title="Sea zones (19)">Sea zones (19)</div>
 <div class="cov-item cov-partial" data-scope="beta" title="Ferry sea hexes (partial)">Ferry sea hexes (partial)</div>
-<div class="cov-item cov-partial" data-scope="alpha" title="Port icons">Port icons</div>
+<div class="cov-item cov-done" data-scope="alpha" title="Port icons">Port icons</div>
 <div class="cov-item cov-todo" data-scope="beta" title="Sea zone borders / ferry distances">Sea zone borders / ferry distances</div>
-<div class="cov-item cov-todo" data-scope="alpha" title="Logo SVGs">Logo SVGs</div>
+<div class="cov-item cov-done" data-scope="alpha" title="Logo SVGs">Logo SVGs</div>
 </div></div>
 <div class="cov-chapter" data-chapter-scope="mixed">
 <div class="cov-chapter-title" id="cov-track-laying">Track Laying</div>
@@ -210,9 +210,11 @@ AG:40 AG:88  Tunis, Alexandria &amp; Suez</code></pre>
 <h2 id="pre-printed-tiles">Pre-Printed Tiles</h2>
 <h3 id="complete">✓ Complete</h3>
 <table><thead><tr><th>Hex</th><th>City</th><th>Tile string</th></tr></thead><tbody><tr><td>J25</td><td>Liverpool</td><td><code>city=revenue:30;label=Y;path=a:2,b:_0;path=a:_0,b:4</code></td></tr><tr><td>J27</td><td>Manchester</td><td><code>city=revenue:20;upgrade=cost:30,terrain:mountain;path=a:1,b:_0;path=a:_0,b:4</code></td></tr><tr><td>AE72</td><td>Athinai</td><td><code>city=revenue:20;path=a:1,b:_0;path=a:5,b:_0</code></td></tr></tbody></table>
-<h3 id="partial-revenue-set-path-edges-missing">~ Partial (revenue set, path edges missing)</h3>
-<table><thead><tr><th>Hex</th><th>City</th><th>Current string</th><th>Missing</th></tr></thead><tbody><tr><td>M28</td><td>London</td><td><code>city=revenue:30;label=L;upgrade=cost:30,terrain:water</code></td><td>both edges</td></tr><tr><td>AA82</td><td>Constantinople</td><td><code>city=revenue:20;city=revenue:20;upgrade=cost:45,terrain:water;label=C</code></td><td>both edges</td></tr><tr><td>N31</td><td>Lille</td><td><code>city=revenue:10;label=Y;border=edge:2,type:impassable;path=a:1,b:_0</code></td><td>edge 0</td></tr><tr><td>I20</td><td>Dublin</td><td><code>city=revenue:10</code></td><td>both edges</td></tr><tr><td>O28</td><td>Le Havre</td><td><code>city=revenue:10</code></td><td>both edges</td></tr><tr><td>X33</td><td>Marseille</td><td><code>city=revenue:20;label=Y</code></td><td>both edges</td></tr><tr><td>U24</td><td>Bordeaux</td><td><code>city=revenue:10</code></td><td>both edges</td></tr></tbody></table>
-<p>Once both edges are confirmed, move each hex from <code>white:</code> to <code>yellow:</code> section in <code>map.rb</code>.</p>
+<h3 id="partial--outstanding">~ Partial / outstanding</h3>
+<table><thead><tr><th>Hex</th><th>City</th><th>Current string</th><th>Status</th></tr></thead><tbody><tr><td>U24</td><td>Bordeaux</td><td><code>city=revenue:10;icon=image:port,sticky:1</code></td><td><strong>BUG-028</strong> — no path edges at all</td></tr><tr><td>N31</td><td>Lille</td><td><code>city=revenue:10;label=Y;border=edge:2,type:impassable;path=a:1,b:_0</code></td><td><strong>BUG-029</strong> — edge 0 missing</td></tr></tbody></table>
+<h3 id="verify-white--yellow-move">~ Verify white: → yellow: move</h3>
+<p>Edges have been added to these hexes in <code>18oe_testing</code>; confirm they are now in the <code>yellow:</code> section (not <code>white:</code>) in <code>map.rb</code>:</p>
+<table><thead><tr><th>Hex</th><th>City</th><th>Verified edges</th></tr></thead><tbody><tr><td>M28</td><td>London</td><td>edge 5 present — verify edge and section</td></tr><tr><td>AA82</td><td>Constantinople</td><td>edge 2 present — verify edge and section</td></tr><tr><td>I20</td><td>Dublin</td><td>edge 4 present — verify edge and section</td></tr><tr><td>O28</td><td>Le Havre</td><td>edge 1 present — verify edge and section</td></tr><tr><td>X33</td><td>Marseille</td><td>edge 5 present — verify edge and section</td></tr></tbody></table>
 <hr>
 <h2 id="sea-zones">Sea Zones</h2>
 <p>19 named zones implemented. Zone borders encoded as <code>border=edge:X,type:province</code> on all boundary edges. Port-entry stubs on 37 sea tiles (<code>junction;path=a:X,b:_0,terminal:1</code>).</p>
@@ -222,8 +224,7 @@ AG:40 AG:88  Tunis, Alexandria &amp; Suez</code></pre>
 <hr>
 <h2 id="national-zone-boundaries">National Zone Boundaries</h2>
 <p>All 8 zones defined. <code>NATIONAL_REGION_HEXES_COMPLETE = true</code>. <code>CITY_NATIONAL_ZONE</code> overrides: Q38 → FR, O52 → PHS. <code>MINOR_EXCLUDED_HOME_CITIES</code> defined.</p>
-<p>⚠️ Two stale entries to fix:</p>
-<ul><li><code>NATIONAL_REGION_HEXES['SC']</code> still contains <code>A40</code> (now blue) — remove</li><li><code>NATIONAL_REGION_HEXES['RU']</code> still contains <code>E88</code> (removed hex) — remove</li></ul>
+<p>✓ Stale entries cleaned in <code>18oe_testing</code>: <code>A40</code> removed from SC, <code>E88</code> removed from RU.</p>
 <hr>
 <h2 id="terrain-costs">Terrain Costs</h2>
 <h3 id="carpathians-rows-pt-cols-5575">Carpathians (rows P–T, cols 55–75)</h3>
@@ -243,13 +244,10 @@ AG:40 AG:88  Tunis, Alexandria &amp; Suez</code></pre>
 <p>? Do OE9–11 upgrade directly to OE20–22?</p>
 <hr>
 <h2 id="ports-and-ferry-routes">Ports and Ferry Routes</h2>
-<table><thead><tr><th>Item</th><th>Status</th></tr></thead><tbody><tr><td>Port city hexes (public light-blue / private red anchor)</td><td>?</td></tr><tr><td>Ferry route paths (start hex+edge → end hex+edge, distance)</td><td>?</td></tr><tr><td>North Sea port authority positions (8)</td><td>?</td></tr><tr><td>Mediterranean port authority positions (8)</td><td>?</td></tr><tr><td>White Cliffs Ferry token slot near Lille N31</td><td>?</td></tr><tr><td>Patronage tiles — fixed city list or game logic only?</td><td>?</td></tr></tbody></table>
-<hr>
-<h2 id="outstanding-bugs">Outstanding Bugs</h2>
-<table><thead><tr><th>Bug</th><th>Location</th><th>Fix</th></tr></thead><tbody><tr><td>Constantinople AA82 no path edges</td><td><code>map.rb white:</code></td><td>Add edges, move to <code>yellow:</code></td></tr><tr><td>London M28 no path edges</td><td><code>map.rb white:</code></td><td>Add edges, move to <code>yellow:</code></td></tr><tr><td>SC zone contains A40</td><td><code>game.rb NATIONAL_REGION_HEXES</code></td><td>Remove A40</td></tr><tr><td>RU zone contains E88</td><td><code>game.rb NATIONAL_REGION_HEXES</code></td><td>Remove E88</td></tr></tbody></table>
+<table><thead><tr><th>Item</th><th>Status</th></tr></thead><tbody><tr><td>Port city hexes (public light-blue / private red anchor)</td><td>✓ 33 <code>icon=image:port,sticky:1</code> instances in map.rb</td></tr><tr><td>Ferry path stubs (14+ <code>junction;path=...,terminal:1</code> hexes)</td><td>✓ Stubs present</td></tr><tr><td>Ferry route paths (start hex+edge → end hex+edge, distance)</td><td>? Numbers not yet defined</td></tr><tr><td>Sea zone distance numbers for cost calculation</td><td>? Outstanding</td></tr><tr><td>North Sea port authority positions (8)</td><td>?</td></tr><tr><td>Mediterranean port authority positions (8)</td><td>?</td></tr><tr><td>White Cliffs Ferry token slot near Lille N31</td><td>?</td></tr><tr><td>Patronage tiles — fixed city list or game logic only?</td><td>?</td></tr></tbody></table>
 <hr>
 <h2 id="open-issues-summary">Open Issues Summary</h2>
-<table><thead><tr><th>Priority</th><th>Item</th></tr></thead><tbody><tr><td><strong>High</strong></td><td>Pre-printed path edges for M28, AA82, N31, I20, O28, X33, U24</td></tr><tr><td><strong>High</strong></td><td>Verify all 19 red hex revenues and edges against physical map</td></tr><tr><td><strong>High</strong></td><td>Remove A40/E88 from national zone hex lists</td></tr><tr><td><strong>Medium</strong></td><td>Ferry paths and distance numbers (sea zone borders done)</td></tr><tr><td><strong>Medium</strong></td><td>Port markers, ferry routes, distances</td></tr><tr><td><strong>Medium</strong></td><td>Verify Caucasus terrain; river routing accuracy</td></tr><tr><td><strong>Low</strong></td><td>Confirm Venezia V47 town vs city</td></tr><tr><td><strong>Low</strong></td><td>OE9–11, OE20–22 edge pairs; OE19 tile type</td></tr><tr><td><strong>Low</strong></td><td>Patronage — fixed list or game logic only</td></tr></tbody></table>
+<table><thead><tr><th>Priority</th><th>Item</th><th>Ref</th></tr></thead><tbody><tr><td><strong>High</strong></td><td>U24 Bordeaux: no path edges</td><td>BUG-028</td></tr><tr><td><strong>High</strong></td><td>N31 Lille: edge 0 missing</td><td>BUG-029</td></tr><tr><td><strong>High</strong></td><td>Verify M28/AA82/I20/O28/X33 are in <code>yellow:</code> section</td><td>map.rb</td></tr><tr><td><strong>High</strong></td><td>Verify all 19 red hex revenues and edges against physical map</td><td>§3</td></tr><tr><td><strong>Medium</strong></td><td>Ferry route paths and sea zone distance numbers</td><td>§8d</td></tr><tr><td><strong>Medium</strong></td><td>Port authority positions (North Sea ×8, Mediterranean ×8)</td><td>§8d</td></tr><tr><td><strong>Medium</strong></td><td>Verify Caucasus terrain; river routing accuracy</td><td>§3</td></tr><tr><td><strong>Low</strong></td><td>White Cliffs Ferry token slot near N31</td><td>§10</td></tr><tr><td><strong>Low</strong></td><td>OE9–11, OE20–22 edge pairs; OE19 tile type</td><td>§5</td></tr><tr><td><strong>Low</strong></td><td>Confirm Venezia V47 town vs city</td><td>§3</td></tr><tr><td><strong>Low</strong></td><td>Patronage tiles — fixed city list or game logic only?</td><td>§14</td></tr></tbody></table>
 </article>
 </main>
 </div>

@@ -17,16 +17,42 @@ to the **Resolved** section. Do not delete entries — the history is the value.
 ## Summary
 
 ```
-Open (alpha): 0   Open (beta): 6   Fixed: 17   Won't fix: 2   Total: 25
-Bugs closed  ██████████████████░░  19 / 25  (76%)
-Alpha bugs   ████████████████████  0 open alpha bugs  ✅
+Open (alpha): 2   Open (beta): 6   Fixed: 17   Won't fix: 2   Total: 27
+Bugs closed  ██████████████████░░  19 / 27  (70%)
+Alpha bugs   ████░░░░░░░░░░░░░░░░  2 open alpha bugs
 ```
 
 ---
 
 ## Open
 
-> All remaining open bugs are **beta scope** — none block the alpha milestone.
+### BUG-028 — U24 Bordeaux: no path edges (city unroutable)
+
+- **Status:** OPEN
+- **Severity:** HIGH (alpha scope — Bordeaux is a pre-printed yellow tile but has no route connections)
+- **File:** `lib/engine/game/g_18_oe/map.rb` (`white:` section)
+- **Rule:** §3 — U24 Bordeaux is a pre-printed yellow tile with two path connections.
+
+**Symptom.** U24 is defined as `'city=revenue:10;icon=image:port,sticky:1'` — no `path=` at all. A train that enters U24 has nowhere to exit; the city is completely unroutable.
+
+**Fix needed.** Add the two correct path edges (verify edge numbers against physical map), then move the hex from `white:` to `yellow:` in map.rb.
+
+---
+
+### BUG-029 — N31 Lille: second path edge missing
+
+- **Status:** OPEN
+- **Severity:** MEDIUM (alpha scope — Lille has edge 1 but is missing edge 0, blocking routes from the White Cliffs Ferry direction)
+- **File:** `lib/engine/game/g_18_oe/map.rb` (`white:` section)
+- **Rule:** §3 — N31 Lille is a pre-printed yellow label-Y tile with two path connections.
+
+**Symptom.** N31 is defined as `'city=revenue:10;label=Y;border=edge:2,type:impassable;path=a:1,b:_0'` — only edge 1 is present. The second edge (0) that connects toward the English Channel / White Cliffs Ferry approach is absent.
+
+**Fix needed.** Add `path=a:0,b:_0` (verify against physical map), then move from `white:` to `yellow:`.
+
+---
+
+> Bugs BUG-026 and below are **beta scope** — none block the alpha milestone.
 
 ### BUG-026 — Final two ORs (abbreviated second OR) not implemented
 

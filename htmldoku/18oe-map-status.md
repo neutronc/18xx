@@ -105,19 +105,24 @@ All best-guess — verify against physical map.
 | J27 | Manchester | `city=revenue:20;upgrade=cost:30,terrain:mountain;path=a:1,b:_0;path=a:_0,b:4` |
 | AE72 | Athinai | `city=revenue:20;path=a:1,b:_0;path=a:5,b:_0` |
 
-### ~ Partial (revenue set, path edges missing)
+### ~ Partial / outstanding
 
-| Hex | City | Current string | Missing |
-|-----|------|----------------|---------|
-| M28 | London | `city=revenue:30;label=L;upgrade=cost:30,terrain:water` | both edges |
-| AA82 | Constantinople | `city=revenue:20;city=revenue:20;upgrade=cost:45,terrain:water;label=C` | both edges |
-| N31 | Lille | `city=revenue:10;label=Y;border=edge:2,type:impassable;path=a:1,b:_0` | edge 0 |
-| I20 | Dublin | `city=revenue:10` | both edges |
-| O28 | Le Havre | `city=revenue:10` | both edges |
-| X33 | Marseille | `city=revenue:20;label=Y` | both edges |
-| U24 | Bordeaux | `city=revenue:10` | both edges |
+| Hex | City | Current string | Status |
+|-----|------|----------------|--------|
+| U24 | Bordeaux | `city=revenue:10;icon=image:port,sticky:1` | **BUG-028** — no path edges at all |
+| N31 | Lille | `city=revenue:10;label=Y;border=edge:2,type:impassable;path=a:1,b:_0` | **BUG-029** — edge 0 missing |
 
-Once both edges are confirmed, move each hex from `white:` to `yellow:` section in `map.rb`.
+### ~ Verify white: → yellow: move
+
+Edges have been added to these hexes in `18oe_testing`; confirm they are now in the `yellow:` section (not `white:`) in `map.rb`:
+
+| Hex | City | Verified edges |
+|-----|------|----------------|
+| M28 | London | edge 5 present — verify edge and section |
+| AA82 | Constantinople | edge 2 present — verify edge and section |
+| I20 | Dublin | edge 4 present — verify edge and section |
+| O28 | Le Havre | edge 1 present — verify edge and section |
+| X33 | Marseille | edge 5 present — verify edge and section |
 
 ---
 
@@ -139,9 +144,7 @@ All 8 zones defined. `NATIONAL_REGION_HEXES_COMPLETE = true`.
 `CITY_NATIONAL_ZONE` overrides: Q38 → FR, O52 → PHS.
 `MINOR_EXCLUDED_HOME_CITIES` defined.
 
-⚠️ Two stale entries to fix:
-- `NATIONAL_REGION_HEXES['SC']` still contains `A40` (now blue) — remove
-- `NATIONAL_REGION_HEXES['RU']` still contains `E88` (removed hex) — remove
+✓ Stale entries cleaned in `18oe_testing`: `A40` removed from SC, `E88` removed from RU.
 
 ---
 
@@ -199,8 +202,10 @@ All 8 zones defined. `NATIONAL_REGION_HEXES_COMPLETE = true`.
 
 | Item | Status |
 |------|--------|
-| Port city hexes (public light-blue / private red anchor) | ? |
-| Ferry route paths (start hex+edge → end hex+edge, distance) | ? |
+| Port city hexes (public light-blue / private red anchor) | ✓ 33 `icon=image:port,sticky:1` instances in map.rb |
+| Ferry path stubs (14+ `junction;path=...,terminal:1` hexes) | ✓ Stubs present |
+| Ferry route paths (start hex+edge → end hex+edge, distance) | ? Numbers not yet defined |
+| Sea zone distance numbers for cost calculation | ? Outstanding |
 | North Sea port authority positions (8) | ? |
 | Mediterranean port authority positions (8) | ? |
 | White Cliffs Ferry token slot near Lille N31 | ? |
@@ -208,27 +213,18 @@ All 8 zones defined. `NATIONAL_REGION_HEXES_COMPLETE = true`.
 
 ---
 
-## Outstanding Bugs
-
-| Bug | Location | Fix |
-|-----|----------|-----|
-| Constantinople AA82 no path edges | `map.rb white:` | Add edges, move to `yellow:` |
-| London M28 no path edges | `map.rb white:` | Add edges, move to `yellow:` |
-| SC zone contains A40 | `game.rb NATIONAL_REGION_HEXES` | Remove A40 |
-| RU zone contains E88 | `game.rb NATIONAL_REGION_HEXES` | Remove E88 |
-
----
-
 ## Open Issues Summary
 
-| Priority | Item |
-|----------|------|
-| **High** | Pre-printed path edges for M28, AA82, N31, I20, O28, X33, U24 |
-| **High** | Verify all 19 red hex revenues and edges against physical map |
-| **High** | Remove A40/E88 from national zone hex lists |
-| **Medium** | Ferry paths and distance numbers (sea zone borders done) |
-| **Medium** | Port markers, ferry routes, distances |
-| **Medium** | Verify Caucasus terrain; river routing accuracy |
-| **Low** | Confirm Venezia V47 town vs city |
-| **Low** | OE9–11, OE20–22 edge pairs; OE19 tile type |
-| **Low** | Patronage — fixed list or game logic only |
+| Priority | Item | Ref |
+|----------|------|-----|
+| **High** | U24 Bordeaux: no path edges | BUG-028 |
+| **High** | N31 Lille: edge 0 missing | BUG-029 |
+| **High** | Verify M28/AA82/I20/O28/X33 are in `yellow:` section | map.rb |
+| **High** | Verify all 19 red hex revenues and edges against physical map | §3 |
+| **Medium** | Ferry route paths and sea zone distance numbers | §8d |
+| **Medium** | Port authority positions (North Sea ×8, Mediterranean ×8) | §8d |
+| **Medium** | Verify Caucasus terrain; river routing accuracy | §3 |
+| **Low** | White Cliffs Ferry token slot near N31 | §10 |
+| **Low** | OE9–11, OE20–22 edge pairs; OE19 tile type | §5 |
+| **Low** | Confirm Venezia V47 town vs city | §3 |
+| **Low** | Patronage tiles — fixed city list or game logic only? | §14 |
