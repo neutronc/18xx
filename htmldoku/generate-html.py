@@ -554,7 +554,7 @@ COVERAGE_DATA = [
         ("Transfer Tokens",              "todo", "alpha"),
         ("Buy Trains",                   "done", "alpha"),
         ("Buy/Sell Own Shares (\u00a711.7)", "done",    "alpha"),
-        ("Buy Abandoned Minor (\u00a711.7)", "todo", "alpha"),
+        ("Buy Abandoned Minor (\u00a711.7)", "todo", "beta"),
     ]),
     ("Stock Rounds", [
         ("Sell-then-buy order",          "done",     "alpha"),

@@ -40,8 +40,8 @@ Alpha milestone progress
 §15 End Game               ████████████████████  ~80% overall  (alpha-scope done; second final OR → beta)
 §16 Tests                  ░░░░░░░░░░░░░░░░░░░░  0%  (not started)
 
-Bug tracker  ██████████████████░░  19 / 25 bugs closed  (76%)
-Alpha bugs   ████████████████████  0 open alpha bugs  ✅
+Bug tracker  ████████████████░░░░  19 / 27 bugs closed  (70%)
+Alpha bugs   ████░░░░░░░░░░░░░░░░  2 open alpha bugs  (BUG-028/029)
 
 Branch status (rebased 2026-05-14 onto upstream/master after PRs #12578 + #12592 merged)
 ──────────────────────────────────────────────────────────────────
@@ -59,14 +59,16 @@ Target: auction · floating · minor-regional phase · major phase to game end �
 
 ---
 
-## Art / Non-Code
-
-- [ ] **Logo SVGs** — colors done; still missing: minors A/B/D/E/F/G/J/L; regionals BHB/POB/KSS/KBS/SB/MAV/SFAI/SFR/CHN/MZA/RCP/MSP/MKV/LRZD/WW/DSJ/BJV **[non-code]**
+*Logo SVGs — all 36 corporations confirmed present in `18oe_testing` (2026-05-14). Removed from todo.*
 
 ---
 
 ## Map
 
+- [ ] **BUG-028** — U24 Bordeaux: no path edges; add correct edge pair + move `white:` → `yellow:` in map.rb **[L1]**
+- [ ] **BUG-029** — N31 Lille: edge 0 missing; add `path=a:0,b:_0` + verify both edges + move `white:` → `yellow:` **[L1]**
+- [ ] Verify M28 London / AA82 Constantinople / I20 Dublin / O28 Le Havre / X33 Marseille are in `yellow:` section in map.rb (edges added in 18oe_testing; section move not yet confirmed) **[L1]**
+- [ ] N31 Lille second token slot for White Cliffs Ferry — pre-printed Lille tile needs a secondary station slot; confirm against physical map **[L1]**
 - [ ] OE9–OE11 — green double-town path edge orientations needed **[L1]**
 - [ ] OE20–OE22 — brown double-town path edge orientations needed **[L1]**
 - [ ] OE19 — tile type unknown; must be identified and defined **[L1]**
@@ -85,6 +87,7 @@ Target: auction · floating · minor-regional phase · major phase to game end �
 
 - [ ] Voluntary regional removal — player may remove one unfloated regional during Regional/Minor Phase; max 6 total **[L2/L3]**
 - [ ] Reserved secondary shares — during Initial SR only, each player may designate one regional's secondary (25%) share as reserved; no other player may purchase it until the second SR; cancelled if regional expands to major before its first OR **[L2]**
+- [ ] Trade with another player — during own SR turn, controlling player may offer personal share trade to any other player; recipient not obligated to accept **[L2]**
 
 *Change of Presidency — handled by base engine (`can_dump?` + `fit_in_bank?`); no custom code needed. Removed 2026-05-14.*
 
@@ -117,6 +120,7 @@ No Pullman logic yet. Nationals' inherent Pullman bonus already in `national_rev
 
 ## §8g — Train Purchase
 
+- [ ] Train type lock for inter-company purchases — minors may only sell to minors, regionals to regionals, majors to majors (§11.3) **[L2]**
 - [ ] Forced purchase — president covers shortfall; else national conversion (majors) or insolvency (minors/regionals) **[L3]**
 - [ ] First-round insolvency: president cash → treasury; company receives reserved 2+2; presidential cert → Open Market; president paid face value **[L3]**
 - [ ] Remove `Engine::Step::Bankrupt` from OR step list — base bankruptcy fires game-end immediately; 18OE force-buy should route to national conversion (BUG-019/BUG-027); replace with a custom no-op or override **[L2]**

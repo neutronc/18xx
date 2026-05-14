@@ -88,22 +88,22 @@
 <div class="bar-row">
 <span class="bar-label-left">Overall</span>
 <div class="progress-track">
-<div class="pb-done"    style="width:18.2%"></div>
+<div class="pb-done"    style="width:17.7%"></div>
 <div class="pb-pr"      style="width:0.0%"></div>
-<div class="pb-partial" style="width:3.3%"></div>
-<div class="pb-todo"    style="width:78.6%"></div>
+<div class="pb-partial" style="width:3.2%"></div>
+<div class="pb-todo"    style="width:79.1%"></div>
 </div>
-<span class="bar-label-right">35&thinsp;/&thinsp;143 items</span>
+<span class="bar-label-right">35&thinsp;/&thinsp;148 items</span>
 </div>
 <div class="bar-row">
 <span class="bar-label-left">Alpha</span>
 <div class="progress-track">
-<div class="pb-done"    style="width:34.2%"></div>
+<div class="pb-done"    style="width:32.6%"></div>
 <div class="pb-pr"      style="width:0.0%"></div>
-<div class="pb-partial" style="width:3.7%"></div>
-<div class="pb-todo"    style="width:62.1%"></div>
+<div class="pb-partial" style="width:3.5%"></div>
+<div class="pb-todo"    style="width:63.9%"></div>
 </div>
-<span class="bar-label-right">34%<span class="bar-aside"> · 46 remaining · <span class="bar-beta">62 beta deferred</span></span></span>
+<span class="bar-label-right">33%<span class="bar-aside"> · 51 remaining · <span class="bar-beta">62 beta deferred</span></span></span>
 </div>
 </div>
 <div class="status-summary" style="margin:0.5rem 0 1.2rem">
@@ -111,7 +111,7 @@
 <div class="stat-chip stat-pr">Needs PR <span>0</span></div>
 <div class="stat-chip stat-partial">Partial <span>0</span></div>
 <div class="stat-chip stat-partial">Started <span>12</span></div>
-<div class="stat-chip stat-todo">To do <span>96</span></div>
+<div class="stat-chip stat-todo">To do <span>101</span></div>
 <div class="stat-chip stat-beta">Beta deferred <span>62</span></div>
 </div>
 <div class="status-filters">
@@ -282,14 +282,14 @@
 <div class="sb-col-body view-layer" style="display:none">
 </div></div>
 <div class="sb-col">
-<div class="sb-col-header todo-col">To Do<span class="sb-col-count">108</span></div>
+<div class="sb-col-header todo-col">To Do<span class="sb-col-count">113</span></div>
 <div class="sb-col-body view-rules">
 <div class="sb-section">
-<div class="sb-section-title">Art / Non-Code</div>
-<div class="sb-item sb-todo" data-layer="non-code" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text"><strong>Logo SVGs</strong> — colors done; still missing: minors A/B/D/E/F/G/J/L; regionals BHB/POB/KSS/KBS/SB/MAV/SFAI/SFR/CHN/MZA/RCP/MSP/MKV/LRZD/WW/DSJ/BJV</span><span class="layer-tag">non-code</span></div>
-</div>
-<div class="sb-section">
 <div class="sb-section-title">Map</div>
+<div class="sb-item sb-todo" data-layer="L1" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text"><strong>BUG-028</strong> — U24 Bordeaux: no path edges; add correct edge pair + move <code>white:</code> → <code>yellow:</code> in map.rb</span><span class="layer-tag">L1</span></div>
+<div class="sb-item sb-todo" data-layer="L1" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text"><strong>BUG-029</strong> — N31 Lille: edge 0 missing; add <code>path=a:0,b:_0</code> + verify both edges + move <code>white:</code> → <code>yellow:</code></span><span class="layer-tag">L1</span></div>
+<div class="sb-item sb-todo" data-layer="L1" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">Verify M28 London / AA82 Constantinople / I20 Dublin / O28 Le Havre / X33 Marseille are in <code>yellow:</code> section in map.rb (edges added in 18oe_testing; section move not yet confirmed)</span><span class="layer-tag">L1</span></div>
+<div class="sb-item sb-todo" data-layer="L1" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">N31 Lille second token slot for White Cliffs Ferry — pre-printed Lille tile needs a secondary station slot; confirm against physical map</span><span class="layer-tag">L1</span></div>
 <div class="sb-item sb-todo" data-layer="L1" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">OE9–OE11 — green double-town path edge orientations needed</span><span class="layer-tag">L1</span></div>
 <div class="sb-item sb-todo" data-layer="L1" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">OE20–OE22 — brown double-town path edge orientations needed</span><span class="layer-tag">L1</span></div>
 <div class="sb-item sb-todo" data-layer="L1" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">OE19 — tile type unknown; must be identified and defined</span><span class="layer-tag">L1</span></div>
@@ -304,6 +304,7 @@
 <div class="sb-section-title">§6 — Stock Round</div>
 <div class="sb-item sb-todo" data-layer="L2/L3" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">Voluntary regional removal — player may remove one unfloated regional during Regional/Minor Phase; max 6 total</span><span class="layer-tag">L2/L3</span></div>
 <div class="sb-item sb-todo" data-layer="L2" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">Reserved secondary shares — during Initial SR only, each player may designate one regional's secondary (25%) share as reserved; no other player may purchase it until the second SR; cancelled if regional expands to major before its first OR</span><span class="layer-tag">L2</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">Trade with another player — during own SR turn, controlling player may offer personal share trade to any other player; recipient not obligated to accept</span><span class="layer-tag">L2</span></div>
 </div>
 <div class="sb-section">
 <div class="sb-section-title">§8b — Track Laying</div>
@@ -322,6 +323,7 @@
 </div>
 <div class="sb-section">
 <div class="sb-section-title">§8g — Train Purchase</div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">Train type lock for inter-company purchases — minors may only sell to minors, regionals to regionals, majors to majors (§11.3)</span><span class="layer-tag">L2</span></div>
 <div class="sb-item sb-todo" data-layer="L3" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">Forced purchase — president covers shortfall; else national conversion (majors) or insolvency (minors/regionals)</span><span class="layer-tag">L3</span></div>
 <div class="sb-item sb-todo" data-layer="L3" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">First-round insolvency: president cash → treasury; company receives reserved 2+2; presidential cert → Open Market; president paid face value</span><span class="layer-tag">L3</span></div>
 <div class="sb-item sb-todo" data-layer="L2" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">Remove <code>Engine::Step::Bankrupt</code> from OR step list — base bankruptcy fires game-end immediately; 18OE force-buy should route to national conversion (BUG-019/BUG-027); replace with a custom no-op or override</span><span class="layer-tag">L2</span></div>
@@ -480,6 +482,10 @@
 <div class="sb-col-body view-layer" style="display:none">
 <div class="sb-section">
 <div class="sb-section-title">L1</div>
+<div class="sb-item sb-todo" data-layer="L1" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text"><strong>BUG-028</strong> — U24 Bordeaux: no path edges; add correct edge pair + move <code>white:</code> → <code>yellow:</code> in map.rb</span></div>
+<div class="sb-item sb-todo" data-layer="L1" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text"><strong>BUG-029</strong> — N31 Lille: edge 0 missing; add <code>path=a:0,b:_0</code> + verify both edges + move <code>white:</code> → <code>yellow:</code></span></div>
+<div class="sb-item sb-todo" data-layer="L1" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">Verify M28 London / AA82 Constantinople / I20 Dublin / O28 Le Havre / X33 Marseille are in <code>yellow:</code> section in map.rb (edges added in 18oe_testing; section move not yet confirmed)</span></div>
+<div class="sb-item sb-todo" data-layer="L1" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">N31 Lille second token slot for White Cliffs Ferry — pre-printed Lille tile needs a secondary station slot; confirm against physical map</span></div>
 <div class="sb-item sb-todo" data-layer="L1" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">OE9–OE11 — green double-town path edge orientations needed</span></div>
 <div class="sb-item sb-todo" data-layer="L1" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">OE20–OE22 — brown double-town path edge orientations needed</span></div>
 <div class="sb-item sb-todo" data-layer="L1" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">OE19 — tile type unknown; must be identified and defined</span></div>
@@ -500,7 +506,9 @@
 <div class="sb-section-title">L2</div>
 <div class="sb-item sb-todo" data-layer="L2" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">All-pass price reduction — if all players consecutively pass before opening packet is sold, privates pay dividends then all items on topmost row reduce by £5; repeats; items reaching £0 must all be taken by next player</span></div>
 <div class="sb-item sb-todo" data-layer="L2" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">Reserved secondary shares — during Initial SR only, each player may designate one regional's secondary (25%) share as reserved; no other player may purchase it until the second SR; cancelled if regional expands to major before its first OR</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">Trade with another player — during own SR turn, controlling player may offer personal share trade to any other player; recipient not obligated to accept</span></div>
 <div class="sb-item sb-todo" data-layer="L2" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">First-OR green tile exception (§11.1.9) — Phase 2 only, first OR after float: if RR cannot connect home token to any town/city via land or ferry without a sea crossing, it may lay one non-city green tile at cost of all remaining tile points; requires ≥1 tile point; cannot be exploited deliberately</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">Train type lock for inter-company purchases — minors may only sell to minors, regionals to regionals, majors to majors (§11.3)</span></div>
 <div class="sb-item sb-todo" data-layer="L2" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">Remove <code>Engine::Step::Bankrupt</code> from OR step list — base bankruptcy fires game-end immediately; 18OE force-buy should route to national conversion (BUG-019/BUG-027); replace with a custom no-op or override</span></div>
 <div class="sb-item sb-todo" data-layer="L2" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">Investigate <code>Engine::Step::Exchange</code> in OR step list — minor exchange abilities fire in SR only; confirm Exchange never triggers during OR and remove if vestigial</span></div>
 <div class="sb-item sb-todo" data-layer="L2" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">During major's OR Transfer Tokens step: controlling player transfers one token between two majors</span></div>
@@ -605,10 +613,6 @@
 <div class="sb-item sb-todo" data-layer="" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">Pullman car revenue</span></div>
 <div class="sb-item sb-todo" data-layer="" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">National revenue calculation</span></div>
 <div class="sb-item sb-todo" data-layer="" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Orient Express bonus (first run, subsequent runs)</span></div>
-</div>
-<div class="sb-section">
-<div class="sb-section-title">non-code</div>
-<div class="sb-item sb-todo" data-layer="non-code" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text"><strong>Logo SVGs</strong> — colors done; still missing: minors A/B/D/E/F/G/J/L; regionals BHB/POB/KSS/KBS/SB/MAV/SFAI/SFR/CHN/MZA/RCP/MSP/MKV/LRZD/WW/DSJ/BJV</span></div>
 </div>
 </div></div>
 </div>
