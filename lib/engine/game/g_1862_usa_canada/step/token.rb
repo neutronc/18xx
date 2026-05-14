@@ -2,7 +2,7 @@
 
 module Engine
   module Game
-    module G1862GoldenSpike
+    module G1862UsaCanada
       module Step
         class Token < Engine::Step::Token
           # Apply P3 (GHU) Bahnhoflizenz: $80 discount on station token placement.

@@ -2,7 +2,7 @@
 
 module Engine
   module Game
-    module G1862GoldenSpike
+    module G1862UsaCanada
       module Step
         class BuySellParShares < Engine::Step::BuySellParShares
           # Restrict NYH par to exactly $100 while NHSC is open and unparred

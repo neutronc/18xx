@@ -2,7 +2,7 @@
 
 module Engine
   module Game
-    module G1862GoldenSpike
+    module G1862UsaCanada
       module Step
         class RepayBond < Engine::Step::Base
           ACTIONS = %w[payoff_debt pass].freeze

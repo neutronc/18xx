@@ -2,7 +2,7 @@
 
 module Engine
   module Game
-    module G1862GoldenSpike
+    module G1862UsaCanada
       module Step
         # Handles parring a corporation whose president's share was granted by a
         # private company (P8 NHSC → NYH director cert).

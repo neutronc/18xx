@@ -12,9 +12,9 @@ require_relative '../base'
 
 module Engine
   module Game
-    module G1862GoldenSpike
+    module G1862UsaCanada
       class Game < Game::Base
-        include_meta(G1862GoldenSpike::Meta)
+        include_meta(G1862UsaCanada::Meta)
         include Entities
         include Map
 
@@ -48,33 +48,32 @@ module Engine
         # ---------------------------------------------------------------------------
         CORP_BONUSES = {
           'CP'  => [
-            { hexes: %w[C21],          cash: 100, route_bonus: 30,  name: 'Toronto'     },
-            { hexes: %w[B18],          cash: 200, route_bonus: 60,  name: 'Thunder Bay' },
-            { hexes: %w[B2 C1 D4 E3], cash: 300, route_bonus: 100, name: 'V/P/S/L'     }, # FIXME
+            { hexes: %w[E25],          cash: 100, route_bonus: 30,  name: 'Toronto'     },
+            { hexes: %w[B20],          cash: 200, route_bonus: 60,  name: 'Thunder Bay' },
+            { hexes: %w[B2 C1 G3 I5], cash: 300, route_bonus: 100, name: 'V/P/S/L'     },
           ],
           'NYH' => [
-            { hexes: %w[D20],          cash: 100, route_bonus: 30,  name: 'Chicago'      },
-            { hexes: %w[F18],          cash: 200, route_bonus: 60,  name: 'New Orleans'  },
+            { hexes: %w[F20],          cash: 100, route_bonus: 30,  name: 'Chicago'     },
+            { hexes: %w[K19],          cash: 200, route_bonus: 60,  name: 'New Orleans' },
           ],
           'CPR' => [
-            { hexes: %w[D16],          cash: 100, route_bonus: 30,  name: 'Omaha'        },
+            { hexes: %w[F14],          cash: 100, route_bonus: 30,  name: 'Omaha'       },
           ],
           'UP'  => [
-            { hexes: %w[F18],          cash: 100, route_bonus: 30,  name: 'New Orleans'  },
-            { hexes: %w[E11],          cash: 200, route_bonus: 60,  name: 'Santa Fe'     },
+            { hexes: %w[K19],          cash: 100, route_bonus: 30,  name: 'New Orleans' },
+            { hexes: %w[J10],          cash: 200, route_bonus: 60,  name: 'El Paso'     },
           ],
           'ATS' => [
-            # FIXME: El Paso hex unconfirmed — omitted until map verified
-            { hexes: %w[B2 C1 D4 E3], cash: 200, route_bonus: 60,  name: 'V/P/S/L'     }, # FIXME
+            { hexes: %w[B2 C1 G3 I5], cash: 200, route_bonus: 60,  name: 'V/P/S/L'     },
           ],
           'NP'  => [
-            { hexes: %w[D20],          cash: 100, route_bonus: 30,  name: 'Chicago'      },
+            { hexes: %w[F20],          cash: 100, route_bonus: 30,  name: 'Chicago'     },
           ],
           'CN'  => [
-            { hexes: %w[B2 C1 D4 E3], cash: 100, route_bonus: 30,  name: 'V/P/S/L'     }, # FIXME
+            { hexes: %w[B2 C1 G3 I5], cash: 100, route_bonus: 30,  name: 'V/P/S/L'     },
             { hexes: %w[B10],          cash: 200, route_bonus: 60,  name: 'Regina'       },
           ],
-          # FIXME: TP El Paso bonus omitted until hex coordinate confirmed
+          # FIXME: TP El Paso bonus omitted until bonus amount confirmed from rulebook
         }.freeze
 
         # ---------------------------------------------------------------------------
@@ -87,7 +86,7 @@ module Engine
         # FIXME: SLC hex coordinate unconfirmed — placeholder until map verified.
         # FIXME: GOLDEN_SPIKE_SHAREHOLDER_BONUS amount unconfirmed from rulebook.
         # ---------------------------------------------------------------------------
-        SLC_HEX                        = 'D10'.freeze   # FIXME: confirm from physical map
+        SLC_HEX                        = 'G9'.freeze
         SLC_CORPS                      = %w[CPR UP].freeze
         SLC_ROUTE_BONUS                = 30   # per OR while route passes through SLC
         SLC_ROUTE_BONUS_SOC            = 15   # reduced while SOC (P7) is open
@@ -613,8 +612,8 @@ module Engine
             Engine::Step::DiscardTrain,
             Engine::Step::Exchange,
             Engine::Step::SpecialTrack,
-            G1862GoldenSpike::Step::CompanyPendingPar,
-            G1862GoldenSpike::Step::BuySellParShares,
+            G1862UsaCanada::Step::CompanyPendingPar,
+            G1862UsaCanada::Step::BuySellParShares,
           ])
         end
 
@@ -623,17 +622,17 @@ module Engine
             Engine::Step::Bankrupt,
             Engine::Step::Exchange,
             Engine::Step::SpecialTrack,
-            G1862GoldenSpike::Step::Token,
+            G1862UsaCanada::Step::Token,
             Engine::Step::BuyCompany,
             Engine::Step::HomeToken,
             Engine::Step::Track,
             Engine::Step::Token,
             Engine::Step::Route,
-            G1862GoldenSpike::Step::Dividend,
+            G1862UsaCanada::Step::Dividend,
             Engine::Step::DiscardTrain,
             Engine::Step::BuyTrain,
-            # FIXME: G1862GoldenSpike::Step::StockBuyback — share-halving action (phase 3+)
-            G1862GoldenSpike::Step::RepayBond,
+            # FIXME: G1862UsaCanada::Step::StockBuyback — share-halving action (phase 3+)
+            G1862UsaCanada::Step::RepayBond,
             [Engine::Step::BuyCompany, { blocks: true }],
           ], round_num: round_num)
         end
