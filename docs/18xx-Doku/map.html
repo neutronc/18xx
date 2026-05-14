@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Map Configuration Reference — 18OE Dev Docs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Playfair+Display:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({ startOnLoad: true, theme: 'base', themeVariables: {
+  primaryColor: '#0d1f38', primaryTextColor: '#faf6ec',
+  primaryBorderColor: '#c9a843', lineColor: '#c9a843',
+  secondaryColor: '#1a3a6a', tertiaryColor: '#2a4a80',
+  actorBkg: '#0d1f38', actorTextColor: '#faf6ec',
+  actorBorder: '#c9a843', actorLineColor: '#c9a843',
+  activationBkgColor: '#2a4ab0', activationBorderColor: '#c9a843',
+  signalColor: '#c9a843', signalTextColor: '#2a1a0a',
+  labelBoxBkgColor: '#0d1f38', labelBoxBorderColor: '#c9a843', labelTextColor: '#faf6ec',
+  loopTextColor: '#2a1a0a',
+  edgeLabelBackground: '#f0ead8',
+  noteBkgColor: '#f0e8d4', noteTextColor: '#2a1a0a', noteBorderColor: '#c9a843',
+  titleColor: '#2a1a0a',
+  clusterBkg: '#1a3a6a', clusterBorder: '#c9a843', clusterTextColor: '#faf6ec',
+  fillType0: '#0d1f38', fillType1: '#1a3a6a', fillType2: '#2a4a80',
+  fillType3: '#1a3a6a', fillType4: '#0d1f38', fillType5: '#2a4a80',
+  fillType6: '#1a3a6a', fillType7: '#0d1f38'
+} });</script>
+</head>
+<body>
+<header id="site-header">
+  <a href="index.html">18OE</a> &mdash; Developer Documentation
+</header>
+<div id="layout">
+<nav id="sidebar" aria-label="Navigation">
+<input id="nav-search" type="search" placeholder="Search…" aria-label="Search documentation" autocomplete="off">
+<div id="search-results" style="display:none">
+<p id="search-no-results" style="display:none">No results found.</p>
+<ul id="search-results-list"></ul>
+</div>
+<div class="track"><h3>18OE Status</h3><ul>
+<li><a href="rules-summary.html">Game Rules Summary</a></li>
+<li><a href="18oe-map-status.html">Map Implementation Status</a></li>
+<li><a href="status.html">Implementation Tracker</a></li>
+<li><a href="rulebook-coverage.html">Rulebook Coverage</a></li>
+<li><a href="alpha-gaps.html">Open for Alpha</a></li>
+</ul></div>
+<div class="track"><h3>Getting Involved</h3><ul>
+<li><a href="first-contribution.html">Your First Contribution</a></li>
+</ul></div>
+<div class="track"><h3>Building a New Game</h3><ul>
+<li><a href="engine-concepts.html">Understanding the Engine</a></li>
+<li><a href="getting-started.html">Development Setup</a></li>
+<li><a href="game-implementation.html">Game Structure</a></li>
+<li><a href="map.html" aria-current="page"><strong>Map Configuration</strong></a></li>
+<li><a href="entities.html">Corporations & Companies</a></li>
+<li><a href="trains-phases.html">Trains, Phases & Market</a></li>
+<li><a href="round-step-system.html">Rounds & Steps</a></li>
+<li><a href="auction-round.html">Auction Round</a></li>
+<li><a href="revenue-routing.html">Revenue & Routing</a></li>
+<li><a href="abilities.html">Abilities</a></li>
+<li><a href="tiles.html">Tile Reference</a></li>
+<li><a href="common-patterns.html">Common Patterns</a></li>
+<li><a href="testing.html">Testing Your Game</a></li>
+<li><a href="title-checklist.html">Title Checklist</a></li>
+<li><a href="coding-guidelines.html">Coding Guidelines</a></li>
+</ul></div>
+<div class="track"><h3>Reference</h3><ul>
+<li><a href="game-engine.html">Game Engine Reference</a></li>
+<li><a href="adrs.html">Architecture Decision Records</a></li>
+</ul></div>
+<div class="track"><h3>Platform & Testing Setup</h3><ul>
+<li><a href="architecture.html">Architecture Overview</a></li>
+<li><a href="konfiguration-betrieb.html">Configuration & Operations</a></li>
+<li><a href="systemgrenzen.html">System Boundaries</a></li>
+</ul></div>
+<div class="track"><h3>Working with Claude</h3><ul>
+<li><a href="codevelop.html">Co-developing with Claude</a></li>
+</ul></div>
+</nav>
+<main>
+<article>
+<h1 id="map-configuration-reference">Map Configuration Reference</h1>
+<p>This page documents the three constants that define a game's physical map: <code>TILES</code>, <code>LOCATION_NAMES</code>, and <code>HEXES</code>. All three live in the title's <code>map.rb</code> file as a module included by the main <code>Game</code> class. For the tile string syntax used in actual tile definitions (<code>lib/engine/tile.rb</code>), see <a href="tiles.html">Tile Reference</a>.</p>
+<hr>
+<h2 id="tiles">TILES</h2>
+<p><code>TILES</code> is a hash from tile number (String) to the number of copies available in the tile bank.</p>
+<pre><code class="language-ruby">TILES = {
+  '3'  =&gt; 2,
+  '4'  =&gt; 2,
+  '7'  =&gt; 4,
+  '8'  =&gt; 8,
+  '9'  =&gt; 7,
+  '14' =&gt; 3,
+  '15' =&gt; 3,
+  '57' =&gt; 4,
+  '58' =&gt; 2,
+  '80' =&gt; 2,
+  '81' =&gt; 2,
+  '82' =&gt; 2,
+  '83' =&gt; 2,
+}.freeze</code></pre>
+<p>Tile numbers refer to the standard 18xx tile catalog. Run <code>/tiles/all</code> on your local instance to browse every available tile, or <code>/tiles/&amp;lt;number&amp;gt;</code> to inspect a single tile at large scale.</p>
+<p>If a tile number is omitted from <code>TILES</code>, it is unavailable in the game. If the quantity is exhausted during play, the engine prevents further lays of that tile.</p>
+<hr>
+<h2 id="location_names">LOCATION_NAMES</h2>
+<p><code>LOCATION_NAMES</code> maps hex coordinates to the display names shown on the map.</p>
+<pre><code class="language-ruby">LOCATION_NAMES = {
+  'D2'  =&gt; 'Lansing',
+  'F2'  =&gt; 'Chicago',
+  'H12' =&gt; 'Altoona',
+  'G19' =&gt; 'New York &amp; Newark',
+  'E23' =&gt; 'Boston',
+}.freeze</code></pre>
+<p>A hex does not need an entry here. Hexes without a location name display no label. Coordinates follow the column-row format where the column is a letter and the row is an integer (e.g. <code>'G19'</code>). The exact labelling convention (odd vs even columns for pointy-top layouts) depends on the <code>LAYOUT</code> value.</p>
+<hr>
+<h2 id="hexes">HEXES</h2>
+<p><code>HEXES</code> is a hash of hashes. The outer key is a Symbol representing the starting colour of the hex group; the inner hash maps one or more coordinates to a tile definition string.</p>
+<pre><code class="language-ruby">HEXES = {
+  red: {
+    ['F2'] =&gt; 'offboard=revenue:yellow_40|brown_70;path=a:3,b:_0;path=a:4,b:_0;path=a:5,b:_0',
+  },
+  gray: {
+    ['D2'] =&gt; 'city=revenue:20;path=a:5,b:_0;path=a:4,b:_0',
+  },
+  white: {
+    %w[F4 J14 F22] =&gt; 'city=revenue:0;upgrade=cost:80,terrain:water',
+    %w[B20 D4 F10] =&gt; 'town=revenue:0',
+    %w[I13 D18 B12] =&gt; '',
+    %w[G15 C21]    =&gt; 'upgrade=cost:120,terrain:mountain',
+  },
+  yellow: {
+    ['G19'] =&gt; 'city=revenue:40;city=revenue:40;path=a:3,b:_0;path=a:0,b:_1;label=NY;upgrade=cost:80,terrain:water',
+  },
+}.freeze</code></pre>
+<h3 id="hex-colours">Hex colours</h3>
+<table><thead><tr><th>Colour</th><th>Meaning</th><th>Upgradeable?</th></tr></thead><tbody><tr><td><code>white</code></td><td>Empty hex or blank track</td><td>Yes</td></tr><tr><td><code>yellow</code></td><td>Pre-printed yellow tile</td><td>Yes (to green)</td></tr><tr><td><code>green</code></td><td>Pre-printed green tile</td><td>Yes (to brown)</td></tr><tr><td><code>gray</code></td><td>Permanently fixed track or city</td><td>No</td></tr><tr><td><code>red</code></td><td>Off-map revenue space</td><td>No</td></tr></tbody></table>
+<h3 id="hex-colour-examples">Hex colour examples</h3>
+<p><strong>White — terrain only (mountain + water upgrade cost, no track):</strong></p>
+<pre><code>upgrade=cost:80,terrain:water|mountain</code></pre>
+<p><img src="images/tile_1889_H5.png" alt="White terrain hex — 1889 H5"></p>
+<hr>
+<p><strong>White — two unconnected towns (no paths; players lay tiles to connect them):</strong></p>
+<pre><code>town=revenue:0;town=revenue:0</code></pre>
+<p><img src="images/tile_18Chesapeake_K3.png" alt="White hex with two towns — 18Chesapeake K3"></p>
+<hr>
+<p><strong>Yellow (preprinted) — two-city OO hex with water upgrade cost:</strong></p>
+<pre><code>city=revenue:30;city=revenue:30;path=a:1,b:_0;path=a:4,b:_1;label=OO;upgrade=cost:40,terrain:water</code></pre>
+<p><img src="images/tile_18Chesapeake_H6.png" alt="Yellow OO hex — 18Chesapeake H6"></p>
+<hr>
+<p><strong>Red (offboard) — split offboard across two hexes with border and phase-keyed revenue:</strong></p>
+<ul><li>A3: <code>city=revenue:yellow_40|green_50|brown_60|gray_80,hide:1,groups:Pittsburgh;path=a:5,b:_0;border=edge:4</code></li><li>B2: <code>offboard=revenue:yellow_40|green_50|brown_60|gray_80,groups:Pittsburgh;path=a:0,b:_0;border=edge:1</code></li></ul>
+<p><img src="images/tile_18Chesapeake_A3_B2.png" alt="Red offboard split — 18Chesapeake A3 and B2"></p>
+<hr>
+<h3 id="grouping-hexes">Grouping hexes</h3>
+<p>Multiple coordinates that share the same tile string may be grouped into an array as the key:</p>
+<pre><code class="language-ruby">%w[B2 C1 E3 F4] =&gt; 'upgrade=cost:80,terrain:mountain'</code></pre>
+<p>This is purely syntactic sugar — each coordinate gets an independent copy of the tile.</p>
+<h3 id="tile-definition-string-in-hexes">Tile definition string in HEXES</h3>
+<p>The string assigned to each coordinate is a semicolon-separated sequence of <em>parts</em>. Each part is a <code>type=key:value,key:value</code> expression. The same tile string language is used in the shared tile catalog, with the addition that <code>HEXES</code> strings may include <code>upgrade=</code> to set terrain cost and the <code>revenue:</code> values may be phase-specific.</p>
+<h4 id="parts-reference">Parts reference</h4>
+<p><strong><code>city=</code></strong></p>
+<p>A city node (counts toward train distance; generates revenue).</p>
+<table><thead><tr><th>Key</th><th>Description</th></tr></thead><tbody><tr><td><code>revenue:</code></td><td>Revenue integer, or phase-keyed string (see below)</td></tr><tr><td><code>slots:</code></td><td>Number of token slots (default <code>1</code>)</td></tr></tbody></table>
+<p><strong><code>town=</code></strong></p>
+<p>A town node (counts toward train distance; generates lower revenue).</p>
+<table><thead><tr><th>Key</th><th>Description</th></tr></thead><tbody><tr><td><code>revenue:</code></td><td>Revenue integer or phase-keyed string</td></tr><tr><td><code>boom:</code></td><td>If <code>true</code>, town generates double revenue in brown/gray phase</td></tr></tbody></table>
+<p><strong><code>offboard=</code></strong></p>
+<p>An off-map revenue space.</p>
+<table><thead><tr><th>Key</th><th>Description</th></tr></thead><tbody><tr><td><code>revenue:</code></td><td>Phase-keyed revenue string (always use phase-keyed values for offboards)</td></tr><tr><td><code>groups:</code></td><td>Comma-separated group names; routes cannot use two offboards in the same group</td></tr></tbody></table>
+<p><strong><code>path=</code></strong></p>
+<p>A track segment connecting edges or nodes.</p>
+<table><thead><tr><th>Key</th><th>Description</th></tr></thead><tbody><tr><td><code>a:</code></td><td>Starting endpoint: edge number <code>0</code>–<code>5</code>, or node reference <code>_0</code>, <code>_1</code>, …</td></tr><tr><td><code>b:</code></td><td>Ending endpoint: same format as <code>a:</code></td></tr></tbody></table>
+<p><strong><code>upgrade=</code></strong></p>
+<p>Terrain cost applied when a tile is laid or upgraded on this hex.</p>
+<table><thead><tr><th>Key</th><th>Description</th></tr></thead><tbody><tr><td><code>cost:</code></td><td>Extra cost in addition to the standard upgrade price</td></tr><tr><td><code>terrain:</code></td><td><code>mountain</code>, <code>water</code>, or <code>desert</code>; the UI shows a terrain icon</td></tr></tbody></table>
+<p><strong><code>border=</code></strong></p>
+<p>An impassable or special boundary along an edge.</p>
+<table><thead><tr><th>Key</th><th>Description</th></tr></thead><tbody><tr><td><code>edge:</code></td><td>Edge number <code>0</code>–<code>5</code></td></tr><tr><td><code>type:</code></td><td><code>impassable</code> blocks routing through that edge</td></tr><tr><td><code>color:</code></td><td>CSS colour for the border line</td></tr></tbody></table>
+<p><strong><code>label=</code></strong></p>
+<p>A city label (e.g. <code>NY</code>, <code>B</code>, <code>OO</code>) that restricts which tile numbers may be placed here and affects revenue bonuses in some titles.</p>
+<table><thead><tr><th>Key</th><th>Description</th></tr></thead><tbody><tr><td>(value only)</td><td>Label string: <code>label=NY</code>, <code>label=OO</code>, <code>label=B</code></td></tr></tbody></table>
+<p><strong><code>icon=</code></strong></p>
+<p>A decorative icon rendered inside the hex.</p>
+<table><thead><tr><th>Key</th><th>Description</th></tr></thead><tbody><tr><td><code>image:</code></td><td>Path under <code>public/icons/</code></td></tr><tr><td><code>name:</code></td><td>Display name shown on hover</td></tr></tbody></table>
+<h4 id="phase-keyed-revenue">Phase-keyed revenue</h4>
+<p>Revenue values that change by phase use the format <code>&amp;lt;colour&amp;gt;_&amp;lt;value&amp;gt;|&amp;lt;colour&amp;gt;_&amp;lt;value&amp;gt;</code>:</p>
+<pre><code>revenue:yellow_30|green_40|brown_60|gray_80</code></pre>
+<p>This is most commonly used for offboard hexes and some gray cities.</p>
+<h3 id="edge-numbering">Edge numbering</h3>
+<p>Edges are numbered 0–5 starting from the top-right and going clockwise. The exact orientation depends on <code>LAYOUT</code>:</p>
+<p><strong>Pointy-top hexagon (<code>:pointy</code>)</strong> — most North American titles</p>
+<p><img src="images/tile_anatomy_pointy.png" alt="Anatomy of a Pointy Tile"></p>
+<p><strong>Flat-top hexagon (<code>:flat</code>)</strong> — used in some European titles</p>
+<p><img src="images/tile_anatomy_flat.png" alt="Anatomy of a Flat Tile"></p>
+<p>Node references (<code>_0</code>, <code>_1</code>, …) in the diagrams above correspond to city or town nodes in the order they appear in the tile string, counting from zero.</p>
+<hr>
+<h2 id="layout">LAYOUT</h2>
+<p><code>LAYOUT</code> specifies the hexagon orientation:</p>
+<pre><code class="language-ruby">LAYOUT = :pointy   # Pointy-top (most common)
+# or
+LAYOUT = :flat     # Flat-top</code></pre>
+<p>The value affects edge numbering, adjacency calculations, and the coordinate system used in <code>HEXES</code> and <code>LOCATION_NAMES</code>.</p>
+<hr>
+<h2 id="hex-coordinate-system">Hex Coordinate System</h2>
+<p>Coordinates combine a column letter and a row number. In <code>:pointy</code> layout, columns advance left-to-right and rows top-to-bottom, with odd and even columns offset by half a hex vertically:</p>
+<pre><code>A1  B2  C1  D2  E1
+    A3  B4  C3  D4
+A5  B6  C5  D6  E5</code></pre>
+<p>The starting point and step increment depend on the map's dimensions. Inspect existing <code>map.rb</code> files (<code>/tiles/&amp;lt;game_title&amp;gt;/all</code> renders them) to calibrate your coordinate grid.</p>
+<hr>
+<h2 id="preprinted-vs-blank-hexes">Preprinted vs Blank Hexes</h2>
+<p>Hexes listed under <code>white</code> with an empty string (<code>''</code>) are fully blank — no track, city, or town. They are upgradeable but have no starting content:</p>
+<pre><code class="language-ruby">%w[C3 D2 E5] =&gt; ''</code></pre>
+<p>Hexes with a <code>city=</code> or <code>town=</code> string but no <code>path=</code> parts show a revenue node with no track connections. Corporations may lay tiles to connect these nodes during the Operating Round.</p>
+<p>Hexes listed under <code>gray</code> or <code>red</code> are fixed for the entire game. Their tile strings define permanent routing and revenue without <code>upgrade=</code> constraints.</p>
+<hr>
+<h2 id="whats-next">What's Next</h2>
+<ul><li>Tile string DSL full reference: <a href="tiles.html">Tile Reference</a></li><li>CORPORATIONS, COMPANIES, TRAINS, PHASES schemas: <a href="entities.html">Entities Reference</a></li><li>Step-by-step implementation guide: <a href="game-implementation.html">Game Implementation</a></li></ul>
+<hr>
+<p><em>Version: 2026-05-08 — derived from <code>lib/engine/game/g_1830/map.rb</code>, <code>lib/engine/hex.rb</code>, <code>lib/engine/tile.rb</code>.</em></p>
+</article>
+</main>
+</div>
+<script src="search.js"></script>
+<script src="ui.js"></script>
+</body>
+</html>

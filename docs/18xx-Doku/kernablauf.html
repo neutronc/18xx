@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Core Flow — A Move from Click to State Change — 18OE Dev Docs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Playfair+Display:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({ startOnLoad: true, theme: 'base', themeVariables: {
+  primaryColor: '#0d1f38', primaryTextColor: '#faf6ec',
+  primaryBorderColor: '#c9a843', lineColor: '#c9a843',
+  secondaryColor: '#1a3a6a', tertiaryColor: '#2a4a80',
+  actorBkg: '#0d1f38', actorTextColor: '#faf6ec',
+  actorBorder: '#c9a843', actorLineColor: '#c9a843',
+  activationBkgColor: '#2a4ab0', activationBorderColor: '#c9a843',
+  signalColor: '#c9a843', signalTextColor: '#2a1a0a',
+  labelBoxBkgColor: '#0d1f38', labelBoxBorderColor: '#c9a843', labelTextColor: '#faf6ec',
+  loopTextColor: '#2a1a0a',
+  edgeLabelBackground: '#f0ead8',
+  noteBkgColor: '#f0e8d4', noteTextColor: '#2a1a0a', noteBorderColor: '#c9a843',
+  titleColor: '#2a1a0a',
+  clusterBkg: '#1a3a6a', clusterBorder: '#c9a843', clusterTextColor: '#faf6ec',
+  fillType0: '#0d1f38', fillType1: '#1a3a6a', fillType2: '#2a4a80',
+  fillType3: '#1a3a6a', fillType4: '#0d1f38', fillType5: '#2a4a80',
+  fillType6: '#1a3a6a', fillType7: '#0d1f38'
+} });</script>
+</head>
+<body>
+<header id="site-header">
+  <a href="index.html">18OE</a> &mdash; Developer Documentation
+</header>
+<div id="layout">
+<nav id="sidebar" aria-label="Navigation">
+<input id="nav-search" type="search" placeholder="Search…" aria-label="Search documentation" autocomplete="off">
+<div id="search-results" style="display:none">
+<p id="search-no-results" style="display:none">No results found.</p>
+<ul id="search-results-list"></ul>
+</div>
+<div class="track"><h3>18OE Status</h3><ul>
+<li><a href="rules-summary.html">Game Rules Summary</a></li>
+<li><a href="18oe-map-status.html">Map Implementation Status</a></li>
+<li><a href="status.html">Implementation Tracker</a></li>
+<li><a href="rulebook-coverage.html">Rulebook Coverage</a></li>
+<li><a href="alpha-gaps.html">Open for Alpha</a></li>
+</ul></div>
+<div class="track"><h3>Getting Involved</h3><ul>
+<li><a href="first-contribution.html">Your First Contribution</a></li>
+</ul></div>
+<div class="track"><h3>Building a New Game</h3><ul>
+<li><a href="engine-concepts.html">Understanding the Engine</a></li>
+<li><a href="getting-started.html">Development Setup</a></li>
+<li><a href="game-implementation.html">Game Structure</a></li>
+<li><a href="map.html">Map Configuration</a></li>
+<li><a href="entities.html">Corporations & Companies</a></li>
+<li><a href="trains-phases.html">Trains, Phases & Market</a></li>
+<li><a href="round-step-system.html">Rounds & Steps</a></li>
+<li><a href="auction-round.html">Auction Round</a></li>
+<li><a href="revenue-routing.html">Revenue & Routing</a></li>
+<li><a href="abilities.html">Abilities</a></li>
+<li><a href="tiles.html">Tile Reference</a></li>
+<li><a href="common-patterns.html">Common Patterns</a></li>
+<li><a href="testing.html">Testing Your Game</a></li>
+<li><a href="title-checklist.html">Title Checklist</a></li>
+<li><a href="coding-guidelines.html">Coding Guidelines</a></li>
+</ul></div>
+<div class="track"><h3>Reference</h3><ul>
+<li><a href="game-engine.html">Game Engine Reference</a></li>
+<li><a href="adrs.html">Architecture Decision Records</a></li>
+</ul></div>
+<div class="track"><h3>Platform & Testing Setup</h3><ul>
+<li><a href="architecture.html">Architecture Overview</a></li>
+<li><a href="konfiguration-betrieb.html">Configuration & Operations</a></li>
+<li><a href="systemgrenzen.html">System Boundaries</a></li>
+</ul></div>
+<div class="track"><h3>Working with Claude</h3><ul>
+<li><a href="codevelop.html">Co-developing with Claude</a></li>
+</ul></div>
+</nav>
+<main>
+<article>
+<h1 id="core-flow--a-move-from-click-to-state-change">Core Flow — A Move from Click to State Change</h1>
+<p>18xx.games runs the same engine logic twice: once in the browser (Opal/JS for immediate UI feedback) and once on the server (Ruby for the authoritative state change). The browser only sends the move to the server after local validation has passed.</p>
+<div class="mermaid">
+sequenceDiagram
+    participant Browser as Browser (Opal/JS)
+    participant API as rack (Roda API)
+    participant Engine as Engine::Game (Ruby)
+    participant DB as PostgreSQL
+    participant Bus as Redis MessageBus
+
+    Browser->>Browser: Player clicks (e.g. buy share)
+    Browser->>Browser: Local engine validates Action
+    Browser->>API: POST /api/game/:id/action {type, entity, ...}
+    API->>DB: SELECT actions WHERE game_id = :id (advisory lock)
+    DB-->>API: all prior Actions
+    API->>Engine: Engine::Game.load(game_data, actions: all_actions)
+    Engine->>Engine: replay — initialises objects, applies each Action
+    API->>Engine: game.process_action(new_action)
+    Engine->>Engine: round.process_action → active_step.process_*
+    Engine->>Engine: game_end_check → next_round! if needed
+    API->>DB: INSERT INTO actions (game_id, action_id, action JSON)
+    API->>Bus: MessageBus.publish /game/:id, updated_state
+    Bus-->>Browser: SSE push to all observers
+    Browser->>Browser: UI updates
+</div>
+<h2 id="phase-1--local-validation-in-the-browser">Phase 1 — Local Validation in the Browser</h2>
+<p>The browser runs the entire engine as JavaScript (transpiled via Opal [<code>lib/engine.rb:8-11</code>]). When a player clicks an action, the local engine checks whether the Action is permitted for the current Step before the request is sent to the server. This prevents unnecessary round-trips and gives immediate feedback.</p>
+<h2 id="phase-2--http-request-and-advisory-lock">Phase 2 — HTTP Request and Advisory Lock</h2>
+<p>The browser sends <code>POST /api/game/:id/action</code> with the Action as a JSON payload [<code>routes/game.rb:54-58</code>]. The API immediately acquires a PostgreSQL Advisory Lock on the game ID [<code>routes/game.rb:56</code>] so that parallel requests cannot corrupt the same session.</p>
+<h2 id="phase-3--engine-replay">Phase 3 — Engine Replay</h2>
+<p>Because the game state is not persisted directly, the API loads all prior Actions from the database and passes them to the engine [<code>lib/engine/game/base.rb:819-837</code>]. The engine <code>initialize</code> method rebuilds every game object (Corporations, Players, StockMarket, Hexes) from scratch and applies each Action in sequence [<code>lib/engine/game/base.rb:566-694</code>]. The result is the state immediately before the new move.</p>
+<h2 id="phase-4--processing-the-new-action">Phase 4 — Processing the New Action</h2>
+<p><code>Game::Base#process_action</code> delegates to <code>round.process_action</code> [<code>lib/engine/game/base.rb:838-898</code>]. The Round finds the first active, blocking Step that recognises the action type and calls its <code>process_&amp;lt;type&amp;gt;</code> method [<code>lib/engine/round/base.rb:75-107</code>]. After processing, the engine checks whether the game has ended (<code>game_end_check</code>) [<code>lib/engine/game/base.rb:2970</code>] and decides whether a round transition (<code>next_round!</code>) is required [<code>lib/engine/game/base.rb:2921-2943</code>].</p>
+<h2 id="phase-5--persistence-and-broadcast">Phase 5 — Persistence and Broadcast</h2>
+<p>The new Action is inserted as a JSON row into <code>actions</code> [<code>models/game.rb:1-10</code>]. The API then publishes the updated state over Redis MessageBus [<code>lib/bus.rb:1-30</code>] to all browsers observing the game. Each browser client receives the Server-Sent Event and updates the UI.</p>
+<h2 id="whats-next">What's next</h2>
+<ul><li>Objects involved in this flow: <a href="mental-model.html">Mental Model</a></li><li>Round and Step in depth: <a href="round-step-system.html">Round/Step System</a></li><li>Why replay instead of snapshot: <a href="adrs.html">ADR-002</a></li><li>Technical topology: <a href="architecture.html">Architecture Overview</a></li></ul>
+<hr>
+<p><em>Version: 2026-05-08 — derived from <code>lib/engine/game/base.rb</code>, <code>lib/engine/round/base.rb</code>, <code>routes/game.rb</code>.</em></p>
+</article>
+</main>
+</div>
+<script src="search.js"></script>
+<script src="ui.js"></script>
+</body>
+</html>

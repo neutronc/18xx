@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Round/Step System — 18OE Dev Docs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Playfair+Display:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({ startOnLoad: true, theme: 'base', themeVariables: {
+  primaryColor: '#0d1f38', primaryTextColor: '#faf6ec',
+  primaryBorderColor: '#c9a843', lineColor: '#c9a843',
+  secondaryColor: '#1a3a6a', tertiaryColor: '#2a4a80',
+  actorBkg: '#0d1f38', actorTextColor: '#faf6ec',
+  actorBorder: '#c9a843', actorLineColor: '#c9a843',
+  activationBkgColor: '#2a4ab0', activationBorderColor: '#c9a843',
+  signalColor: '#c9a843', signalTextColor: '#2a1a0a',
+  labelBoxBkgColor: '#0d1f38', labelBoxBorderColor: '#c9a843', labelTextColor: '#faf6ec',
+  loopTextColor: '#2a1a0a',
+  edgeLabelBackground: '#f0ead8',
+  noteBkgColor: '#f0e8d4', noteTextColor: '#2a1a0a', noteBorderColor: '#c9a843',
+  titleColor: '#2a1a0a',
+  clusterBkg: '#1a3a6a', clusterBorder: '#c9a843', clusterTextColor: '#faf6ec',
+  fillType0: '#0d1f38', fillType1: '#1a3a6a', fillType2: '#2a4a80',
+  fillType3: '#1a3a6a', fillType4: '#0d1f38', fillType5: '#2a4a80',
+  fillType6: '#1a3a6a', fillType7: '#0d1f38'
+} });</script>
+</head>
+<body>
+<header id="site-header">
+  <a href="index.html">18OE</a> &mdash; Developer Documentation
+</header>
+<div id="layout">
+<nav id="sidebar" aria-label="Navigation">
+<input id="nav-search" type="search" placeholder="Search…" aria-label="Search documentation" autocomplete="off">
+<div id="search-results" style="display:none">
+<p id="search-no-results" style="display:none">No results found.</p>
+<ul id="search-results-list"></ul>
+</div>
+<div class="track"><h3>18OE Status</h3><ul>
+<li><a href="rules-summary.html">Game Rules Summary</a></li>
+<li><a href="18oe-map-status.html">Map Implementation Status</a></li>
+<li><a href="status.html">Implementation Tracker</a></li>
+<li><a href="rulebook-coverage.html">Rulebook Coverage</a></li>
+<li><a href="alpha-gaps.html">Open for Alpha</a></li>
+</ul></div>
+<div class="track"><h3>Getting Involved</h3><ul>
+<li><a href="first-contribution.html">Your First Contribution</a></li>
+</ul></div>
+<div class="track"><h3>Building a New Game</h3><ul>
+<li><a href="engine-concepts.html">Understanding the Engine</a></li>
+<li><a href="getting-started.html">Development Setup</a></li>
+<li><a href="game-implementation.html">Game Structure</a></li>
+<li><a href="map.html">Map Configuration</a></li>
+<li><a href="entities.html">Corporations & Companies</a></li>
+<li><a href="trains-phases.html">Trains, Phases & Market</a></li>
+<li><a href="round-step-system.html" aria-current="page"><strong>Rounds & Steps</strong></a></li>
+<li><a href="auction-round.html">Auction Round</a></li>
+<li><a href="revenue-routing.html">Revenue & Routing</a></li>
+<li><a href="abilities.html">Abilities</a></li>
+<li><a href="tiles.html">Tile Reference</a></li>
+<li><a href="common-patterns.html">Common Patterns</a></li>
+<li><a href="testing.html">Testing Your Game</a></li>
+<li><a href="title-checklist.html">Title Checklist</a></li>
+<li><a href="coding-guidelines.html">Coding Guidelines</a></li>
+</ul></div>
+<div class="track"><h3>Reference</h3><ul>
+<li><a href="game-engine.html">Game Engine Reference</a></li>
+<li><a href="adrs.html">Architecture Decision Records</a></li>
+</ul></div>
+<div class="track"><h3>Platform & Testing Setup</h3><ul>
+<li><a href="architecture.html">Architecture Overview</a></li>
+<li><a href="konfiguration-betrieb.html">Configuration & Operations</a></li>
+<li><a href="systemgrenzen.html">System Boundaries</a></li>
+</ul></div>
+<div class="track"><h3>Working with Claude</h3><ul>
+<li><a href="codevelop.html">Co-developing with Claude</a></li>
+</ul></div>
+</nav>
+<main>
+<article>
+<h1 id="roundstep-system">Round/Step System</h1>
+<p>Every game action passes through a two-level dispatcher: a <strong>Round</strong> that holds an ordered list of <strong>Steps</strong>, and Steps that declare which action types they handle. Understanding this hierarchy is essential for adding new game mechanics or debugging an unexpected "greyed-out" button.</p>
+<h2 id="rounds">Rounds</h2>
+<p><code>Engine::Round::Base</code> [<code>lib/engine/round/base.rb:12</code>] is an abstract container for one turn segment. It holds:</p>
+<ul><li>An ordered list of <code>Step</code> instances (<code>@steps</code>)</li><li>An ordered queue of acting Entities (<code>@entities</code>)</li><li>The index into that queue (<code>@entity_index</code>)</li></ul>
+<p><code>Game::Base</code> instantiates concrete Round subclasses via factory methods:</p>
+<table><thead><tr><th>Round class</th><th>Short name</th><th>Factory method</th></tr></thead><tbody><tr><td><code>Round::Stock</code> [<code>lib/engine/round/stock.rb:1</code>]</td><td>SR</td><td><code>new_stock_round</code> (<code>:3177</code>)</td></tr><tr><td><code>Round::Operating</code> [<code>lib/engine/round/operating.rb:7</code>]</td><td>OR</td><td><code>new_operating_round</code> (<code>:3192</code>)</td></tr><tr><td><code>Round::Auction</code></td><td>—</td><td>title-specific</td></tr></tbody></table>
+<p>After each action <code>Round::Base#after_process</code> decides whether the current Entity is done and calls <code>next_entity!</code> to advance the queue. When the queue is exhausted, <code>finish_round</code> is called, which triggers <code>Game::Base#next_round!</code> [<code>lib/engine/game/base.rb:2921</code>].</p>
+<h2 id="steps">Steps</h2>
+<p><code>Engine::Step::Base</code> [<code>lib/engine/step/base.rb:8</code>] is the atomic decision unit.</p>
+<h3 id="how-a-step-handles-an-action">How a Step handles an action</h3>
+<p>When <code>Round::Base#process_action</code> receives an action [<code>lib/engine/round/base.rb:75</code>]:</p>
+<ol><li>It iterates the Step list in order.</li><li>For each Step it calls <code>blocking?</code> (<code>:84</code>) — if the Step is blocking and the action type is in the Step's <code>actions</code> list, the Step handles the action.</li><li>If no blocking Step claims the action, a <code>GameError</code> is raised.</li></ol>
+<h3 id="blocking-vs-blocks"><code>blocking?</code> vs <code>blocks?</code></h3>
+<ul><li><code>blocking?</code> (<code>:84</code>) — returns true by default; the Step claims priority over lower-priority Steps.</li><li><code>blocks?</code> (<code>:88</code>) — can return false to let lower Steps act even when this Step is active.</li></ul>
+<p>This allows a Step to <em>monitor</em> an action type (e.g. log it) without preventing other Steps from handling it.</p>
+<h3 id="actions-constant"><code>ACTIONS</code> constant</h3>
+<p>Each Step class defines <code>ACTIONS = [].freeze</code> (<code>:13</code>) and overrides it with the string action types it processes, e.g. <code>['buy_shares', 'sell_shares', 'par']</code>. The UI reads the union of all active Steps' <code>ACTIONS</code> to determine which buttons to enable.</p>
+<h3 id="round_state"><code>round_state</code></h3>
+<p><code>round_state</code> (<code>:80</code>) returns a hash of variables the Step contributes to the Round's shared state (e.g. bought-this-round flags). This avoids coupling between Step classes.</p>
+<h2 id="sequence-stock-round">Sequence: Stock Round</h2>
+<div class="mermaid">
+sequenceDiagram
+    participant Game as Game::Base
+    participant SR as Round::Stock
+    participant Step as Step::BuySellParShares
+
+    Game->>SR: new_stock_round
+    SR->>SR: select_entities (players)
+    loop each player turn
+        SR->>Step: process_action(buy_shares)
+        Step->>Step: process_buy_shares
+        Step->>SR: done?
+        SR->>SR: next_entity!
+    end
+    SR->>Game: finish_round → next_round!
+</div>
+<h2 id="sequence-operating-round">Sequence: Operating Round</h2>
+<div class="mermaid">
+sequenceDiagram
+    participant Game as Game::Base
+    participant OR as Round::Operating
+    participant Steps as Steps (LayTile, PlaceToken, RunRoutes, Dividend, BuyTrain…)
+
+    Game->>OR: new_operating_round
+    OR->>OR: select_entities (corporations in operating order)
+    loop each corporation turn
+        OR->>Steps: process_action(lay_tile)
+        OR->>Steps: process_action(run_routes)
+        OR->>Steps: process_action(dividend)
+        OR->>OR: after_end_of_turn → next_entity!
+    end
+    OR->>Game: finish_round → next_round!
+</div>
+<h2 id="standard-or-step-order">Standard OR Step Order</h2>
+<p>Each operating entity moves through these steps in order. The Round finds the first <code>blocking?</code> Step that handles each incoming action type.</p>
+<table><thead><tr><th>#</th><th>Step class</th><th>Action types</th><th>Notes</th></tr></thead><tbody><tr><td>1</td><td><code>Step::HomeToken</code></td><td>—</td><td>Places home token if <code>HOME_TOKEN_TIMING</code> requires it</td></tr><tr><td>2</td><td><code>Step::Track</code></td><td><code>lay_tile</code></td><td>Yellow lays and upgrades</td></tr><tr><td>3</td><td><code>Step::Token</code></td><td><code>place_token</code></td><td>Station token placement</td></tr><tr><td>4</td><td><code>Step::Route</code></td><td><code>run_routes</code></td><td>Train routing and revenue calculation</td></tr><tr><td>5</td><td><code>Step::Dividend</code></td><td><code>dividend</code></td><td>Pay / withhold / split</td></tr><tr><td>6</td><td><code>Step::BuyTrain</code></td><td><code>buy_train</code>, <code>sell_shares</code></td><td>Train purchase; sell-shares sub-step for emergency buy</td></tr><tr><td>7</td><td><code>Step::BuySellParShares</code></td><td><code>buy_shares</code>, <code>sell_shares</code>, <code>par</code></td><td>Available to majors only in some titles</td></tr></tbody></table>
+<p>Game titles add, remove, or replace steps by passing a custom step list to <code>new_operating_round</code>.</p>
+<p><strong>18OE additions to the standard OR sequence:</strong></p>
+<ul><li>After Step::Token: Transfer Tokens step (majors only — swap tokens between same-player majors)</li><li><code>Step::Consolidate</code> — active during the Consolidation round (Phase 5+)</li><li><code>Step::ConvertToNational</code> — fires when national formation is triggered at Phase 4/6/8</li></ul>
+<h2 id="auto-processing-single-choice-steps">Auto-Processing Single-Choice Steps</h2>
+<p>When an entity type has only one valid choice for a step (e.g. minors always half-pay), suppress the UI prompt entirely by returning <code>[]</code> from <code>actions</code> and handling the auto-action in <code>skip!</code>.</p>
+<pre><code class="language-ruby">def actions(entity)
+  return [] if %i[minor national].include?(entity.type)
+  super
+end
+
+def skip!
+  case current_entity.type
+  when :minor
+    kind = total_revenue.zero? ? 'withhold' : 'half'
+  when :national
+    kind = total_revenue.zero? ? 'withhold' : 'payout'
+  else
+    return super
+  end
+  process_dividend(Action::Dividend.new(current_entity, kind: kind))
+end</code></pre>
+<p><code>dividend_types</code> must include every kind that <code>process_dividend</code> may be called with, including <code>:withhold</code> as a zero-revenue fallback — even for single-choice entity types. Reference: <code>g_1837/step/minor_half_pay.rb</code>.</p>
+<h2 id="select_entities-vs-blocks"><code>select_entities</code> vs <code>blocks?</code></h2>
+<p><code>select_entities</code> determines who <em>participates</em> in the round — include all eligible entities broadly. <code>blocks?</code> determines whether a specific entity's turn is <em>active right now</em> — return <code>false</code> to auto-skip.</p>
+<p><strong>Do not pre-filter in <code>select_entities</code></strong> based on state that can change mid-round (e.g. share ownership after a merge). The initial entity list is fixed; only <code>blocks?</code> is evaluated on every turn.</p>
+<pre><code class="language-ruby"># Broad selection — include all non-bankrupt players:
+def select_entities
+  @game.players
+end
+
+# Fine-grained gating — step auto-skips when nothing to do:
+def blocks?(entity)
+  entity.shares.any? { |s| %i[minor regional].include?(s.corporation.type) }
+end</code></pre>
+<h2 id="adding-a-new-step">Adding a New Step</h2>
+<ol><li>Create <code>lib/engine/step/my_step.rb</code> inheriting from <code>Step::Base</code> (or the closest concrete subclass).</li><li>Override <code>actions(_entity)</code> to return the action type strings this step handles.</li><li>Implement <code>process_&lt;type&gt;(action)</code> for each action type.</li><li>Use <code>round_state</code> to declare step-level state variables shared with the Round.</li><li>Add the step to your title's <code>new_operating_round</code> or <code>new_stock_round</code> call.</li></ol>
+<h2 id="writing-your-first-custom-step">Writing Your First Custom Step</h2>
+<p>Before writing a new Step, confirm you cannot express the rule through a constant or a <code>game.rb</code> method override. A new Step is the right tool when:</p>
+<ul><li>A new action type must be introduced that no existing Step handles.</li><li>The decision sequence for a corporation type differs from the default order.</li><li>An existing Step's logic cannot be expressed through <code>tile_lays</code>, abilities, or hook overrides alone.</li></ul>
+<h3 id="worked-example-mandatory-dividend-for-minors">Worked Example: Mandatory Dividend for Minors</h3>
+<p>Goal: minor corporations in your game always pay out half their revenue — no player choice.</p>
+<p><strong>Step 1 — Create the file</strong></p>
+<pre><code>lib/engine/game/g_8888/step/minor_half_pay.rb</code></pre>
+<p><strong>Step 2 — Inherit from the closest base</strong></p>
+<pre><code class="language-ruby"># frozen_string_literal: true
+
+require_relative '../../../step/dividend'
+
+module Engine
+  module Game
+    module G8888
+      module Step
+        class MinorHalfPay &lt; Engine::Step::Dividend
+          # Minors get no UI prompt — their dividend is auto-processed.
+          def actions(entity)
+            return [] if entity.type == :minor
+            super
+          end
+
+          def skip!
+            return super unless current_entity.type == :minor
+
+            kind = total_revenue(@game.current_routes).zero? ? 'withhold' : 'half'
+            process_dividend(Action::Dividend.new(current_entity, kind: kind))
+          end
+
+          # Every kind that process_dividend may be called with must appear here.
+          def dividend_types
+            %i[half withhold]
+          end
+        end
+      end
+    end
+  end
+end</code></pre>
+<p><strong>Step 3 — Register it in your operating round</strong></p>
+<p>In <code>lib/engine/game/g_8888/game.rb</code>, replace the default <code>Engine::Step::Dividend</code> with your custom step:</p>
+<pre><code class="language-ruby">def operating_round(round_num)
+  Round::Operating.new(self, [
+    Engine::Step::Bankrupt,
+    Engine::Step::Exchange,
+    Engine::Step::SpecialTrack,
+    Engine::Step::BuyCompany,
+    Engine::Step::HomeToken,
+    Engine::Step::Track,
+    Engine::Step::Token,
+    Engine::Step::Route,
+    G8888::Step::MinorHalfPay,       # replaces Engine::Step::Dividend
+    Engine::Step::DiscardTrain,
+    Engine::Step::BuyTrain,
+    [Engine::Step::BuyCompany, { blocks: true }],
+  ], round_num: round_num)
+end</code></pre>
+<p><strong>Step 4 — Test it</strong></p>
+<p>Load a fixture or start a fresh game in IRB and replay up to the first minor OR:</p>
+<pre><code class="language-ruby">require_relative 'lib/engine'
+g = Engine::Game::G8888::Game.new(%w[Alice Bob Charlie])
+
+# Advance past auction into first OR
+# (add actions as needed for your title)
+g.current_entity.type   # =&gt; :minor
+g.current_round.active_step.class  # =&gt; Engine::Game::G8888::Step::MinorHalfPay</code></pre>
+<h3 id="anatomy-of-a-step">Anatomy of a Step</h3>
+<pre><code>Engine::Step::Base
+  ├── ACTIONS        — array of action type strings this step handles
+  ├── actions(entity) — returns ACTIONS when active, [] to suppress UI for this entity
+  ├── blocking?      — true by default; claims priority over lower steps
+  ├── blocks?        — can return false to let lower steps through
+  ├── process_*(action) — called by Round when this step claims the action
+  ├── skip!          — auto-processes when no player choice is needed
+  └── round_state    — hash of variables contributed to the Round's shared state</code></pre>
+<p>The <code>process_*</code> naming convention mirrors the action type: <code>process_lay_tile</code>, <code>process_buy_train</code>, <code>process_dividend</code>, etc. The Round dispatches by calling <code>public_send("process_#{action.type}", action)</code>.</p>
+<h3 id="where-to-look-for-existing-steps">Where to look for existing Steps</h3>
+<table><thead><tr><th>You need…</th><th>Look at</th></tr></thead><tbody><tr><td>Tile lay with extra free lays</td><td><code>lib/engine/step/special_track.rb</code></td></tr><tr><td>Token placement with teleport</td><td><code>lib/engine/step/special_token.rb</code></td></tr><tr><td>Buy company from bank or player</td><td><code>lib/engine/step/buy_company.rb</code></td></tr><tr><td>Emergency train purchase</td><td><code>lib/engine/step/buy_train.rb</code></td></tr><tr><td>Revenue calculation hook</td><td><code>lib/engine/step/route.rb</code></td></tr><tr><td>Waterfall / priority auction</td><td><code>lib/engine/game/g_1822/step/</code></td></tr><tr><td>Minor conversion</td><td><code>lib/engine/game/g_1867/step/</code></td></tr></tbody></table>
+<p>Always inherit from the closest concrete Step rather than <code>Step::Base</code> directly — you get validation, error messages, and UI helpers for free.</p>
+<hr>
+<h2 id="whats-next">What's Next</h2>
+<ul><li>Engine class reference and layer taxonomy: <a href="game-engine.html">Game Engine</a></li><li>Design decisions behind the replay model: <a href="adrs.html">ADRs</a></li><li>Coding patterns for steps and rounds: <a href="coding-guidelines.html">Coding Guidelines</a></li><li>Testing your Step with fixtures: <a href="testing.html">Testing Your Game</a></li></ul>
+<hr>
+<p><em>Version: 2026-05-08 — derived from <code>lib/engine/round/base.rb</code>, <code>lib/engine/step/base.rb</code>, <code>lib/engine/round/operating.rb</code>, <code>lib/engine/round/stock.rb</code>, <code>lib/engine/game/base.rb</code>.</em></p>
+</article>
+</main>
+</div>
+<script src="search.js"></script>
+<script src="ui.js"></script>
+</body>
+</html>

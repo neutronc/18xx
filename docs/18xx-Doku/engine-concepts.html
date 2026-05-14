@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Understanding the Engine — 18OE Dev Docs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Playfair+Display:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({ startOnLoad: true, theme: 'base', themeVariables: {
+  primaryColor: '#0d1f38', primaryTextColor: '#faf6ec',
+  primaryBorderColor: '#c9a843', lineColor: '#c9a843',
+  secondaryColor: '#1a3a6a', tertiaryColor: '#2a4a80',
+  actorBkg: '#0d1f38', actorTextColor: '#faf6ec',
+  actorBorder: '#c9a843', actorLineColor: '#c9a843',
+  activationBkgColor: '#2a4ab0', activationBorderColor: '#c9a843',
+  signalColor: '#c9a843', signalTextColor: '#2a1a0a',
+  labelBoxBkgColor: '#0d1f38', labelBoxBorderColor: '#c9a843', labelTextColor: '#faf6ec',
+  loopTextColor: '#2a1a0a',
+  edgeLabelBackground: '#f0ead8',
+  noteBkgColor: '#f0e8d4', noteTextColor: '#2a1a0a', noteBorderColor: '#c9a843',
+  titleColor: '#2a1a0a',
+  clusterBkg: '#1a3a6a', clusterBorder: '#c9a843', clusterTextColor: '#faf6ec',
+  fillType0: '#0d1f38', fillType1: '#1a3a6a', fillType2: '#2a4a80',
+  fillType3: '#1a3a6a', fillType4: '#0d1f38', fillType5: '#2a4a80',
+  fillType6: '#1a3a6a', fillType7: '#0d1f38'
+} });</script>
+</head>
+<body>
+<header id="site-header">
+  <a href="index.html">18OE</a> &mdash; Developer Documentation
+</header>
+<div id="layout">
+<nav id="sidebar" aria-label="Navigation">
+<input id="nav-search" type="search" placeholder="Search…" aria-label="Search documentation" autocomplete="off">
+<div id="search-results" style="display:none">
+<p id="search-no-results" style="display:none">No results found.</p>
+<ul id="search-results-list"></ul>
+</div>
+<div class="track"><h3>18OE Status</h3><ul>
+<li><a href="rules-summary.html">Game Rules Summary</a></li>
+<li><a href="18oe-map-status.html">Map Implementation Status</a></li>
+<li><a href="status.html">Implementation Tracker</a></li>
+<li><a href="rulebook-coverage.html">Rulebook Coverage</a></li>
+<li><a href="alpha-gaps.html">Open for Alpha</a></li>
+</ul></div>
+<div class="track"><h3>Getting Involved</h3><ul>
+<li><a href="first-contribution.html">Your First Contribution</a></li>
+</ul></div>
+<div class="track"><h3>Building a New Game</h3><ul>
+<li><a href="engine-concepts.html" aria-current="page"><strong>Understanding the Engine</strong></a></li>
+<li><a href="getting-started.html">Development Setup</a></li>
+<li><a href="game-implementation.html">Game Structure</a></li>
+<li><a href="map.html">Map Configuration</a></li>
+<li><a href="entities.html">Corporations & Companies</a></li>
+<li><a href="trains-phases.html">Trains, Phases & Market</a></li>
+<li><a href="round-step-system.html">Rounds & Steps</a></li>
+<li><a href="auction-round.html">Auction Round</a></li>
+<li><a href="revenue-routing.html">Revenue & Routing</a></li>
+<li><a href="abilities.html">Abilities</a></li>
+<li><a href="tiles.html">Tile Reference</a></li>
+<li><a href="common-patterns.html">Common Patterns</a></li>
+<li><a href="testing.html">Testing Your Game</a></li>
+<li><a href="title-checklist.html">Title Checklist</a></li>
+<li><a href="coding-guidelines.html">Coding Guidelines</a></li>
+</ul></div>
+<div class="track"><h3>Reference</h3><ul>
+<li><a href="game-engine.html">Game Engine Reference</a></li>
+<li><a href="adrs.html">Architecture Decision Records</a></li>
+</ul></div>
+<div class="track"><h3>Platform & Testing Setup</h3><ul>
+<li><a href="architecture.html">Architecture Overview</a></li>
+<li><a href="konfiguration-betrieb.html">Configuration & Operations</a></li>
+<li><a href="systemgrenzen.html">System Boundaries</a></li>
+</ul></div>
+<div class="track"><h3>Working with Claude</h3><ul>
+<li><a href="codevelop.html">Co-developing with Claude</a></li>
+</ul></div>
+</nav>
+<main>
+<article>
+<h1 id="understanding-the-engine">Understanding the Engine</h1>
+<p>Before writing your first line of game code, it helps to understand why the engine is built the way it is and how the key objects fit together. This page is the mental model you need before working through the rest of the tutorial.</p>
+<hr>
+<h2 id="the-core-invariant-only-actions-are-persisted">The Core Invariant: Only Actions Are Persisted</h2>
+<p>The 18xx.games engine never saves the game state — the board layout, cash totals, stock prices — to the database. It saves only the <strong>sequence of Actions</strong> that produced that state. Every time a page loads, the engine replays all actions from scratch to reconstruct the state.</p>
+<p>This means:</p>
+<ul><li>There is no migration risk from state format changes.</li><li>A fixture test is just "replay these actions and check the final scores."</li><li>Adding a new game title requires only defining the starting conditions and how each action type changes them.</li></ul>
+<p>The trade-off is that load time grows with game length. Caching and the PIN mechanism (locking old games to a JS bundle snapshot) address this.</p>
+<hr>
+<h2 id="the-object-map">The Object Map</h2>
+<div class="mermaid">
+classDiagram
+    class Game {
+        +id: Integer
+        +title: String
+        +status: String
+        +turn: Integer
+        +actions: Action[]
+        +process_action()
+        +next_round!()
+    }
+    class Player {
+        +id
+        +name
+        +cash: Integer
+        +shares: Share[]
+    }
+    class Corporation {
+        +id
+        +name
+        +cash: Integer
+        +trains: Train[]
+        +tokens: Token[]
+        +share_price: SharePrice
+    }
+    class Round {
+        +steps: Step[]
+        +entities: Entity[]
+        +process_action()
+        +active_step()
+    }
+    class Step {
+        +ACTIONS: Symbol[]
+        +active?()
+        +blocking?()
+        +process_*(action)
+    }
+    class Action {
+        +id: Integer
+        +type: String
+        +entity
+        +to_h(): Hash
+    }
+    class Phase {
+        +name: String
+        +operating_rounds: Integer
+        +buying_train!()
+    }
+    class Train {
+        +name
+        +distance
+        +price: Integer
+        +obsolete: Boolean
+    }
+    class StockMarket {
+        +market: SharePrice[][]
+        +par_prices: SharePrice[]
+        +move_up()
+        +move_down()
+    }
+    class Hex {
+        +id: String
+        +tile: Tile
+        +neighbors: Hex[]
+    }
+
+    Game "1" --> "1..*" Round : current
+    Game "1" --> "2..6" Player : has
+    Game "1" --> "1..*" Corporation : has
+    Game "1" --> "1" StockMarket : has
+    Game "1" --> "1" Phase : current
+    Game "1" --> "1..*" Hex : has
+    Round "1" --> "1..*" Step : contains
+    Corporation "1" --> "0..*" Train : owns
+    Phase "1" --> "0..*" Train : triggers
+</div>
+<hr>
+<h2 id="the-four-runtime-layers">The Four Runtime Layers</h2>
+<p>When you implement a game title, you are working in exactly one of these layers per change:</p>
+<table><thead><tr><th>Layer</th><th>Where</th><th>What you control</th></tr></thead><tbody><tr><td><strong>L1 — Constants</strong></td><td><code>game.rb</code>, <code>entities.rb</code>, <code>map.rb</code></td><td>TRAINS, PHASES, CORPORATIONS, HEXES, MARKET</td></tr><tr><td><strong>L2 — Event hooks</strong></td><td><code>game.rb</code> overrides</td><td>Named methods called when engine events fire (<code>event_close_companies!</code>, <code>operating_order</code>, etc.)</td></tr><tr><td><strong>L3 — Step overrides</strong></td><td><code>step/</code> directory</td><td>Decision logic within an existing Step type</td></tr><tr><td><strong>L4 — New Step / Round</strong></td><td><code>step/</code> or <code>round/</code> directory</td><td>Entirely new action types or turn structures</td></tr></tbody></table>
+<p>Work at the lowest layer that solves the problem. Constants first, then event hooks, then step overrides, then new Steps. Adding a new Step is significant; most title-specific rules only need a constant or a method override.</p>
+<p><strong>g_1830 is the gold standard for L1</strong>: 95% of its mechanics live in constants.</p>
+<h3 id="l1--what-each-constant-captures">L1 — What each constant captures</h3>
+<p><strong><code>TRAINS</code> entries:</strong></p>
+<ul><li>Train roster: <code>name:</code>, <code>distance:</code>, <code>price:</code>, <code>num:</code></li><li>Rust triggers: <code>rusts_on:</code>, <code>obsolete_on:</code></li><li>Availability gate: <code>available_on:</code> (train only appears after another is bought)</li><li>Purchase discounts: <code>discount: {'2' =&gt; 30}</code> hash</li><li>Variants: <code>variants:</code> array (sub-types selectable at buy time; each can have own <code>rusts_on:</code>)</li><li>Revenue multipliers on variants: <code>multiplier:</code> int</li><li>Phase-transition events: <code>events: [{'type' =&gt; 'xxx'}]</code> — dispatched to <code>event_xxx!</code></li><li>Multi-node distance specs: <code>distance:</code> as array of <code>{'nodes'=&gt;[...], 'pay'=&gt;N, 'visit'=&gt;N}</code></li></ul>
+<p><strong><code>PHASES</code> entries:</strong></p>
+<ul><li>Train limit per phase (scalar or <code>{minor: N, major: N, national: N}</code> hash)</li><li>Available tile colours: <code>tiles:</code></li><li>Operating rounds per phase: <code>operating_rounds:</code></li><li>Status flags: string array mapping to <code>STATUS_TEXT</code></li><li>Phase-trigger events: same <code>events:</code> key as trains</li></ul>
+<p><strong><code>CORPORATIONS</code> / <code>MINORS</code> entries:</strong></p>
+<ul><li>Type field: <code>:minor</code> / <code>:major</code> / <code>:national</code></li><li>Token stack and costs: <code>tokens:</code></li><li>Home coordinates + city index: <code>coordinates:</code>, <code>city:</code></li><li>Float percent: <code>float_percent:</code></li></ul>
+<p><strong>Scalar game constants (selection):</strong></p>
+<ul><li><code>CAPITALIZATION</code> — <code>:full</code>, <code>:incremental</code>, <code>:none</code></li><li><code>SELL_BUY_ORDER</code>, <code>SELL_AFTER</code>, <code>SELL_MOVEMENT</code>, <code>POOL_SHARE_DROP</code></li><li><code>MUST_BUY_TRAIN</code>, <code>MUST_SELL_IN_BLOCKS</code>, <code>EBUY_FROM_OTHERS</code>, <code>EBUY_PRES_SWAP</code></li><li><code>HOME_TOKEN_TIMING</code>, <code>TILE_RESERVATION_BLOCKS_OTHERS</code>, <code>TRACK_RESTRICTION</code></li><li><code>BANK_CASH</code>, <code>STARTING_CASH</code>, <code>CERT_LIMIT</code>, <code>CURRENCY_FORMAT_STR</code></li><li><code>GAME_END_CHECK</code> hash of reason → timing</li><li><code>TILE_LAYS</code> array of lay-slot hashes for default entity type</li><li><code>STATUS_TEXT</code>, <code>EVENTS_TEXT</code>, <code>MARKET_TEXT</code>, <code>GAME_END_REASONS_TEXT</code></li></ul>
+<h3 id="l2--key-hook-methods">L2 — Key hook methods</h3>
+<table><thead><tr><th>Hook method</th><th>What it controls</th></tr></thead><tbody><tr><td><code>tile_lays(entity)</code></td><td>Lay budget per entity type and/or phase</td></tr><tr><td><code>revenue_for(route, stops)</code></td><td>Route revenue bonus additions</td></tr><tr><td><code>float_corporation(corp)</code></td><td>When/how corp receives IPO cash</td></tr><tr><td><code>must_buy_train?(entity)</code></td><td>Whether corp is forced to buy a train</td></tr><tr><td><code>upgrades_to?(from, to, ...)</code></td><td>Custom tile upgrade validation</td></tr><tr><td><code>check_distance(route, visits)</code></td><td>Route validity rules</td></tr><tr><td><code>check_other(route)</code></td><td>Extra single-route validity rules</td></tr><tr><td><code>operating_order</code></td><td>Order entities operate in the OR</td></tr><tr><td><code>next_round!</code></td><td>Inter-round sequencing</td></tr><tr><td><code>event_xxx!</code></td><td>Any named phase/train event handler</td></tr><tr><td><code>num_trains(train)</code></td><td>Override train count (e.g. gated availability)</td></tr><tr><td><code>buying_power(entity)</code></td><td>Available spending budget</td></tr><tr><td><code>can_par?(corp, parrer)</code></td><td>Whether a corp can be parred</td></tr><tr><td><code>setup</code></td><td>One-time game initialisation</td></tr><tr><td><code>action_processed(action)</code></td><td>Post-action side effects</td></tr><tr><td><code>sold_out_increase?</code></td><td>Stock market UP movement eligibility</td></tr></tbody></table>
+<h3 id="l3--common-custom-step-and-round-categories">L3 — Common custom Step and Round categories</h3>
+<table><thead><tr><th>Category</th><th>What it changes</th></tr></thead><tbody><tr><td>Waterfall auction</td><td>How privates/minors are allocated at game start</td></tr><tr><td>Minor acquisition</td><td>OR step for a major to absorb a minor</td></tr><tr><td>Merger/conversion</td><td>Corp merges or converts; share reduction</td></tr><tr><td>Emergency issue/buy</td><td>Emergency train purchase flow</td></tr><tr><td>Nationalization</td><td>National corp auto-formation and auto-operation</td></tr><tr><td>Custom Operating round</td><td>Extended start_operating / skip logic</td></tr></tbody></table>
+<hr>
+<h2 id="game-round-and-step">Game, Round, and Step</h2>
+<p>A <strong>Game</strong> (<code>Game::Base</code>) is the top-level container. It holds all objects and knows which Round is active. Each of the 100+ game titles is a subclass with its own constant definitions.</p>
+<p>A <strong>Round</strong> is a turn segment — Stock Round, Operating Round, Auction Round. It holds an ordered list of <strong>Steps</strong> and an ordered queue of entities (players or corporations) that act in sequence.</p>
+<p>A <strong>Step</strong> is an atomic decision unit. It declares <code>ACTIONS</code> — the action types it handles — and implements <code>process_&amp;lt;type&amp;gt;(action)</code> for each. The Round asks Steps in order: "can you handle this?" The first blocking Step that claims the action type handles it.</p>
+<p>The UI reads the union of all active Steps' <code>ACTIONS</code> lists to decide which buttons to enable. If a button is greyed out, no active Step is claiming that action type for the current entity.</p>
+<hr>
+<h2 id="how-an-action-travels">How an Action Travels</h2>
+<div class="mermaid">
+stateDiagram-v2
+    [*] --> Created : User clicks a UI control
+    Created --> LocalValidated : Client-side engine validates against local state
+    LocalValidated --> Sent : HTTP POST to /api/game/:id/action
+    Sent --> Replayed : Advisory Lock acquired; all prior Actions replayed
+    Replayed --> ServerValidated : New Action applied to fresh engine state
+    ServerValidated --> Persisted : Action inserted into actions table
+    Persisted --> Broadcast : Published to Redis /game/:id channel
+    Broadcast --> [*] : SSE delivers updated state to all connected clients
+    ServerValidated --> Rejected : Validation error — 422 response
+    Rejected --> [*] : Client shows error; no state change persisted
+</div>
+<p>The same engine code runs on both sides. The browser validates optimistically; the server validates authoritatively. Your game code only needs to be correct once.</p>
+<hr>
+<h2 id="how-phases-advance">How Phases Advance</h2>
+<p>Buying the first copy of a train advances the game phase. This is the engine's primary mechanism for progressing the development arc:</p>
+<div class="mermaid">
+sequenceDiagram
+    participant Corp as Corporation
+    participant Depot as Depot
+    participant Phase as Phase
+    participant Game as Game::Base
+
+    Corp->>Depot: buy_train(train)
+    Depot->>Phase: buying_train!(train)
+    Phase->>Phase: check trigger (on: field in PHASES)
+    alt phase advances
+        Phase->>Game: dispatch phase events (event_close_companies! etc.)
+        Game->>Game: rust older trains (rusts_on: field in TRAINS)
+        Game->>Game: unlock track colours (tiles: field in PHASES)
+        Game->>Game: update operating round count
+    end
+</div>
+<p>The <code>on:</code> field in each <code>PHASES</code> entry names the train whose first purchase triggers that phase. A single purchase can advance the phase and fire multiple events simultaneously.</p>
+<hr>
+<h2 id="event-handler-library">Event Handler Library</h2>
+<p>Event handlers are dispatched from <code>TRAINS</code> or <code>PHASES</code> <code>events:</code> arrays via <code>@game.send("event_#{type}!")</code>. They must exist in <code>game.rb</code> or <code>base.rb</code>.</p>
+<table><thead><tr><th>Event name</th><th>What it does</th><th>Source</th></tr></thead><tbody><tr><td><code>close_companies</code></td><td>Closes all companies with no owner or qualifying criteria</td><td><code>base.rb</code></td></tr><tr><td><code>remove_reservations</code></td><td>Removes all unsold home reservations</td><td><code>1846</code></td></tr><tr><td><code>remove_bonuses</code></td><td>Removes east-west / bonus tokens</td><td><code>1846</code></td></tr><tr><td><code>float_30</code> / <code>float_40</code> / <code>float_60</code></td><td>Changes float threshold mid-game</td><td><code>1880</code></td></tr><tr><td><code>green_minors_available</code></td><td>Minors can buy green trains</td><td><code>1867/1861</code></td></tr><tr><td><code>majors_can_ipo</code></td><td>Major corps open for IPO</td><td><code>1867/1861</code></td></tr><tr><td><code>minors_cannot_start</code></td><td>Minors blocked from starting</td><td><code>1867/1861</code></td></tr><tr><td><code>minors_nationalized</code></td><td>All remaining minors nationalize</td><td><code>1867/1861</code></td></tr><tr><td><code>trainless_nationalization</code></td><td>Trainless entities nationalize</td><td><code>1867/1861</code></td></tr><tr><td><code>nationalize_companies</code></td><td>Privates absorbed into national</td><td><code>1867/1861</code></td></tr><tr><td><code>phase_revenue</code></td><td>Changes private revenues by phase</td><td><code>1822 family</code></td></tr><tr><td><code>full_capitalisation</code></td><td>Full cap event</td><td><code>1822, 1880</code></td></tr><tr><td><code>trigger_endgame</code></td><td>Signals game-end countdown</td><td><code>1868_wy</code></td></tr></tbody></table>
+<p>Define your own by adding <code>events: [{'type' =&amp;gt; 'my_event'}]</code> to a <code>TRAINS</code> or <code>PHASES</code> entry and implementing <code>event_my_event!</code> in <code>game.rb</code>.</p>
+<hr>
+<h2 id="key-terms">Key Terms</h2>
+<table><thead><tr><th>Term</th><th>What it means</th></tr></thead><tbody><tr><td><strong>Action</strong></td><td>A persisted move: entity, type (<code>buy_shares</code>, <code>lay_tile</code>, etc.), and type-specific args</td></tr><tr><td><strong>Advisory Lock</strong></td><td>PostgreSQL lock per game ID — prevents parallel requests from corrupting the same session</td></tr><tr><td><strong>Bank</strong></td><td>Central cash reserve; can trigger end-of-game when exhausted</td></tr><tr><td><strong>Certificate Limit</strong></td><td>Maximum certificates a player may hold (game-specific, player-count-dependent)</td></tr><tr><td><strong>Company</strong></td><td>Private company auctioned at game start; grants special abilities</td></tr><tr><td><strong>Corporation</strong></td><td>Investable railway company with shares, trains, tokens, and a stock market position</td></tr><tr><td><strong>DEV_STAGE</strong></td><td>Title status: <code>:prealpha</code> → <code>:alpha</code> → <code>:beta</code> → <code>:production</code></td></tr><tr><td><strong>Depot</strong></td><td>Supply of unsold trains</td></tr><tr><td><strong>Ebuy</strong></td><td>Emergency Buy — a corporation with no train must buy one, using the president's cash if needed</td></tr><tr><td><strong>Entity</strong></td><td>Collective term for anything that can act: Player, Corporation, Minor, Company</td></tr><tr><td><strong>Graph</strong></td><td>Routing graph computed from current track layout; used for revenue calculation</td></tr><tr><td><strong>Hotseat</strong></td><td>Local multiplayer mode (no server)</td></tr><tr><td><strong>Minor</strong></td><td>Small subsidiary in certain titles; can own shares and run routes</td></tr><tr><td><strong>Opal</strong></td><td>Ruby-to-JavaScript transpiler that lets the engine run in the browser</td></tr><tr><td><strong>Par</strong></td><td>Issue price at IPO; sets the starting stock market position</td></tr><tr><td><strong>Phase</strong></td><td>Game segment advanced by train purchases; controls track colours, OR count, and train rusting</td></tr><tr><td><strong>Pin</strong></td><td>Locks a running game to an older JS bundle to prevent breaking replays</td></tr><tr><td><strong>Round</strong></td><td>Turn segment (SR, OR, Auction); contains Steps and Entities</td></tr><tr><td><strong>Step</strong></td><td>Atomic decision unit; declares <code>ACTIONS</code> and handles them</td></tr><tr><td><strong>Stock Round (SR)</strong></td><td>Players buy and sell shares</td></tr><tr><td><strong>Operating Round (OR)</strong></td><td>Corporations lay track, place tokens, buy trains, run routes</td></tr><tr><td><strong>StockMarket</strong></td><td>2D price grid; buys/sells move a corporation's marker</td></tr><tr><td><strong>Tile</strong></td><td>Track tile on a Hex; contains paths, cities, towns</td></tr><tr><td><strong>Token</strong></td><td>Corporation's presence marker on a city</td></tr><tr><td><strong>Train</strong></td><td>Corporation's train; has reach (distance) and triggers phase transitions</td></tr></tbody></table>
+<hr>
+<h2 id="where-to-look-things-up">Where to Look Things Up</h2>
+<table><thead><tr><th>Question</th><th>Where to look</th></tr></thead><tbody><tr><td>What does Game::Base provide by default?</td><td><code>lib/engine/game/base.rb</code> — skim the constants block at the top</td></tr><tr><td>Where is a Step registered?</td><td>The <code>operating_round</code> or <code>stock_round</code> method in the title's <code>game.rb</code></td></tr><tr><td>How does an existing action type work?</td><td><code>lib/engine/step/&lt;action&gt;.rb</code></td></tr><tr><td>What events does a phase/train trigger?</td><td><code>lib/engine/phase.rb</code> and the title's <code>PHASES</code>/<code>TRAINS</code> constants</td></tr><tr><td>What does a production title look like?</td><td><code>lib/engine/game/g_1830/</code> (canonical reference), <code>lib/engine/game/g_1846/</code> (incremental cap), <code>lib/engine/game/g_1867/</code> (minor conversion)</td></tr></tbody></table>
+<hr>
+<h2 id="whats-next">What's Next</h2>
+<p>Work through the tutorial in order:</p>
+<ol><li><a href="getting-started.html">Development Setup</a> — get Docker running and the test suite green</li><li><a href="game-implementation.html">Game Structure</a> — create the four files every title needs</li><li><a href="map.html">Map Configuration</a> — define hexes, location names, and tile supply</li><li><a href="entities.html">Corporations & Companies</a> — define the entities players interact with</li><li><a href="trains-phases.html">Trains, Phases & Market</a> — configure the economic arc</li><li><a href="round-step-system.html">Rounds & Steps</a> — customise the decision sequence</li></ol>
+<hr>
+<p><em>Version: 2026-05-08 — derived from <code>lib/engine/game/base.rb</code>, <code>lib/engine/round/base.rb</code>, <code>lib/engine/step/base.rb</code>, <code>lib/engine/phase.rb</code>.</em></p>
+</article>
+</main>
+</div>
+<script src="search.js"></script>
+<script src="ui.js"></script>
+</body>
+</html>

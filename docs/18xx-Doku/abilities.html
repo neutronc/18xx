@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ability Types Reference — 18OE Dev Docs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Playfair+Display:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({ startOnLoad: true, theme: 'base', themeVariables: {
+  primaryColor: '#0d1f38', primaryTextColor: '#faf6ec',
+  primaryBorderColor: '#c9a843', lineColor: '#c9a843',
+  secondaryColor: '#1a3a6a', tertiaryColor: '#2a4a80',
+  actorBkg: '#0d1f38', actorTextColor: '#faf6ec',
+  actorBorder: '#c9a843', actorLineColor: '#c9a843',
+  activationBkgColor: '#2a4ab0', activationBorderColor: '#c9a843',
+  signalColor: '#c9a843', signalTextColor: '#2a1a0a',
+  labelBoxBkgColor: '#0d1f38', labelBoxBorderColor: '#c9a843', labelTextColor: '#faf6ec',
+  loopTextColor: '#2a1a0a',
+  edgeLabelBackground: '#f0ead8',
+  noteBkgColor: '#f0e8d4', noteTextColor: '#2a1a0a', noteBorderColor: '#c9a843',
+  titleColor: '#2a1a0a',
+  clusterBkg: '#1a3a6a', clusterBorder: '#c9a843', clusterTextColor: '#faf6ec',
+  fillType0: '#0d1f38', fillType1: '#1a3a6a', fillType2: '#2a4a80',
+  fillType3: '#1a3a6a', fillType4: '#0d1f38', fillType5: '#2a4a80',
+  fillType6: '#1a3a6a', fillType7: '#0d1f38'
+} });</script>
+</head>
+<body>
+<header id="site-header">
+  <a href="index.html">18OE</a> &mdash; Developer Documentation
+</header>
+<div id="layout">
+<nav id="sidebar" aria-label="Navigation">
+<input id="nav-search" type="search" placeholder="Search…" aria-label="Search documentation" autocomplete="off">
+<div id="search-results" style="display:none">
+<p id="search-no-results" style="display:none">No results found.</p>
+<ul id="search-results-list"></ul>
+</div>
+<div class="track"><h3>18OE Status</h3><ul>
+<li><a href="rules-summary.html">Game Rules Summary</a></li>
+<li><a href="18oe-map-status.html">Map Implementation Status</a></li>
+<li><a href="status.html">Implementation Tracker</a></li>
+<li><a href="rulebook-coverage.html">Rulebook Coverage</a></li>
+<li><a href="alpha-gaps.html">Open for Alpha</a></li>
+</ul></div>
+<div class="track"><h3>Getting Involved</h3><ul>
+<li><a href="first-contribution.html">Your First Contribution</a></li>
+</ul></div>
+<div class="track"><h3>Building a New Game</h3><ul>
+<li><a href="engine-concepts.html">Understanding the Engine</a></li>
+<li><a href="getting-started.html">Development Setup</a></li>
+<li><a href="game-implementation.html">Game Structure</a></li>
+<li><a href="map.html">Map Configuration</a></li>
+<li><a href="entities.html">Corporations & Companies</a></li>
+<li><a href="trains-phases.html">Trains, Phases & Market</a></li>
+<li><a href="round-step-system.html">Rounds & Steps</a></li>
+<li><a href="auction-round.html">Auction Round</a></li>
+<li><a href="revenue-routing.html">Revenue & Routing</a></li>
+<li><a href="abilities.html" aria-current="page"><strong>Abilities</strong></a></li>
+<li><a href="tiles.html">Tile Reference</a></li>
+<li><a href="common-patterns.html">Common Patterns</a></li>
+<li><a href="testing.html">Testing Your Game</a></li>
+<li><a href="title-checklist.html">Title Checklist</a></li>
+<li><a href="coding-guidelines.html">Coding Guidelines</a></li>
+</ul></div>
+<div class="track"><h3>Reference</h3><ul>
+<li><a href="game-engine.html">Game Engine Reference</a></li>
+<li><a href="adrs.html">Architecture Decision Records</a></li>
+</ul></div>
+<div class="track"><h3>Platform & Testing Setup</h3><ul>
+<li><a href="architecture.html">Architecture Overview</a></li>
+<li><a href="konfiguration-betrieb.html">Configuration & Operations</a></li>
+<li><a href="systemgrenzen.html">System Boundaries</a></li>
+</ul></div>
+<div class="track"><h3>Working with Claude</h3><ul>
+<li><a href="codevelop.html">Co-developing with Claude</a></li>
+</ul></div>
+</nav>
+<main>
+<article>
+<h1 id="ability-types-reference">Ability Types Reference</h1>
+<p>Company and corporation abilities are defined as hashes in <code>entities.rb</code> files. The engine processes them via <code>lib/engine/ability/</code> and evaluates their legality through <code>Game::Base#ability_right_time?</code>. This page is an exhaustive reference for ability types, their fields, and the <code>when:</code> vocabulary.</p>
+<hr>
+<h2 id="ability-type-frequency">Ability Type Frequency</h2>
+<p>Frequencies extracted from analysis of 112 <code>entities.rb</code> files (1,111 COMPANIES, 1,241 CORPORATIONS) across the engine.</p>
+<table><thead><tr><th>Type</th><th>Occurrences</th><th>Games</th><th>Key fields</th></tr></thead><tbody><tr><td><code>exchange</code></td><td>260</td><td>31</td><td><code>corporations:</code>, <code>from:</code>, <code>when:</code></td></tr><tr><td><code>tile_lay</code></td><td>232</td><td>59</td><td><code>count:</code>, <code>when:</code>, <code>free:</code>, <code>tiles:</code>, <code>hexes:</code>, <code>consume_tile_lay:</code>, <code>closed_when_used_up:</code></td></tr><tr><td><code>blocks_hexes</code></td><td>180</td><td>40</td><td><code>hexes:</code></td></tr><tr><td><code>no_buy</code></td><td>175</td><td>35</td><td>(no extra fields)</td></tr><tr><td><code>shares</code></td><td>124</td><td>43</td><td><code>shares:</code></td></tr><tr><td><code>close</code></td><td>108</td><td>38</td><td><code>when:</code>, <code>corporation:</code>, <code>on_phase:</code></td></tr><tr><td><code>revenue_change</code></td><td>92</td><td>14</td><td><code>revenue:</code>, <code>on_phase:</code></td></tr><tr><td><code>assign_hexes</code></td><td>82</td><td>34</td><td><code>hexes:</code></td></tr><tr><td><code>reservation</code></td><td>78</td><td>11</td><td><code>hexes:</code></td></tr><tr><td><code>hex_bonus</code></td><td>54</td><td>10</td><td><code>hexes:</code>, <code>amount:</code></td></tr><tr><td><code>token</code></td><td>53</td><td>27</td><td><code>price:</code>, <code>count:</code>, <code>corporation:</code></td></tr><tr><td><code>base</code></td><td>50</td><td>8</td><td><code>description:</code></td></tr><tr><td><code>tile_discount</code></td><td>44</td><td>28</td><td><code>terrain:</code>, <code>discount:</code></td></tr><tr><td><code>assign_corporation</code></td><td>34</td><td>21</td><td><code>corporations:</code></td></tr><tr><td><code>blocks_hexes_consent</code></td><td>32</td><td>4</td><td>(blocking released on owner consent)</td></tr><tr><td><code>description</code></td><td>21</td><td>8</td><td><code>description:</code></td></tr><tr><td><code>choose_ability</code></td><td>19</td><td>6</td><td>(no standard fields)</td></tr><tr><td><code>manual_close_company</code></td><td>19</td><td>1</td><td>(no standard fields)</td></tr><tr><td><code>sell_company</code></td><td>19</td><td>2</td><td>(no standard fields)</td></tr><tr><td><code>train_discount</code></td><td>16</td><td>12</td><td><code>discount:</code>, <code>trains:</code></td></tr><tr><td><code>teleport</code></td><td>16</td><td>12</td><td><code>hexes:</code>, <code>tiles:</code></td></tr><tr><td><code>tile_income</code></td><td>10</td><td>9</td><td>(no standard fields)</td></tr><tr><td><code>train_limit</code></td><td>9</td><td>6</td><td>(no standard fields)</td></tr><tr><td><code>generic</code></td><td>8</td><td>1</td><td><code>desc:</code></td></tr><tr><td><code>additional_token</code></td><td>7</td><td>7</td><td>(no standard fields)</td></tr><tr><td><code>train_buy</code></td><td>6</td><td>6</td><td>(no standard fields)</td></tr><tr><td><code>acquire_company</code></td><td>6</td><td>2</td><td>(no standard fields)</td></tr><tr><td><code>borrow_train</code></td><td>2</td><td>2</td><td>(no standard fields)</td></tr><tr><td><code>blocks_partition</code></td><td>2</td><td>2</td><td>(no standard fields)</td></tr><tr><td><code>train_scrapper</code></td><td>1</td><td>1</td><td>(no standard fields)</td></tr><tr><td><code>purchase_train</code></td><td>1</td><td>1</td><td>(no standard fields)</td></tr></tbody></table>
+<hr>
+<h2 id="ability-structure">Ability Structure</h2>
+<p>Standard ability hash in <code>entities.rb</code>:</p>
+<pre><code class="language-ruby">{
+  type: 'tile_lay',           # required
+  owner_type: 'player',       # 'player' | 'corporation'
+  when: 'track',              # string or array; see When: Field section
+  count: 2,                   # number of uses; omit = unlimited
+  hexes: %w[A1 B2],           # hex restriction
+  tiles: %w[57 58],           # tile number restriction
+  free: true,                 # waives tile cost
+  closed_when_used_up: true,  # close company when count reaches 0
+  reachable: true,            # must be reachable from home token
+  consume_tile_lay: true,     # consumes one of the corporation's normal lay slots
+  terrain: 'mountain',        # (on tile_discount) terrain type
+  discount: 20,               # (on tile_discount / train_discount) amount
+  trains: %w[2+2 3+3],        # (on train_discount) train types
+  corporations: %w[GWR LNWR], # (on exchange / token / assign_corporation)
+  from: 'par',                # (on exchange) source
+  description: 'text',        # (on base / description / generic)
+  price: 0,                   # (on token) placement cost
+  corporation: 'GWR',         # (on token / close) specific corporation
+  on_phase: 'Phase 4',        # (on close / revenue_change) phase trigger
+  revenue: 20,                # (on revenue_change) new value
+  amount: 30,                 # (on hex_bonus) bonus amount
+}</code></pre>
+<h3 id="count-enforcement"><code>count:</code> enforcement</h3>
+<p><code>ability.use!</code> decrements <code>@count</code> [<code>lib/engine/ability/base.rb:1</code>]. When count reaches zero and <code>@remove_when_used_up</code> is true (the default), the ability is removed from the entity. <code>TileLay#use!</code> tracks <code>lay_count</code> and <code>upgrade_count</code> separately.</p>
+<h3 id="consume_tile_lay-on-tile_lay-abilities"><code>consume_tile_lay:</code> on <code>tile_lay</code> abilities</h3>
+<ul><li><code>consume_tile_lay: true</code> — routes through <code>lay_tile_action</code>; increments <code>@round.num_laid_track</code>. The ability <em>consumes</em> one of the corporation's normal lay slots.</li><li>Without <code>consume_tile_lay</code> — routes through <code>lay_tile</code> directly. The ability is <em>extra</em> on top of the normal budget.</li></ul>
+<h3 id="blocks_hexes-vs-blocks_hexes_consent"><code>blocks_hexes</code> vs <code>blocks_hexes_consent</code></h3>
+<ul><li><code>blocks_hexes</code> — unconditional; blocked until the company is purchased or closed.</li><li><code>blocks_hexes_consent</code> — blocking released when the owning player consents. Used for concession cards (released when the concession is transferred or the major is parred). Reference: 1822 family.</li></ul>
+<hr>
+<h2 id="when-field-complete-vocabulary"><code>when:</code> Field Complete Vocabulary</h2>
+<p>649 occurrences across 75 games; 27 distinct values. Source: <code>Game::Base#ability_right_time?</code> [<code>lib/engine/game/base.rb</code>].</p>
+<h3 id="or-step-scoped">OR Step-Scoped</h3>
+<p>Active only during the named Step class:</p>
+<table><thead><tr><th>Value</th><th>Active when</th><th>Typical ability types</th></tr></thead><tbody><tr><td><code>'track'</code></td><td><code>Step::Track</code></td><td><code>tile_lay</code>, <code>tile_discount</code></td></tr><tr><td><code>'special_track'</code></td><td><code>Step::SpecialTrack</code></td><td><code>tile_lay</code>, <code>teleport</code></td></tr><tr><td><code>'token'</code></td><td><code>Step::Token</code></td><td><code>token</code></td></tr><tr><td><code>'special_token'</code></td><td><code>Step::SpecialToken</code></td><td><code>token</code>, <code>teleport</code></td></tr><tr><td><code>'route'</code></td><td><code>Step::Route</code></td><td><code>generic</code></td></tr><tr><td><code>'track_and_token'</code></td><td><code>Step::TrackAndToken</code></td><td><code>tile_lay</code>, <code>token</code></td></tr><tr><td><code>'buy_train'</code></td><td><code>Step::BuyTrain</code></td><td><code>train_discount</code></td></tr><tr><td><code>'buying_train'</code></td><td>During train purchase (alias)</td><td><code>train_discount</code></td></tr><tr><td><code>'single_depot_train_buy'</code></td><td>Variant buy-train step</td><td><code>train_discount</code></td></tr><tr><td><code>'dividend'</code></td><td><code>Step::Dividend</code></td><td><code>generic</code>, <code>revenue_change</code></td></tr><tr><td><code>'exchange'</code></td><td>SR <code>Step::Exchange</code></td><td><code>exchange</code></td></tr></tbody></table>
+<h3 id="or-turn-scoped">OR Turn-Scoped</h3>
+<p>Active at any point during the owning entity's OR turn:</p>
+<table><thead><tr><th>Value</th><th>Condition</th></tr></thead><tbody><tr><td><code>'owning_corp_or_turn'</code></td><td>OR active AND current operator owns the ability (155 occurrences)</td></tr><tr><td><code>'owning_player_or_turn'</code></td><td>OR active AND the president is the ability's player</td></tr><tr><td><code>'owning_player_track'</code></td><td>OR active AND president == ability's player AND in Track step</td></tr><tr><td><code>'owning_player_token'</code></td><td>OR active AND president == ability's player AND in Token step</td></tr><tr><td><code>'or_between_turns'</code></td><td>OR active AND <code>!current_operator_acted</code></td></tr><tr><td><code>'or_start'</code></td><td>OR active AND <code>@round.at_start</code></td></tr></tbody></table>
+<h3 id="sr-turn-scoped">SR Turn-Scoped</h3>
+<table><thead><tr><th>Value</th><th>Condition</th></tr></thead><tbody><tr><td><code>'owning_player_sr_turn'</code></td><td>SR active AND current entity is ability's player (155 occurrences)</td></tr><tr><td><code>'stock_round'</code></td><td>SR active, any player, any turn</td></tr></tbody></table>
+<h3 id="event-triggered-on-close-abilities-only">Event-Triggered (on <code>close</code> abilities only)</h3>
+<table><thead><tr><th>Value</th><th>Triggered by</th></tr></thead><tbody><tr><td><code>'bought_train'</code></td><td><code>base.rb#buy_train</code> → <code>close_companies_on_event!</code></td></tr><tr><td><code>'ran_train'</code></td><td><code>step/dividend.rb</code> → <code>close_companies_on_event!</code></td></tr><tr><td><code>'operated'</code></td><td><code>step/dividend.rb#pass!</code> → <code>close_companies_on_event!</code></td></tr><tr><td><code>'par'</code></td><td><code>base.rb#after_par</code> → <code>close_companies_on_event!</code></td></tr><tr><td><code>'sold'</code></td><td><code>step/buy_company.rb</code> fires <code>'sold'</code> abilities</td></tr><tr><td><code>'auction_end'</code></td><td>Game-specific auction step</td></tr><tr><td><code>'has_train'</code></td><td>Revenue-change at OR start when the corporation has trains</td></tr></tbody></table>
+<h3 id="meta--any-round">Meta / Any-Round</h3>
+<table><thead><tr><th>Value</th><th>Meaning</th></tr></thead><tbody><tr><td><code>'any'</code></td><td>Usable at any time. Short-circuits all other checks.</td></tr></tbody></table>
+<p><strong>Always-valid values</strong> (no step prerequisite): <code>any</code>, <code>owning_corp_or_turn</code>, <code>owning_player_or_turn</code>, <code>owning_player_track</code>, <code>owning_player_token</code>, <code>owning_player_sr_turn</code>, <code>stock_round</code>, <code>or_between_turns</code>, <code>or_start</code>.</p>
+<hr>
+<h2 id="exchange-ability--from-values"><code>exchange</code> Ability — <code>from:</code> Values</h2>
+<table><thead><tr><th>Value</th><th>Meaning</th></tr></thead><tbody><tr><td><code>'par'</code></td><td>Concession pattern — company exchanged to float a corporation at par</td></tr><tr><td><code>'ipo'</code></td><td>Exchange for a share from the IPO pool</td></tr><tr><td><code>'market'</code></td><td>Exchange for a share from the secondary market</td></tr><tr><td><code>%w[ipo market]</code></td><td>Either source</td></tr><tr><td><code>%i[reserved]</code></td><td>Reserved share</td></tr></tbody></table>
+<p>Concessions use <code>from: 'par'</code> per the 1822/1866 concession pattern.</p>
+<hr>
+<h2 id="description-ability"><code>description</code> Ability</h2>
+<p>Used to associate a minor with a major and to hold the human-readable rulebook ability text:</p>
+<pre><code class="language-ruby"># In CORPORATIONS for a minor:
+abilities: [{ type: 'description', description: 'Associated minor for GWR' }]</code></pre>
+<p>The <code>par_via_exchange</code> field handles the mechanical association; the <code>description</code> ability is UI display only.</p>
+<hr>
+<h2 id="18oe-ability-mapping">18OE Ability Mapping</h2>
+<h3 id="minor-special-abilities">Minor special abilities</h3>
+<table><thead><tr><th>Minor</th><th>Rule description</th><th>Ability types needed</th></tr></thead><tbody><tr><td>A — Silver Banner</td><td>Bank pays major treasury = share value on merge</td><td><code>base</code> + custom hook in <code>merge_minor</code></td></tr><tr><td>B — Orange Scroll</td><td>Track upgrades cost 1 tile point (not cities/grand/metro)</td><td><code>tile_discount</code> + <code>tile_lay</code> extra slot</td></tr><tr><td>C — Golden Bell</td><td>President chooses operating position each OR</td><td><code>choose_ability</code> + custom <code>operating_order</code></td></tr><tr><td>D — Green Junction</td><td>Token in non-metro city; £20/£40 bonus by phase; removed at Phase 5</td><td><code>token</code> (free) + <code>hex_bonus</code> (phase-conditional)</td></tr><tr><td>E — Blue Coast</td><td>33% discount on blue terrain; +1 tile pt in blue hexes</td><td><code>tile_discount</code> (terrain: water) + <code>tile_lay</code></td></tr><tr><td>F — White Peak</td><td>33% discount on green terrain; +1 tile pt in green hexes</td><td><code>tile_discount</code> (terrain: mountain) + <code>tile_lay</code></td></tr><tr><td>G — Indigo Foundry</td><td>+2 tile points per OR</td><td>Custom <code>tile_lays</code> returning extra slots</td></tr><tr><td>H — Great Western Steamship</td><td>Reduces sea zones counted by 1 (Phase 1–6) or 2 (Phase 7–8)</td><td>Custom game hook; no standard type</td></tr><tr><td>J — Grey Locomotive Works</td><td>10% discount on all train purchases</td><td><code>train_discount</code></td></tr><tr><td>K — Vermilion Seal</td><td>Mail contract pays revenue to treasury at OR start</td><td><code>extra_revenue</code> hook or <code>hex_bonus</code></td></tr><tr><td>L — Krasnaya Strela</td><td>+1+1 marker adds 1 city limit and 1 town count to assigned train</td><td>Custom game hook; no standard type</td></tr><tr><td>M — CIWL</td><td>10 Pullman cars</td><td>Custom Pullman asset; no standard type</td></tr></tbody></table>
+<h3 id="private-special-abilities">Private special abilities</h3>
+<table><thead><tr><th>Private</th><th>Rule description</th><th>Ability types needed</th></tr></thead><tbody><tr><td>Wien Südbahnhof</td><td>Free station token placement</td><td><code>token</code> (price: 0, when: 'token')</td></tr><tr><td>Barclay, Bevan, Barclay & Tritton</td><td>Three selectable options (re-set par / reserve share / prevent DROP)</td><td><code>choose_ability</code></td></tr><tr><td>Star Harbor Trading Co.</td><td>Port token in port city (doesn't consume slot)</td><td><code>token</code> + <code>assign_hexes</code></td></tr><tr><td>Central Circle Transport Corp.</td><td>Token in non-port city as town (£10–£60 by phase)</td><td><code>token</code> + <code>hex_bonus</code></td></tr><tr><td>White Cliffs Ferry</td><td>Lille (N31) token at Phase 5; enables ferry</td><td><code>tile_lay</code> + phase-trigger logic</td></tr><tr><td>Hochberg Mining & Lumber</td><td>Token in rough terrain hex; track restricted to owner</td><td><code>assign_hexes</code> + custom hook</td></tr><tr><td>Brandt & Brandau, Engineers</td><td>4 tokens, up to 2/OR, free yellow tile; closes on last token</td><td><code>tile_lay</code> (free: true, count: 4, closed_when_used_up: true)</td></tr><tr><td>Swift Metropolitan Line</td><td>Protects one 2+2 from train limit</td><td>Custom game hook; no standard type</td></tr></tbody></table>
+<hr>
+<h2 id="whats-next">What's next</h2>
+<ul><li>How abilities are evaluated at runtime: <a href="game-engine.html">Game Engine</a></li><li>OR step order in which ability <code>when:</code> values become active: <a href="round-step-system.html">Round/Step System</a></li><li>Tile lay mechanics: <a href="tiles.html">Tile Reference</a></li></ul>
+<hr>
+<p><em>Version: 2026-05-08 — derived from <code>lib/engine/ability/base.rb</code>, <code>lib/engine/ability/tile_lay.rb</code>, <code>lib/engine/game/base.rb</code>.</em></p>
+</article>
+</main>
+</div>
+<script src="search.js"></script>
+<script src="ui.js"></script>
+</body>
+</html>

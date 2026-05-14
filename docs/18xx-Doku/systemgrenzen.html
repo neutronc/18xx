@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>System Boundaries and External Dependencies — 18OE Dev Docs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Playfair+Display:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({ startOnLoad: true, theme: 'base', themeVariables: {
+  primaryColor: '#0d1f38', primaryTextColor: '#faf6ec',
+  primaryBorderColor: '#c9a843', lineColor: '#c9a843',
+  secondaryColor: '#1a3a6a', tertiaryColor: '#2a4a80',
+  actorBkg: '#0d1f38', actorTextColor: '#faf6ec',
+  actorBorder: '#c9a843', actorLineColor: '#c9a843',
+  activationBkgColor: '#2a4ab0', activationBorderColor: '#c9a843',
+  signalColor: '#c9a843', signalTextColor: '#2a1a0a',
+  labelBoxBkgColor: '#0d1f38', labelBoxBorderColor: '#c9a843', labelTextColor: '#faf6ec',
+  loopTextColor: '#2a1a0a',
+  edgeLabelBackground: '#f0ead8',
+  noteBkgColor: '#f0e8d4', noteTextColor: '#2a1a0a', noteBorderColor: '#c9a843',
+  titleColor: '#2a1a0a',
+  clusterBkg: '#1a3a6a', clusterBorder: '#c9a843', clusterTextColor: '#faf6ec',
+  fillType0: '#0d1f38', fillType1: '#1a3a6a', fillType2: '#2a4a80',
+  fillType3: '#1a3a6a', fillType4: '#0d1f38', fillType5: '#2a4a80',
+  fillType6: '#1a3a6a', fillType7: '#0d1f38'
+} });</script>
+</head>
+<body>
+<header id="site-header">
+  <a href="index.html">18OE</a> &mdash; Developer Documentation
+</header>
+<div id="layout">
+<nav id="sidebar" aria-label="Navigation">
+<input id="nav-search" type="search" placeholder="Search…" aria-label="Search documentation" autocomplete="off">
+<div id="search-results" style="display:none">
+<p id="search-no-results" style="display:none">No results found.</p>
+<ul id="search-results-list"></ul>
+</div>
+<div class="track"><h3>18OE Status</h3><ul>
+<li><a href="rules-summary.html">Game Rules Summary</a></li>
+<li><a href="18oe-map-status.html">Map Implementation Status</a></li>
+<li><a href="status.html">Implementation Tracker</a></li>
+<li><a href="rulebook-coverage.html">Rulebook Coverage</a></li>
+<li><a href="alpha-gaps.html">Open for Alpha</a></li>
+</ul></div>
+<div class="track"><h3>Getting Involved</h3><ul>
+<li><a href="first-contribution.html">Your First Contribution</a></li>
+</ul></div>
+<div class="track"><h3>Building a New Game</h3><ul>
+<li><a href="engine-concepts.html">Understanding the Engine</a></li>
+<li><a href="getting-started.html">Development Setup</a></li>
+<li><a href="game-implementation.html">Game Structure</a></li>
+<li><a href="map.html">Map Configuration</a></li>
+<li><a href="entities.html">Corporations & Companies</a></li>
+<li><a href="trains-phases.html">Trains, Phases & Market</a></li>
+<li><a href="round-step-system.html">Rounds & Steps</a></li>
+<li><a href="auction-round.html">Auction Round</a></li>
+<li><a href="revenue-routing.html">Revenue & Routing</a></li>
+<li><a href="abilities.html">Abilities</a></li>
+<li><a href="tiles.html">Tile Reference</a></li>
+<li><a href="common-patterns.html">Common Patterns</a></li>
+<li><a href="testing.html">Testing Your Game</a></li>
+<li><a href="title-checklist.html">Title Checklist</a></li>
+<li><a href="coding-guidelines.html">Coding Guidelines</a></li>
+</ul></div>
+<div class="track"><h3>Reference</h3><ul>
+<li><a href="game-engine.html">Game Engine Reference</a></li>
+<li><a href="adrs.html">Architecture Decision Records</a></li>
+</ul></div>
+<div class="track"><h3>Platform & Testing Setup</h3><ul>
+<li><a href="architecture.html">Architecture Overview</a></li>
+<li><a href="konfiguration-betrieb.html">Configuration & Operations</a></li>
+<li><a href="systemgrenzen.html" aria-current="page"><strong>System Boundaries</strong></a></li>
+</ul></div>
+<div class="track"><h3>Working with Claude</h3><ul>
+<li><a href="codevelop.html">Co-developing with Claude</a></li>
+</ul></div>
+</nav>
+<main>
+<article>
+<h1 id="system-boundaries-and-external-dependencies">System Boundaries and External Dependencies</h1>
+<p>18xx.games integrates with several external systems. This page maps each external dependency, its purpose, what happens when it is unavailable, and where the integration code lives.</p>
+<h2 id="dependency-map">Dependency Map</h2>
+<div class="mermaid">
+graph LR
+    App["18xx.games (rack + queue)"]
+    PG["PostgreSQL"]
+    Redis["Redis"]
+    Email["SMTP (email provider)"]
+    NR["New Relic APM"]
+    Webhook["User Webhook endpoints"]
+    GitHub["GitHub Issues"]
+
+    App -->|"Sequel"| PG
+    App -->|"MessageBus / redis gem"| Redis
+    App -->|"lib/mail.rb"| Email
+    App -->|"newrelic_rpm gem"| NR
+    App -->|"lib/hooks.rb"| Webhook
+    App -->|"redirect"| GitHub
+</div>
+<h2 id="postgresql">PostgreSQL</h2>
+<p><strong>Purpose:</strong> Primary data store for users, games, sessions, and actions.</p>
+<p><strong>Integration:</strong> <code>Sequel</code> ORM via <code>sequel</code> and <code>sequel_pg</code> gems [<code>Gemfile:13-14</code>]. Connection string from <code>DATABASE_URL</code> or <code>APP_DATABASE_URL</code> environment variable [<code>db.rb:6</code>].</p>
+<p><strong>Failure behaviour:</strong> <code>db.rb</code> retries the connection up to 5 times with 5-second sleeps before raising. If the database is unavailable after startup, all API requests that require DB access will fail with 500.</p>
+<p><strong>Advisory lock dependency:</strong> <code>sequel-pg_advisory_lock</code> [<code>Gemfile:17</code>] is used to serialise concurrent action requests. This requires PostgreSQL; it cannot be swapped for another database.</p>
+<h2 id="redis">Redis</h2>
+<p><strong>Purpose:</strong> MessageBus pub/sub for real-time game updates; user timestamp and stats cache.</p>
+<p><strong>Integration:</strong> <code>message_bus</code> gem with Redis backend [<code>Gemfile:4</code>]; <code>redis</code> gem for direct cache access [<code>Gemfile:12</code>]. URL hardcoded to <code>redis://redis:6379</code> in <code>lib/bus.rb:6</code>.</p>
+<p><strong>Failure behaviour:</strong> If Redis is unreachable, live-mode SSE updates will not be delivered to browsers, but game actions will still be processed and persisted. The API will log errors from MessageBus publish calls.</p>
+<h2 id="email-smtp">Email (SMTP)</h2>
+<p><strong>Purpose:</strong> Turn-notification emails to players in async games.</p>
+<p><strong>Integration:</strong> <code>lib/mail.rb</code>; called from <code>queue.rb</code> in the <code>/turn</code> MessageBus subscriber. The subject includes the game title, ID, and type (e.g. "Your turn").</p>
+<p><strong>Failure behaviour:</strong> Email delivery failure is caught and logged; the action is still accepted. Addresses from <code>@msn</code>, <code>@hotmail</code>, <code>@outlook</code>, <code>@live</code>, <code>@icloud</code>, or <code>@yahoo</code> domains are suppressed to reduce bounce rates [<code>queue.rb:88</code>].</p>
+<h2 id="new-relic-apm">New Relic APM</h2>
+<p><strong>Purpose:</strong> Production application performance monitoring.</p>
+<p><strong>Integration:</strong> <code>newrelic_rpm</code> gem [<code>Gemfile:5</code>]; loaded as a Roda plugin in production only [<code>api.rb:61</code>].</p>
+<p><strong>Failure behaviour:</strong> If the licence key is absent or New Relic is unreachable, the plugin is simply not loaded (development) or silently degraded (production).</p>
+<h2 id="user-webhook-endpoints">User Webhook Endpoints</h2>
+<p><strong>Purpose:</strong> Real-time game-event notifications for users who prefer webhooks over email.</p>
+<p><strong>Integration:</strong> <code>lib/hooks.rb</code>; called from <code>queue.rb</code>. Users configure a webhook URL and optional user ID in their profile settings.</p>
+<p><strong>Failure behaviour:</strong> Errors from webhook delivery are caught and printed; the action processing is not affected [<code>queue.rb:75</code>].</p>
+<h2 id="github-issues">GitHub Issues</h2>
+<p><strong>Purpose:</strong> Bug reports and feature requests.</p>
+<p><strong>Integration:</strong> The API redirects <code>/issues/&amp;lt;label&amp;gt;</code> to <code>https://github.com/tobymao/18xx/issues?q=...</code> with the matching label filter [<code>api.rb:179-190</code>]. No GitHub API token is required; it is a plain redirect.</p>
+<p><strong>Failure behaviour:</strong> If GitHub is unreachable, the redirect target will simply not load in the user's browser.</p>
+<h2 id="what-is-internal">What Is Internal</h2>
+<p>The following components are <strong>not</strong> external dependencies — they run inside the Docker stack:</p>
+<ul><li>PostgreSQL (container <code>db</code>)</li><li>Redis (container <code>redis</code>)</li><li>Nginx reverse proxy (container <code>nginx</code>, production only)</li></ul>
+<h2 id="whats-next">What's next</h2>
+<ul><li>Container layout and environment variables: <a href="konfiguration-betrieb.html">Configuration and Operations</a></li><li>Full system topology: <a href="architecture.html">Architecture Overview</a></li></ul>
+<hr>
+<p><em>Version: 2026-05-08 — derived from <code>lib/bus.rb</code>, <code>db.rb</code>, <code>queue.rb</code>, <code>api.rb</code>, <code>Gemfile</code>, <code>docker-compose.prod.yml</code>.</em></p>
+</article>
+</main>
+</div>
+<script src="search.js"></script>
+<script src="ui.js"></script>
+</body>
+</html>

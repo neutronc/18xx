@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tile Reference — 18OE Dev Docs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Playfair+Display:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({ startOnLoad: true, theme: 'base', themeVariables: {
+  primaryColor: '#0d1f38', primaryTextColor: '#faf6ec',
+  primaryBorderColor: '#c9a843', lineColor: '#c9a843',
+  secondaryColor: '#1a3a6a', tertiaryColor: '#2a4a80',
+  actorBkg: '#0d1f38', actorTextColor: '#faf6ec',
+  actorBorder: '#c9a843', actorLineColor: '#c9a843',
+  activationBkgColor: '#2a4ab0', activationBorderColor: '#c9a843',
+  signalColor: '#c9a843', signalTextColor: '#2a1a0a',
+  labelBoxBkgColor: '#0d1f38', labelBoxBorderColor: '#c9a843', labelTextColor: '#faf6ec',
+  loopTextColor: '#2a1a0a',
+  edgeLabelBackground: '#f0ead8',
+  noteBkgColor: '#f0e8d4', noteTextColor: '#2a1a0a', noteBorderColor: '#c9a843',
+  titleColor: '#2a1a0a',
+  clusterBkg: '#1a3a6a', clusterBorder: '#c9a843', clusterTextColor: '#faf6ec',
+  fillType0: '#0d1f38', fillType1: '#1a3a6a', fillType2: '#2a4a80',
+  fillType3: '#1a3a6a', fillType4: '#0d1f38', fillType5: '#2a4a80',
+  fillType6: '#1a3a6a', fillType7: '#0d1f38'
+} });</script>
+</head>
+<body>
+<header id="site-header">
+  <a href="index.html">18OE</a> &mdash; Developer Documentation
+</header>
+<div id="layout">
+<nav id="sidebar" aria-label="Navigation">
+<input id="nav-search" type="search" placeholder="Search…" aria-label="Search documentation" autocomplete="off">
+<div id="search-results" style="display:none">
+<p id="search-no-results" style="display:none">No results found.</p>
+<ul id="search-results-list"></ul>
+</div>
+<div class="track"><h3>18OE Status</h3><ul>
+<li><a href="rules-summary.html">Game Rules Summary</a></li>
+<li><a href="18oe-map-status.html">Map Implementation Status</a></li>
+<li><a href="status.html">Implementation Tracker</a></li>
+<li><a href="rulebook-coverage.html">Rulebook Coverage</a></li>
+<li><a href="alpha-gaps.html">Open for Alpha</a></li>
+</ul></div>
+<div class="track"><h3>Getting Involved</h3><ul>
+<li><a href="first-contribution.html">Your First Contribution</a></li>
+</ul></div>
+<div class="track"><h3>Building a New Game</h3><ul>
+<li><a href="engine-concepts.html">Understanding the Engine</a></li>
+<li><a href="getting-started.html">Development Setup</a></li>
+<li><a href="game-implementation.html">Game Structure</a></li>
+<li><a href="map.html">Map Configuration</a></li>
+<li><a href="entities.html">Corporations & Companies</a></li>
+<li><a href="trains-phases.html">Trains, Phases & Market</a></li>
+<li><a href="round-step-system.html">Rounds & Steps</a></li>
+<li><a href="auction-round.html">Auction Round</a></li>
+<li><a href="revenue-routing.html">Revenue & Routing</a></li>
+<li><a href="abilities.html">Abilities</a></li>
+<li><a href="tiles.html" aria-current="page"><strong>Tile Reference</strong></a></li>
+<li><a href="common-patterns.html">Common Patterns</a></li>
+<li><a href="testing.html">Testing Your Game</a></li>
+<li><a href="title-checklist.html">Title Checklist</a></li>
+<li><a href="coding-guidelines.html">Coding Guidelines</a></li>
+</ul></div>
+<div class="track"><h3>Reference</h3><ul>
+<li><a href="game-engine.html">Game Engine Reference</a></li>
+<li><a href="adrs.html">Architecture Decision Records</a></li>
+</ul></div>
+<div class="track"><h3>Platform & Testing Setup</h3><ul>
+<li><a href="architecture.html">Architecture Overview</a></li>
+<li><a href="konfiguration-betrieb.html">Configuration & Operations</a></li>
+<li><a href="systemgrenzen.html">System Boundaries</a></li>
+</ul></div>
+<div class="track"><h3>Working with Claude</h3><ul>
+<li><a href="codevelop.html">Co-developing with Claude</a></li>
+</ul></div>
+</nav>
+<main>
+<article>
+<h1 id="tile-reference">Tile Reference</h1>
+<p>Tiles are defined as string expressions in <code>lib/engine/tile.rb</code>. This page covers the tile language, the anatomy of a tile, and the development routes available for inspecting tiles in a running local instance.</p>
+<hr>
+<h2 id="development-routes">Development Routes</h2>
+<p>A running local instance (see <a href="getting-started.html">Getting Started</a>) exposes these routes for tile development:</p>
+<table><thead><tr><th>Route</th><th>Purpose</th></tr></thead><tbody><tr><td><code>/tiles/all</code></td><td>Renders all tiles defined in <code>lib/engine/tile.rb</code></td></tr><tr><td><code>/tiles/&lt;tile_name&gt;</code></td><td>Renders a single tile at large scale</td></tr><tr><td><code>/tiles/&lt;game_title&gt;/&lt;hex_or_tile&gt;</code></td><td>Renders a hex or tile from a specific game at large scale. Multiple hex/tile names separated by <code>+</code>.</td></tr><tr><td><code>/tiles/&lt;game_titles&gt;/all</code></td><td>Renders all tiles for one or more game titles (fuzzy matched, <code>+</code>-separated)</td></tr><tr><td><code>/map/&lt;game_title&gt;</code></td><td>Renders the full map for the given game title</td></tr></tbody></table>
+<p><strong>Optional URL parameters:</strong></p>
+<table><thead><tr><th>Param</th><th>Meaning</th></tr></thead><tbody><tr><td><code>r=&lt;rotation&gt;</code></td><td>Integer rotation, multiple rotations as <code>+</code>-separated integers, or <code>all</code> for all 6. Ignored at <code>/tiles/all</code>.</td></tr><tr><td><code>n=&lt;location_name&gt;</code></td><td>Location name rendered on tiles that have at least one stop. Pre-printed names are not overridden. Ignored at <code>/tiles/all</code>.</td></tr><tr><td><code>grid</code></td><td>Overlays the triangular grid to identify regions on a tile.</td></tr></tbody></table>
+<p>Rotation can also be embedded in the tile name: <code>/tiles/9-1</code> renders tile <code>9</code> with rotation 1; <code>/tiles/7-2+8-2</code> renders tiles 7 and 8 both with rotation 2. In-name rotation ignores the <code>r=</code> param.</p>
+<hr>
+<h2 id="anatomy-of-a-tile">Anatomy of a Tile</h2>
+<p>A flat-top hex and a pointy-top hex label their edges and regions differently. Both diagrams below show the edge numbering used by <code>path=a:N,b:N</code> in the tile language.</p>
+<p><img src="images/tile_anatomy_flat.png" alt="Anatomy of a Flat Tile"></p>
+<p><img src="images/tile_anatomy_pointy.png" alt="Anatomy of a Pointy Tile"></p>
+<hr>
+<h2 id="tile-language">Tile Language</h2>
+<p>A tile string consists of <strong>main parts</strong> separated by <code>;</code>. Each main part has <strong>sub parts</strong> separated by <code>,</code>. Properties within sub parts are separated by <code>|</code>.</p>
+<p>Some tile properties are <em>not</em> part of the tile string and are defined elsewhere in the game configuration:</p>
+<ul><li><strong>Color</strong> — set on the <code>Hex</code> or upgraded from the game map</li><li><strong>Location names</strong> — set in <code>LOCATION_NAMES</code> constant</li><li><strong>Reserved city slots</strong> — set in <code>CORPORATIONS</code> / <code>COMPANIES</code> home coordinates</li><li><strong>Blockers</strong> — set via <code>blocks_hexes</code> abilities</li></ul>
+<hr>
+<h3 id="main-parts">Main Parts</h3>
+<h4 id="city"><code>city</code></h4>
+<p>A revenue-generating city node that can hold station tokens.</p>
+<table><thead><tr><th>Sub part</th><th>Type</th><th>Default</th><th>Meaning</th></tr></thead><tbody><tr><td><code>slots</code></td><td>integer</td><td><code>1</code></td><td>How many tokens this city can hold</td></tr><tr><td><code>revenue</code></td><td>integer or phase spec</td><td>required</td><td>Revenue value; see phase-based revenue below</td></tr><tr><td><code>groups</code></td><td>`\</td><td>`-separated strings</td><td>—</td><td>Routes cannot contain more than one stop from the same group</td></tr><tr><td><code>hide</code></td><td><code>1</code></td><td>—</td><td>Do not render the revenue value</td></tr><tr><td><code>loc</code></td><td>e.g. <code>center</code>, <code>2</code></td><td>—</td><td>Position on the hex (pointy layout)</td></tr></tbody></table>
+<h4 id="town"><code>town</code></h4>
+<p>A smaller revenue center that cannot hold station tokens.</p>
+<table><thead><tr><th>Sub part</th><th>Type</th><th>Default</th><th>Meaning</th></tr></thead><tbody><tr><td><code>revenue</code></td><td>integer or phase spec</td><td>required</td><td>Revenue value</td></tr><tr><td><code>style</code></td><td><code>rect</code> / <code>dot</code> / <code>hidden</code></td><td>auto</td><td><code>rect</code> when 1–2 paths connect; <code>dot</code> when 0 or 3+; <code>hidden</code> for special offboards</td></tr><tr><td><code>groups</code></td><td>`\</td><td>`-separated strings</td><td>—</td><td>Same-group route restriction</td></tr><tr><td><code>hide</code></td><td><code>1</code></td><td>—</td><td>Do not render the revenue value</td></tr></tbody></table>
+<h4 id="offboard"><code>offboard</code></h4>
+<p>An off-map revenue terminus. Not rendered as a node itself, but changes how connecting track is drawn — track to offboards is tapered and pointed.</p>
+<p>Same sub parts as <code>city</code> (<code>revenue</code>, <code>groups</code>, <code>hide</code>).</p>
+<h4 id="path"><code>path</code></h4>
+<p>A track segment connecting two points.</p>
+<table><thead><tr><th>Sub part</th><th>Type</th><th>Meaning</th></tr></thead><tbody><tr><td><code>a</code></td><td>edge int or <code>_N</code> node ref</td><td>required — first endpoint</td></tr><tr><td><code>b</code></td><td>edge int or <code>_N</code> node ref</td><td>required — second endpoint</td></tr><tr><td><code>terminal</code></td><td><code>1</code> or <code>2</code></td><td>Non-passthrough path (offboard track). <code>2</code> draws a shorter taper.</td></tr><tr><td><code>ignore</code></td><td><code>1</code></td><td>Skip this path during node-walk (used for special offboards)</td></tr><tr><td><code>a_lane</code></td><td><code>width.index</code></td><td>Lane width and index for the <code>a</code> endpoint</td></tr><tr><td><code>b_lane</code></td><td><code>width.index</code></td><td>Lane width and index for the <code>b</code> endpoint</td></tr><tr><td><code>lanes</code></td><td>integer</td><td>Number of parallel tracks. Auto-assigns <code>a_lane</code> / <code>b_lane</code> for each copy.</td></tr><tr><td><code>track</code></td><td><code>broad</code> / <code>narrow</code> / <code>dual</code></td><td>Track gauge type, used for display and connectivity. Default: <code>broad</code></td></tr></tbody></table>
+<p>Node references use an underscore followed by the zero-based index of the previously defined part: <code>_0</code> is the first city/town/offboard/junction, <code>_1</code> is the second, etc.</p>
+<h4 id="label"><code>label</code></h4>
+<p>A large letter or short text rendered on the tile (e.g. <code>H</code>, <code>OO</code>, <code>Chi</code>, <code>Z</code>).</p>
+<p><code>label=H</code></p>
+<h4 id="upgrade"><code>upgrade</code></h4>
+<p>Terrain cost marker.</p>
+<table><thead><tr><th>Sub part</th><th>Type</th><th>Meaning</th></tr></thead><tbody><tr><td><code>cost</code></td><td>integer</td><td>required — cost to lay a tile on this hex</td></tr><tr><td><code>terrain</code></td><td><code>mountain</code> / <code>water</code> (or `mountain\</td><td>water`)</td><td>Terrain type(s)</td></tr><tr><td><code>loc</code></td><td>corner spec</td><td>Render position (pointy layout only) — <code>5.5</code> = between edges 5 and 0</td></tr></tbody></table>
+<h4 id="border"><code>border</code></h4>
+<p>Modifies the rendering of one hex edge.</p>
+<table><thead><tr><th>Sub part</th><th>Type</th><th>Meaning</th></tr></thead><tbody><tr><td><code>edge</code></td><td>integer</td><td>required — which edge (0–5)</td></tr><tr><td><code>type</code></td><td><code>mountain</code> / <code>water</code> / <code>impassable</code></td><td>Border type. Without type, draws a color-matched line to join adjacent tiles.</td></tr><tr><td><code>cost</code></td><td>integer</td><td>Cost to cross (mountain/water borders)</td></tr></tbody></table>
+<h4 id="junction"><code>junction</code></h4>
+<p>The center point of a Lawson-style tile. Referenced as a node by <code>path</code> using <code>_N</code>.</p>
+<p><code>junction;path=a:0,b:_0;path=a:2,b:_0;path=a:4,b:_0</code></p>
+<h4 id="icon"><code>icon</code></h4>
+<p>An SVG icon on the tile.</p>
+<table><thead><tr><th>Sub part</th><th>Type</th><th>Meaning</th></tr></thead><tbody><tr><td><code>image</code></td><td>string</td><td>required — name; rendered from <code>public/icons/&lt;image&gt;.svg</code></td></tr><tr><td><code>name</code></td><td>string</td><td>Name for this icon instance; defaults to <code>image</code></td></tr><tr><td><code>sticky</code></td><td><code>1</code></td><td>Icon remains visible after a tile upgrade</td></tr><tr><td><code>blocks_lay</code></td><td>(flag)</td><td>Tile cannot be placed normally; only via special ability</td></tr><tr><td><code>loc</code></td><td>corner spec</td><td>Render position (pointy layout only)</td></tr></tbody></table>
+<h4 id="frame"><code>frame</code></h4>
+<p>Colored border frame around the tile.</p>
+<table><thead><tr><th>Sub part</th><th>Meaning</th></tr></thead><tbody><tr><td><code>color</code></td><td>required — primary frame color</td></tr><tr><td><code>color2</code></td><td>Optional second frame color</td></tr></tbody></table>
+<hr>
+<h3 id="phase-based-revenue">Phase-Based Revenue</h3>
+<p>Revenue that changes by phase uses an underscore-separated <code>phase_value</code> format, with multiple phases separated by <code>|</code>:</p>
+<pre><code>revenue:yellow_40|green_50|brown_60|gray_80</code></pre>
+<hr>
+<h3 id="lanes">Lanes</h3>
+<p>Lanes specify paths for double-track, treble-track, and quad-track tiles. Each path endpoint has two attributes:</p>
+<ul><li><strong>width</strong> — number of tracks connecting to that edge</li><li><strong>index</strong> — position within those tracks (0 = most clockwise)</li></ul>
+<p>The <code>lanes</code> sub part on a <code>path</code> automatically creates <code>N</code> parallel paths between the two endpoints with correctly assigned <code>a_lane</code> / <code>b_lane</code> values. Use <code>a_lane</code> / <code>b_lane</code> explicitly only when endpoints connect in an unusual way (e.g. a double-track edge to a single-track edge).</p>
+<p><img src="images/lane_widths.png" alt="Examples of lane widths"></p>
+<p><img src="images/lanes_small.png" alt="Examples of lane connections"></p>
+<hr>
+<h2 id="tile-string-examples">Tile String Examples</h2>
+<p><strong>Tile #1 — two towns connected by through track:</strong></p>
+<pre><code>town=revenue:10;town=revenue:10;path=a:1,b:_0;path=a:_0,b:3;path=a:0,b:_1;path=a:_1,b:4</code></pre>
+<p><img src="images/tile_1.png" alt="Tile 1"></p>
+<hr>
+<p><strong>Tile #23 — plain track, no revenue center:</strong></p>
+<pre><code>path=a:0,b:3;path=a:0,b:4</code></pre>
+<p><img src="images/tile_23.png" alt="Tile 23"></p>
+<hr>
+<p><strong>Lawson tile #81 — junction with three arms:</strong></p>
+<pre><code>junction;path=a:0,b:_0;path=a:2,b:_0;path=a:4,b:_0</code></pre>
+<p><img src="images/tile_81.png" alt="Tile 81"></p>
+<hr>
+<p><strong>1889 — tile 439 (city with label and upgrade cost):</strong></p>
+<pre><code>city=revenue:60,slots:2;path=a:0,b:_0;path=a:2,b:_0;path=a:4,b:_0;label=H;upgrade=cost:80</code></pre>
+<p><img src="images/tile_1889_439.png" alt="Tile 439"></p>
+<hr>
+<p><strong>1889 — preprinted tile for H5 (terrain only, no track):</strong></p>
+<pre><code>upgrade=cost:80,terrain:water|mountain</code></pre>
+<p><img src="images/tile_1889_H5.png" alt="1889 H5"></p>
+<hr>
+<p><strong>18Chesapeake — preprinted tiles for A3 and B2 (split offboard with border and phase revenue):</strong></p>
+<ul><li>A3: <code>city=revenue:yellow_40|green_50|brown_60|gray_80,hide:1,groups:Pittsburgh;path=a:5,b:_0;border=edge:4</code></li><li>B2: <code>offboard=revenue:yellow_40|green_50|brown_60|gray_80,groups:Pittsburgh;path=a:0,b:_0;border=edge:1</code></li></ul>
+<p><img src="images/tile_18Chesapeake_A3_B2.png" alt="18Chesapeake A3 and B2"></p>
+<hr>
+<p><strong>18Chesapeake — preprinted tile for H6 (two-city OO hex with water upgrade cost):</strong></p>
+<pre><code>city=revenue:30;city=revenue:30;path=a:1,b:_0;path=a:4,b:_1;label=OO;upgrade=cost:40,terrain:water</code></pre>
+<p><img src="images/tile_18Chesapeake_H6.png" alt="18Chesapeake H6"></p>
+<hr>
+<p><strong>18Chesapeake — preprinted tile for K3 (two unconnected towns):</strong></p>
+<pre><code>town=revenue:0;town=revenue:0</code></pre>
+<p><img src="images/tile_18Chesapeake_K3.png" alt="18Chesapeake K3"></p>
+<hr>
+<p><strong>18MEX — upgrade for Mexico City (multi-slot city with town, lanes, and label):</strong></p>
+<pre><code>city=revenue:60,slots:3,loc:center;town=revenue:10,loc:2;path=a:0,b:_0;path=a:1,b:_0;path=a:3,b:_0;path=a:2,b:_1;path=a:5,b:_0,lanes:2;path=a:_1,b:_0;label=MC</code></pre>
+<p><img src="images/tile_18MEX_485MC.png" alt="18MEX 485MC"></p>
+<hr>
+<p><strong>18MEX — upgrade for Puebla (town with mixed-lane paths and label):</strong></p>
+<pre><code>town=revenue:10;path=a:2,b:_0,a_lane:2.1;path=a:5,b:_0;path=a:2,b:4,a_lane:2.0;label=P</code></pre>
+<p><img src="images/tile_18MEX_485P.png" alt="18MEX 485P"></p>
+<hr>
+<p><strong>1831 — tile 301c (triple-track path using <code>lanes:3</code>):</strong></p>
+<pre><code>path=a:0,b:3,lanes:3</code></pre>
+<p><img src="images/tile_1831_301c.png" alt="1831 301c"></p>
+<hr>
+<h2 id="whats-next">What's next</h2>
+<ul><li>Ability types that interact with tile laying: <a href="abilities.html">Ability Types Reference</a></li><li><code>tile_lays</code> slot mechanics in the engine: <a href="game-engine.html">Game Engine</a></li><li>Developer routes for testing other game features: <a href="getting-started.html">Getting Started</a></li></ul>
+<hr>
+<p><em>Version: 2026-05-08 — derived from <code>TILES.md</code>, <code>lib/engine/tile.rb</code>.</em></p>
+</article>
+</main>
+</div>
+<script src="search.js"></script>
+<script src="ui.js"></script>
+</body>
+</html>

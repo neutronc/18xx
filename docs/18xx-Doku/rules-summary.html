@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>18OE — Game Rules Summary — 18OE Dev Docs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Playfair+Display:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({ startOnLoad: true, theme: 'base', themeVariables: {
+  primaryColor: '#0d1f38', primaryTextColor: '#faf6ec',
+  primaryBorderColor: '#c9a843', lineColor: '#c9a843',
+  secondaryColor: '#1a3a6a', tertiaryColor: '#2a4a80',
+  actorBkg: '#0d1f38', actorTextColor: '#faf6ec',
+  actorBorder: '#c9a843', actorLineColor: '#c9a843',
+  activationBkgColor: '#2a4ab0', activationBorderColor: '#c9a843',
+  signalColor: '#c9a843', signalTextColor: '#2a1a0a',
+  labelBoxBkgColor: '#0d1f38', labelBoxBorderColor: '#c9a843', labelTextColor: '#faf6ec',
+  loopTextColor: '#2a1a0a',
+  edgeLabelBackground: '#f0ead8',
+  noteBkgColor: '#f0e8d4', noteTextColor: '#2a1a0a', noteBorderColor: '#c9a843',
+  titleColor: '#2a1a0a',
+  clusterBkg: '#1a3a6a', clusterBorder: '#c9a843', clusterTextColor: '#faf6ec',
+  fillType0: '#0d1f38', fillType1: '#1a3a6a', fillType2: '#2a4a80',
+  fillType3: '#1a3a6a', fillType4: '#0d1f38', fillType5: '#2a4a80',
+  fillType6: '#1a3a6a', fillType7: '#0d1f38'
+} });</script>
+</head>
+<body>
+<header id="site-header">
+  <a href="index.html">18OE</a> &mdash; Developer Documentation
+</header>
+<div id="layout">
+<nav id="sidebar" aria-label="Navigation">
+<input id="nav-search" type="search" placeholder="Search…" aria-label="Search documentation" autocomplete="off">
+<div id="search-results" style="display:none">
+<p id="search-no-results" style="display:none">No results found.</p>
+<ul id="search-results-list"></ul>
+</div>
+<div class="track"><h3>18OE Status</h3><ul>
+<li><a href="rules-summary.html" aria-current="page"><strong>Game Rules Summary</strong></a></li>
+<li><a href="18oe-map-status.html">Map Implementation Status</a></li>
+<li><a href="status.html">Implementation Tracker</a></li>
+<li><a href="rulebook-coverage.html">Rulebook Coverage</a></li>
+<li><a href="alpha-gaps.html">Open for Alpha</a></li>
+</ul></div>
+<div class="track"><h3>Getting Involved</h3><ul>
+<li><a href="first-contribution.html">Your First Contribution</a></li>
+</ul></div>
+<div class="track"><h3>Building a New Game</h3><ul>
+<li><a href="engine-concepts.html">Understanding the Engine</a></li>
+<li><a href="getting-started.html">Development Setup</a></li>
+<li><a href="game-implementation.html">Game Structure</a></li>
+<li><a href="map.html">Map Configuration</a></li>
+<li><a href="entities.html">Corporations & Companies</a></li>
+<li><a href="trains-phases.html">Trains, Phases & Market</a></li>
+<li><a href="round-step-system.html">Rounds & Steps</a></li>
+<li><a href="auction-round.html">Auction Round</a></li>
+<li><a href="revenue-routing.html">Revenue & Routing</a></li>
+<li><a href="abilities.html">Abilities</a></li>
+<li><a href="tiles.html">Tile Reference</a></li>
+<li><a href="common-patterns.html">Common Patterns</a></li>
+<li><a href="testing.html">Testing Your Game</a></li>
+<li><a href="title-checklist.html">Title Checklist</a></li>
+<li><a href="coding-guidelines.html">Coding Guidelines</a></li>
+</ul></div>
+<div class="track"><h3>Reference</h3><ul>
+<li><a href="game-engine.html">Game Engine Reference</a></li>
+<li><a href="adrs.html">Architecture Decision Records</a></li>
+</ul></div>
+<div class="track"><h3>Platform & Testing Setup</h3><ul>
+<li><a href="architecture.html">Architecture Overview</a></li>
+<li><a href="konfiguration-betrieb.html">Configuration & Operations</a></li>
+<li><a href="systemgrenzen.html">System Boundaries</a></li>
+</ul></div>
+<div class="track"><h3>Working with Claude</h3><ul>
+<li><a href="codevelop.html">Co-developing with Claude</a></li>
+</ul></div>
+</nav>
+<main>
+<article>
+<h1 id="18oe--game-rules-summary">18OE — Game Rules Summary</h1>
+<p>Quick reference for the core rules of 18OE. Intended as a developer cheat-sheet alongside the full rulebook at <code>rules/18OE_Rulebook_v_1.0.txt</code>.</p>
+<hr>
+<h2 id="company-types">Company Types</h2>
+<table><thead><tr><th>Type</th><th>Certs</th><th>Par Values</th><th>Float Condition</th></tr></thead><tbody><tr><td>Minor</td><td>1 (100%)</td><td>£120 fixed</td><td>Selected in auction; floated in Regional/Minor Phase</td></tr><tr><td>Regional</td><td>3 (50%+25%+25%)</td><td>£60/65/70/75/80/90</td><td>Pay 2× par to treasury</td></tr><tr><td>Major</td><td>9 (20%+8×10%)</td><td>£75/80/90/100/110/120</td><td>Expand from floated regional</td></tr><tr><td>National</td><td>9 (20%+8×10%)</td><td>Inherits major</td><td>Forms at Phase 4/6/8 start</td></tr></tbody></table>
+<hr>
+<h2 id="game-phases-railroad">Game Phases (Railroad)</h2>
+<ol><li><strong>Auction</strong> — buy privates, minors, concessions</li><li><strong>Concession</strong> (Train Phase 1) — 10 float actions in numbered order <em>(deferred)</em></li><li><strong>Regional/Minor</strong> — until 18 regionals + all 12 minors floated; 6 regionals removed</li><li><strong>Major</strong> — secondary shares available; majors can float; level-3 trains available</li><li><strong>Consolidation</strong> — first SR after Phase 5; remaining minors/regionals merge or abandon</li></ol>
+<hr>
+<h2 id="train-phases--rusting">Train Phases & Rusting</h2>
+<table><thead><tr><th>Level</th><th>Type</th><th>Qty</th><th>Face Value</th><th>Rusts At</th></tr></thead><tbody><tr><td>2</td><td>2+2 / —</td><td>30</td><td>£100</td><td>Phase 4</td></tr><tr><td>3</td><td>3+3 / 3</td><td>20</td><td>£225 / £200</td><td>Phase 6</td></tr><tr><td>4</td><td>4+4 / 4</td><td>10</td><td>£350 / £300</td><td>Phase 8</td></tr><tr><td>5</td><td>5+5 / 5</td><td>8</td><td>£475 / £400</td><td>—</td></tr><tr><td>6</td><td>6+6 / 6</td><td>6</td><td>£600 / £525</td><td>—</td></tr><tr><td>7</td><td>7+7 / 4D</td><td>14</td><td>£750 / £850</td><td>—</td></tr><tr><td>8</td><td>8+8 / 5D</td><td>8</td><td>£900 / £1000</td><td>—</td></tr></tbody></table>
+<p>Level 8 becomes available after the 4th Level 7 purchase (not at a fixed phase).</p>
+<hr>
+<h2 id="train-limits-by-phase">Train Limits by Phase</h2>
+<table><thead><tr><th>Phase</th><th>Minor/Regional</th><th>Major</th><th>National</th></tr></thead><tbody><tr><td>1–3</td><td>2</td><td>4</td><td>—</td></tr><tr><td>4</td><td>1</td><td>3</td><td>4</td></tr><tr><td>5–6</td><td>— (must merge)</td><td>2</td><td>3</td></tr><tr><td>7–8</td><td>—</td><td>3</td><td>4</td></tr></tbody></table>
+<hr>
+<h2 id="stock-market-movement">Stock Market Movement</h2>
+<ul><li><strong>RIGHT</strong>: dividend ≥ share value (also +3 RIGHT on first OE run)</li><li><strong>LEFT</strong>: zero dividend paid</li><li><strong>UP</strong>: all shares in players' hands at end of SR</li><li><strong>DOWN</strong>: each share sold</li><li><strong>No move</strong>: dividend > 0 but < share value; or at £550</li></ul>
+<hr>
+<h2 id="operating-round-per-company">Operating Round (per company)</h2>
+<ol><li>Lay track (tile pts: minor/regional=3, major=6, national=9; nationals pay no terrain costs)</li><li>Place token (one per OR; regionals/minors restricted to home zone)</li><li>Run trains & calculate revenue</li><li>Pay/split/hold (nationals must pay ALL as dividends)</li><li>Transfer tokens (majors only — between same player's majors)</li><li>Buy trains</li><li>Buy or sell shares (majors only)</li></ol>
+<hr>
+<h2 id="track-rights-zones">Track Rights Zones</h2>
+<table><thead><tr><th>Zone Code</th><th>Zone Name</th><th>Home Token Cost</th><th>Terrain Discount</th></tr></thead><tbody><tr><td>UK</td><td>United Kingdom</td><td>£40</td><td>None</td></tr><tr><td>PHS</td><td>Prussia/Holland/Switzerland</td><td>£40</td><td>None</td></tr><tr><td>FR</td><td>France/Belgium</td><td>£20</td><td>None</td></tr><tr><td>AH</td><td>Austria-Hungary</td><td>£20</td><td>None</td></tr><tr><td>IT</td><td>Italy</td><td>£10</td><td>20%</td></tr><tr><td>SP</td><td>Spain/Portugal</td><td>£10</td><td>20%</td></tr><tr><td>RU</td><td>Russia</td><td>£10</td><td>20%</td></tr><tr><td>SC</td><td>Scandinavia</td><td>£10</td><td>20%</td></tr></tbody></table>
+<hr>
+<h2 id="orient-express">Orient Express</h2>
+<ul><li>Majors only; route must include Constantinople + one of Paris/London/Berlin/Madrid/Sankt-Peterburg; must include some land track</li><li>Constantinople is on-map pre-printed yellow at <strong>AA82</strong> (eastern map terminus)</li><li>First run bonus: £30 (Phase 2–4), £60 (Phase 5–6), £100 (Phase 7–8) + RIGHT×3</li><li>Trains level ≤4 can be combined (combined level = sum); level 5+ cannot combine</li></ul>
+<hr>
+<h2 id="national-revenue-unique">National Revenue (unique)</h2>
+<p>Nationals have virtual tokens in every city/town in their home zone:</p>
+<ol><li>Linked cities/towns in zone → counted at face value (D trains double)</li><li>Remaining capacity → filled at £60/city or £10/town (no linkage required)</li></ol>
+<p>Implementation: <code>Graph.new(home_as_token: true, no_blocking: true)</code> — see <a href="engine-concepts.html">Engine Concepts</a>.</p>
+<hr>
+<h2 id="cross-water-costs">Cross-Water Costs</h2>
+<ul><li>Track: Ferry = +£5 × distance; Sea = +£10 × number of sea zones</li><li>Tokens: Ferry = +£20 × distance; Sea = +£40 × number of sea zones</li><li>6 sea zones: North Sea, Baltic, Western Mediterranean, Adriatic, Aegean, Black Sea</li></ul>
+</article>
+</main>
+</div>
+<script src="search.js"></script>
+<script src="ui.js"></script>
+</body>
+</html>

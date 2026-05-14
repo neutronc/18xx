@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Glossary — 18OE Dev Docs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Playfair+Display:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({ startOnLoad: true, theme: 'base', themeVariables: {
+  primaryColor: '#0d1f38', primaryTextColor: '#faf6ec',
+  primaryBorderColor: '#c9a843', lineColor: '#c9a843',
+  secondaryColor: '#1a3a6a', tertiaryColor: '#2a4a80',
+  actorBkg: '#0d1f38', actorTextColor: '#faf6ec',
+  actorBorder: '#c9a843', actorLineColor: '#c9a843',
+  activationBkgColor: '#2a4ab0', activationBorderColor: '#c9a843',
+  signalColor: '#c9a843', signalTextColor: '#2a1a0a',
+  labelBoxBkgColor: '#0d1f38', labelBoxBorderColor: '#c9a843', labelTextColor: '#faf6ec',
+  loopTextColor: '#2a1a0a',
+  edgeLabelBackground: '#f0ead8',
+  noteBkgColor: '#f0e8d4', noteTextColor: '#2a1a0a', noteBorderColor: '#c9a843',
+  titleColor: '#2a1a0a',
+  clusterBkg: '#1a3a6a', clusterBorder: '#c9a843', clusterTextColor: '#faf6ec',
+  fillType0: '#0d1f38', fillType1: '#1a3a6a', fillType2: '#2a4a80',
+  fillType3: '#1a3a6a', fillType4: '#0d1f38', fillType5: '#2a4a80',
+  fillType6: '#1a3a6a', fillType7: '#0d1f38'
+} });</script>
+</head>
+<body>
+<header id="site-header">
+  <a href="index.html">18OE</a> &mdash; Developer Documentation
+</header>
+<div id="layout">
+<nav id="sidebar" aria-label="Navigation">
+<input id="nav-search" type="search" placeholder="Search…" aria-label="Search documentation" autocomplete="off">
+<div id="search-results" style="display:none">
+<p id="search-no-results" style="display:none">No results found.</p>
+<ul id="search-results-list"></ul>
+</div>
+<div class="track"><h3>18OE Status</h3><ul>
+<li><a href="rules-summary.html">Game Rules Summary</a></li>
+<li><a href="18oe-map-status.html">Map Implementation Status</a></li>
+<li><a href="status.html">Implementation Tracker</a></li>
+<li><a href="rulebook-coverage.html">Rulebook Coverage</a></li>
+<li><a href="alpha-gaps.html">Open for Alpha</a></li>
+</ul></div>
+<div class="track"><h3>Getting Involved</h3><ul>
+<li><a href="first-contribution.html">Your First Contribution</a></li>
+</ul></div>
+<div class="track"><h3>Building a New Game</h3><ul>
+<li><a href="engine-concepts.html">Understanding the Engine</a></li>
+<li><a href="getting-started.html">Development Setup</a></li>
+<li><a href="game-implementation.html">Game Structure</a></li>
+<li><a href="map.html">Map Configuration</a></li>
+<li><a href="entities.html">Corporations & Companies</a></li>
+<li><a href="trains-phases.html">Trains, Phases & Market</a></li>
+<li><a href="round-step-system.html">Rounds & Steps</a></li>
+<li><a href="auction-round.html">Auction Round</a></li>
+<li><a href="revenue-routing.html">Revenue & Routing</a></li>
+<li><a href="abilities.html">Abilities</a></li>
+<li><a href="tiles.html">Tile Reference</a></li>
+<li><a href="common-patterns.html">Common Patterns</a></li>
+<li><a href="testing.html">Testing Your Game</a></li>
+<li><a href="title-checklist.html">Title Checklist</a></li>
+<li><a href="coding-guidelines.html">Coding Guidelines</a></li>
+</ul></div>
+<div class="track"><h3>Reference</h3><ul>
+<li><a href="game-engine.html">Game Engine Reference</a></li>
+<li><a href="adrs.html">Architecture Decision Records</a></li>
+</ul></div>
+<div class="track"><h3>Platform & Testing Setup</h3><ul>
+<li><a href="architecture.html">Architecture Overview</a></li>
+<li><a href="konfiguration-betrieb.html">Configuration & Operations</a></li>
+<li><a href="systemgrenzen.html">System Boundaries</a></li>
+</ul></div>
+<div class="track"><h3>Working with Claude</h3><ul>
+<li><a href="codevelop.html">Co-developing with Claude</a></li>
+</ul></div>
+</nav>
+<main>
+<article>
+<h1 id="glossary">Glossary</h1>
+<table><thead><tr><th>Term</th><th>Meaning</th><th>Code source</th></tr></thead><tbody><tr><td><strong>Action</strong></td><td>A persisted move. Contains an entity reference, a type (<code>buy_shares</code>, <code>lay_tile</code>, <code>run_routes</code>, etc.), and type-specific arguments. Stored as JSON in the <code>actions</code> table and replayed on load.</td><td>[<code>lib/engine/action/base.rb:1</code>]</td></tr><tr><td><strong>Advisory Lock</strong></td><td>PostgreSQL mechanism that prevents two simultaneous requests from corrupting the same game session. Acquired per game ID.</td><td>[<code>routes/game.rb:56</code>]</td></tr><tr><td><strong>Auto-Action</strong></td><td>An Action the engine generates and processes automatically without player input — e.g. bankruptcy declaration or a forced train purchase.</td><td>[<code>lib/engine/game/base.rb:851-875</code>]</td></tr><tr><td><strong>Bank</strong></td><td>The central cash reserve for the session. When the bank breaks (cash ≤ 0), a <code>bank</code> end condition may trigger.</td><td>[<code>lib/engine/bank.rb:1</code>]</td></tr><tr><td><strong>Certificate Limit</strong></td><td>Maximum number of certificates a player may hold. Game-specific and player-count-dependent.</td><td>[<code>lib/engine/game/base.rb:200</code>]</td></tr><tr><td><strong>Company</strong></td><td>A private company auctioned at game start that grants special abilities. Not to be confused with Corporation.</td><td>[<code>lib/engine/company.rb:1</code>]</td></tr><tr><td><strong>Corporation</strong></td><td>The investable railway company. Has shares, trains, tokens, and a position on the stock market.</td><td>[<code>lib/engine/corporation.rb:1</code>]</td></tr><tr><td><strong>DEV_STAGE</strong></td><td>Development status of a game title: <code>:prealpha</code>, <code>:alpha</code>, <code>:beta</code>, <code>:production</code>. Affects warning messages and archival behaviour.</td><td>[<code>lib/engine/game/meta.rb:4</code>]</td></tr><tr><td><strong>Depot</strong></td><td>The supply of unsold trains. Corporations buy trains from the Depot.</td><td>[<code>lib/engine/depot.rb:1</code>]</td></tr><tr><td><strong>Dividend</strong></td><td>Revenue distributed per share after an Operating Round. Amount depends on revenue run and payout decision.</td><td>[<code>lib/engine/step/dividend.rb:1</code>]</td></tr><tr><td><strong>Ebuy</strong></td><td>Emergency Buy. A Corporation that has no train after operating must purchase one — potentially using the president's cash.</td><td>[<code>lib/engine/game/base.rb:282-330</code>]</td></tr><tr><td><strong>Entity</strong></td><td>Collective term for all acting objects: Player, Corporation, Minor, Company.</td><td>[<code>lib/engine/entity.rb:1</code>]</td></tr><tr><td><strong>Game::Base</strong></td><td>Base class for all game titles. Holds all engine objects and orchestrates the game flow.</td><td>[<code>lib/engine/game/base.rb:91</code>]</td></tr><tr><td><strong>Graph</strong></td><td>The routing graph the engine computes from the current track layout. Used for revenue calculation and route validation.</td><td>[<code>lib/engine/graph.rb:1</code>]</td></tr><tr><td><strong>Hex</strong></td><td>A hexagon on the game map. Contains a <code>Tile</code> with the track layout and cities.</td><td>[<code>lib/engine/hex.rb:1</code>]</td></tr><tr><td><strong>Hotseat</strong></td><td>Local multiplayer mode without a server. All players share the same browser.</td><td>[<code>assets/app/game_manager.rb:23-42</code>]</td></tr><tr><td><strong>MessageBus</strong></td><td>Redis-backed pub/sub channel for real-time updates. Pushes updated game state to all browser clients after every Action.</td><td>[<code>lib/bus.rb:1-30</code>]</td></tr><tr><td><strong>Minor</strong></td><td>A small subsidiary company in certain game titles. Can own shares and run routes.</td><td>[<code>lib/engine/minor.rb:1</code>]</td></tr><tr><td><strong>Opal</strong></td><td>Ruby-to-JavaScript transpiler. Allows the same engine codebase to run in the browser and on the server.</td><td>[<code>Gemfile:6</code>]</td></tr><tr><td><strong>Operating Round (OR)</strong></td><td>Round type in which Corporations act in turn order to lay track, place tokens, buy trains, and run routes.</td><td>[<code>lib/engine/round/operating.rb:1</code>]</td></tr><tr><td><strong>Par</strong></td><td>The issue price of a share at a corporation's IPO. Sets the starting position on the stock market.</td><td>[<code>lib/engine/share_price.rb:1</code>]</td></tr><tr><td><strong>Phase</strong></td><td>A game segment advanced by train purchases. Determines allowed track types, number of ORs, and which trains rust.</td><td>[<code>lib/engine/phase.rb:1</code>]</td></tr><tr><td><strong>Pin</strong></td><td>Mechanism that locks a running game to an older JavaScript bundle when a breaking change is introduced.</td><td>[<code>lib/engine/game/base.rb:688-694</code>]</td></tr><tr><td><strong>Round</strong></td><td>Container for a turn segment (SR, OR, Auction). Holds an ordered list of Steps and Entities.</td><td>[<code>lib/engine/round/base.rb:12</code>]</td></tr><tr><td><strong>Snabberb</strong></td><td>Minimal virtual-DOM framework for the Ruby/Opal frontend layer.</td><td>[<code>Gemfile:14</code>]</td></tr><tr><td><strong>Step</strong></td><td>Atomic decision unit within a Round. Declares ACTIONS and processes incoming Actions.</td><td>[<code>lib/engine/step/base.rb:8</code>]</td></tr><tr><td><strong>Stock Round (SR)</strong></td><td>Round type in which players buy and sell shares.</td><td>[<code>lib/engine/round/stock.rb:1</code>]</td></tr><tr><td><strong>StockMarket</strong></td><td>Two-dimensional price grid. Share buys/sells move a corporation's marker; special cells trigger game end or closure.</td><td>[<code>lib/engine/stock_market.rb:1</code>]</td></tr><tr><td><strong>Tile</strong></td><td>The track tile on a Hex. Contains paths, cities, and towns.</td><td>[<code>lib/engine/tile.rb:1</code>]</td></tr><tr><td><strong>Token</strong></td><td>A Corporation's presence marker on a city. Allows the city to be included in a route.</td><td>[<code>lib/engine/token.rb:1</code>]</td></tr><tr><td><strong>Train</strong></td><td>A Corporation's train. Has a reach (distance) and triggers phase transitions when purchased.</td><td>[<code>lib/engine/train.rb:1</code>]</td></tr></tbody></table>
+<h2 id="whats-next">What's next</h2>
+<ul><li>How the objects interact: <a href="mental-model.html">Mental Model</a></li><li>A move in motion: <a href="kernablauf.html">Core Flow</a></li><li>Technical engine reference: <a href="game-engine.html">Game Engine</a></li></ul>
+<hr>
+<p><em>Version: 2026-05-08 — derived from <code>lib/engine/</code>, <code>models/</code>, <code>assets/app/</code>.</em></p>
+</article>
+</main>
+</div>
+<script src="search.js"></script>
+<script src="ui.js"></script>
+</body>
+</html>

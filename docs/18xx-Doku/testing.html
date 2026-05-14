@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fixture Testing — 18OE Dev Docs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Playfair+Display:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({ startOnLoad: true, theme: 'base', themeVariables: {
+  primaryColor: '#0d1f38', primaryTextColor: '#faf6ec',
+  primaryBorderColor: '#c9a843', lineColor: '#c9a843',
+  secondaryColor: '#1a3a6a', tertiaryColor: '#2a4a80',
+  actorBkg: '#0d1f38', actorTextColor: '#faf6ec',
+  actorBorder: '#c9a843', actorLineColor: '#c9a843',
+  activationBkgColor: '#2a4ab0', activationBorderColor: '#c9a843',
+  signalColor: '#c9a843', signalTextColor: '#2a1a0a',
+  labelBoxBkgColor: '#0d1f38', labelBoxBorderColor: '#c9a843', labelTextColor: '#faf6ec',
+  loopTextColor: '#2a1a0a',
+  edgeLabelBackground: '#f0ead8',
+  noteBkgColor: '#f0e8d4', noteTextColor: '#2a1a0a', noteBorderColor: '#c9a843',
+  titleColor: '#2a1a0a',
+  clusterBkg: '#1a3a6a', clusterBorder: '#c9a843', clusterTextColor: '#faf6ec',
+  fillType0: '#0d1f38', fillType1: '#1a3a6a', fillType2: '#2a4a80',
+  fillType3: '#1a3a6a', fillType4: '#0d1f38', fillType5: '#2a4a80',
+  fillType6: '#1a3a6a', fillType7: '#0d1f38'
+} });</script>
+</head>
+<body>
+<header id="site-header">
+  <a href="index.html">18OE</a> &mdash; Developer Documentation
+</header>
+<div id="layout">
+<nav id="sidebar" aria-label="Navigation">
+<input id="nav-search" type="search" placeholder="Search…" aria-label="Search documentation" autocomplete="off">
+<div id="search-results" style="display:none">
+<p id="search-no-results" style="display:none">No results found.</p>
+<ul id="search-results-list"></ul>
+</div>
+<div class="track"><h3>18OE Status</h3><ul>
+<li><a href="rules-summary.html">Game Rules Summary</a></li>
+<li><a href="18oe-map-status.html">Map Implementation Status</a></li>
+<li><a href="status.html">Implementation Tracker</a></li>
+<li><a href="rulebook-coverage.html">Rulebook Coverage</a></li>
+<li><a href="alpha-gaps.html">Open for Alpha</a></li>
+</ul></div>
+<div class="track"><h3>Getting Involved</h3><ul>
+<li><a href="first-contribution.html">Your First Contribution</a></li>
+</ul></div>
+<div class="track"><h3>Building a New Game</h3><ul>
+<li><a href="engine-concepts.html">Understanding the Engine</a></li>
+<li><a href="getting-started.html">Development Setup</a></li>
+<li><a href="game-implementation.html">Game Structure</a></li>
+<li><a href="map.html">Map Configuration</a></li>
+<li><a href="entities.html">Corporations & Companies</a></li>
+<li><a href="trains-phases.html">Trains, Phases & Market</a></li>
+<li><a href="round-step-system.html">Rounds & Steps</a></li>
+<li><a href="auction-round.html">Auction Round</a></li>
+<li><a href="revenue-routing.html">Revenue & Routing</a></li>
+<li><a href="abilities.html">Abilities</a></li>
+<li><a href="tiles.html">Tile Reference</a></li>
+<li><a href="common-patterns.html">Common Patterns</a></li>
+<li><a href="testing.html" aria-current="page"><strong>Testing Your Game</strong></a></li>
+<li><a href="title-checklist.html">Title Checklist</a></li>
+<li><a href="coding-guidelines.html">Coding Guidelines</a></li>
+</ul></div>
+<div class="track"><h3>Reference</h3><ul>
+<li><a href="game-engine.html">Game Engine Reference</a></li>
+<li><a href="adrs.html">Architecture Decision Records</a></li>
+</ul></div>
+<div class="track"><h3>Platform & Testing Setup</h3><ul>
+<li><a href="architecture.html">Architecture Overview</a></li>
+<li><a href="konfiguration-betrieb.html">Configuration & Operations</a></li>
+<li><a href="systemgrenzen.html">System Boundaries</a></li>
+</ul></div>
+<div class="track"><h3>Working with Claude</h3><ul>
+<li><a href="codevelop.html">Co-developing with Claude</a></li>
+</ul></div>
+</nav>
+<main>
+<article>
+<h1 id="fixture-testing">Fixture Testing</h1>
+<p>Fixtures are JSON snapshots of complete or in-progress games. The test suite replays every fixture and asserts that the final result matches the recorded outcome. Adding a fixture for your title gives you regression coverage without writing a single explicit test assertion.</p>
+<hr>
+<h2 id="how-fixtures-work">How Fixtures Work</h2>
+<p>When the test suite loads a fixture it:</p>
+<ol><li>Reads the <code>actions</code> array from the JSON file.</li><li>Initialises a fresh engine instance with the fixture's <code>title</code> and <code>players</code>.</li><li>Replays every action in order via <code>Game::Base#process_action</code>.</li><li>Compares the final player scores against the <code>result</code> hash in the file.</li></ol>
+<p>A failing fixture means the engine no longer produces the same outcome from the same sequence of moves — a regression.</p>
+<p>The spec that runs all fixtures is <code>spec/lib/engine/game/fixtures_spec.rb</code>. It discovers fixture files automatically; no registration is required.</p>
+<hr>
+<h2 id="fixture-file-location">Fixture File Location</h2>
+<p>Place fixture files under:</p>
+<pre><code>public/fixtures/&lt;title&gt;/</code></pre>
+<p>For example:</p>
+<pre><code>public/fixtures/1830/1830_game_end_bank.json
+public/fixtures/1830/26855.json</code></pre>
+<p>The directory name must exactly match the game's <code>GAME_TITLE</code> string (the canonical title, e.g. <code>'1830'</code>).</p>
+<hr>
+<h2 id="creating-a-fixture">Creating a Fixture</h2>
+<h3 id="1-play-or-import-a-complete-game">1. Play or import a complete game</h3>
+<p>The easiest source is a finished game from production. Import it into your local instance:</p>
+<pre><code class="language-bash">docker compose exec rack irb</code></pre>
+<pre><code class="language-ruby">load 'scripts/import_game.rb'
+import_game(12345)   # replace with the production game ID</code></pre>
+<p>All player passwords are reset to <code>password</code> after import.</p>
+<p>Alternatively, play a game to completion on your local instance.</p>
+<h3 id="2-export-the-game-json">2. Export the game JSON</h3>
+<p>Open the game in the browser and navigate to:</p>
+<pre><code>http://localhost:9292/api/game/&lt;id&gt;</code></pre>
+<p>Save the JSON response as a file. Or use the export link in the game UI (⋮ menu → Export).</p>
+<h3 id="3-anonymise-and-clean-the-file">3. Anonymise and clean the file</h3>
+<p>The fixture spec enforces several format requirements. Edit the JSON to meet them:</p>
+<table><thead><tr><th>Requirement</th><th>What to change</th></tr></thead><tbody><tr><td><code>"status"</code> must be <code>"finished"</code></td><td>Do not use in-progress games</td></tr><tr><td>Player names must be anonymised</td><td>Replace with <code>"Player 1"</code>, <code>"Player 2"</code>, etc.</td></tr><tr><td><code>"description"</code> must be empty</td><td>Set to <code>""</code></td></tr><tr><td>All action IDs must be integers</td><td>Verify no string IDs</td></tr><tr><td>File must be single-line</td><td>See compression step below</td></tr></tbody></table>
+<p>Remove or scrub chat messages — <code>"message"</code> actions expose real player usernames.</p>
+<h3 id="4-compress-to-a-single-line">4. Compress to a single line</h3>
+<p>The spec checks that fixtures are stored compressed (single line with no extra whitespace). Use <code>jq</code>:</p>
+<pre><code class="language-bash">jq -c . my_game.json &gt; public/fixtures/1865/my_game.json</code></pre>
+<p>Or use the project's make target if available:</p>
+<pre><code class="language-bash">make fixture_format</code></pre>
+<hr>
+<h2 id="fixture-json-structure">Fixture JSON Structure</h2>
+<pre><code class="language-json">{
+  "id": 12345,
+  "description": "",
+  "user": { "id": 0, "name": "You" },
+  "players": [
+    { "id": 1, "name": "Player 1" },
+    { "id": 2, "name": "Player 2" },
+    { "id": 3, "name": "Player 3" }
+  ],
+  "min_players": 2,
+  "max_players": 6,
+  "title": "1830",
+  "settings": {
+    "seed": 1879860849,
+    "is_async": true,
+    "optional_rules": []
+  },
+  "status": "finished",
+  "turn": 9,
+  "round": "Operating Round",
+  "result": {
+    "1": 13048,
+    "2": 12109,
+    "3": 12025
+  },
+  "actions": [
+    { "type": "bid",  "entity": 1, "entity_type": "player", "id": 1, "company": "CA", "price": 165 },
+    { "type": "par",  "entity": 2, "entity_type": "player", "id": 5, "corporation": "PRR", "share_price": "100,0,6" },
+    { "type": "pass", "entity": 3, "entity_type": "player", "id": 6 },
+    ...
+  ]
+}</code></pre>
+<p>The <code>result</code> hash maps <strong>player ID strings</strong> to their final scores. The engine calculates scores by summing cash, share values, and any other title-specific scoring. The fixture spec asserts the replay produces exactly these values.</p>
+<hr>
+<h2 id="running-fixture-tests">Running Fixture Tests</h2>
+<p>Run all fixtures:</p>
+<pre><code class="language-bash">docker compose exec rack bundle exec rspec spec/lib/engine/game/fixtures_spec.rb</code></pre>
+<p>Run only fixtures for one title:</p>
+<pre><code class="language-bash">docker compose exec rack bundle exec rspec spec/lib/engine/game/fixtures_spec.rb \
+  -e "1830"</code></pre>
+<p>Run in parallel (recommended for the full suite):</p>
+<pre><code class="language-bash">docker compose exec rack bundle exec parallel_rspec spec/</code></pre>
+<hr>
+<h2 id="debugging-a-failing-fixture">Debugging a Failing Fixture</h2>
+<h3 id="identify-the-failing-action">Identify the failing action</h3>
+<p>The spec error message includes the action ID where replay diverged. Find that action in the fixture JSON and examine the game state immediately before it.</p>
+<h3 id="load-the-fixture-in-irb">Load the fixture in IRB</h3>
+<pre><code class="language-bash">docker compose exec rack irb</code></pre>
+<pre><code class="language-ruby">require_relative 'lib/engine'
+
+raw = JSON.parse(File.read('public/fixtures/1830/26855.json'))
+
+# Replay all actions
+g = Engine::Game::G1830::Game.new(
+  raw['players'].map { |p| p['name'] },
+  id: raw['id'],
+  actions: raw['actions']
+)
+
+# Inspect state
+g.current_round.class           # =&gt; Engine::Round::Operating
+g.current_entity.name           # =&gt; "PRR"
+g.corporations.map { |c| [c.name, c.cash] }.to_h
+g.players.map { |p| [p.name, p.cash] }.to_h</code></pre>
+<p>To replay only up to action N:</p>
+<pre><code class="language-ruby">g = Engine::Game::G1830::Game.new(
+  raw['players'].map { |p| p['name'] },
+  id: raw['id'],
+  actions: raw['actions'].first(42)   # replay first 42 actions
+)</code></pre>
+<h3 id="add-a-breakpoint">Add a breakpoint</h3>
+<pre><code class="language-ruby"># In your step or game file:
+require 'pry-byebug'
+binding.pry   # execution pauses here when hit during replay</code></pre>
+<p>Then replay the fixture in IRB — the pry prompt will open at the breakpoint.</p>
+<hr>
+<h2 id="readable-diffs-with-jq">Readable Diffs with jq</h2>
+<p>Fixture files are compressed to single lines, which makes git diffs unreadable. Configure git to expand them before diffing:</p>
+<p>Add to <code>.git/config</code> (or <code>~/.gitconfig</code> to apply globally):</p>
+<pre><code class="language-ini">[diff "json"]
+  textconv = bash -c 'jq . "$0" -'</code></pre>
+<p>Add to <code>.gitattributes</code> in the project root:</p>
+<pre><code>public/fixtures/**/*.json diff=json</code></pre>
+<p>Now <code>git diff</code> shows properly indented JSON.</p>
+<hr>
+<h2 id="fixture-format-options">Fixture Format Options</h2>
+<p>An optional <code>fixture_format</code> key controls how the formatting make-target processes the file:</p>
+<pre><code class="language-json">"fixture_format": {
+  "keep_user": false,
+  "keep_description": false,
+  "chat": "scrub"
+}</code></pre>
+<table><thead><tr><th>Key</th><th>Values</th><th>Effect</th></tr></thead><tbody><tr><td><code>keep_user</code></td><td><code>true</code> / <code>false</code></td><td>Preserve or clear the <code>user</code> field</td></tr><tr><td><code>keep_description</code></td><td><code>true</code> / <code>false</code></td><td>Preserve or clear <code>description</code></td></tr><tr><td><code>chat</code></td><td><code>"scrub"</code> / <code>"keep"</code> / omit</td><td>Replace message content with <code>""</code>, keep as-is, or remove message actions entirely</td></tr></tbody></table>
+<hr>
+<h2 id="updating-a-fixture-after-an-intentional-engine-change">Updating a Fixture After an Intentional Engine Change</h2>
+<p>When you intentionally change engine behaviour (fix a rules bug, implement a missing rule), existing fixtures may fail because the new code produces different final scores. Do not simply re-record the fixture — first decide which is correct:</p>
+<table><thead><tr><th>Situation</th><th>Action</th></tr></thead><tbody><tr><td>The old fixture was wrong (the engine had a bug)</td><td>Fix the engine, then re-record the fixture</td></tr><tr><td>The fixture was correct and the change broke it</td><td>Fix the change so it doesn't regress the existing game</td></tr><tr><td>The rules genuinely changed (errata)</td><td>Re-record the fixture and note the rules change in the PR</td></tr></tbody></table>
+<h3 id="re-recording-a-fixture">Re-recording a fixture</h3>
+<ol><li>Play or import a new complete game that exercises the new behaviour.</li><li>Export and anonymise as described in <a href="#creating-a-fixture">Creating a Fixture</a>.</li><li>Replace the old fixture file or add a new one alongside it.</li><li>Confirm the spec passes with the new fixture before deleting the old one.</li></ol>
+<p>If the change affects many fixtures, run the full suite first to see the scope:</p>
+<pre><code class="language-bash">docker compose exec rack bundle exec rspec spec/lib/engine/game/fixtures_spec.rb \
+  --format documentation 2&gt;&amp;1 | grep "FAILED\|passed"</code></pre>
+<hr>
+<h2 id="ci-and-parallel-execution">CI and Parallel Execution</h2>
+<p>The full fixture suite covers hundreds of games and takes several minutes sequentially. Always run in parallel before submitting a PR:</p>
+<pre><code class="language-bash"># Run all specs in parallel (uses all available CPU cores)
+docker compose exec rack bundle exec parallel_rspec spec/
+
+# Run only fixture specs in parallel
+docker compose exec rack bundle exec parallel_rspec spec/lib/engine/game/
+
+# Set explicit process count
+docker compose exec rack bundle exec parallel_rspec -n 4 spec/</code></pre>
+<p><code>parallel_rspec</code> splits spec files across worker processes. Output is buffered per worker and printed at the end. A failing fixture prints the action ID and expected vs actual result hash.</p>
+<h3 id="checking-only-your-title-before-a-pr">Checking only your title before a PR</h3>
+<pre><code class="language-bash"># Fast: syntax + your fixtures only
+docker compose exec rack bundle exec rspec \
+  spec/lib/engine/game/fixtures_spec.rb -e "8888"
+
+# Then full parallel suite to catch regressions
+docker compose exec rack bundle exec parallel_rspec spec/</code></pre>
+<hr>
+<h2 id="whats-next">What's Next</h2>
+<ul><li>Step-by-step game title setup: <a href="game-implementation.html">Game Structure</a></li><li>Running the dev environment: <a href="getting-started.html">Development Setup</a></li><li>Common rules patterns with test examples: <a href="common-patterns.html">Common Patterns</a></li><li>Title readiness checklist: <a href="title-checklist.html">Title Checklist</a></li></ul>
+<hr>
+<p><em>Version: 2026-05-08 — derived from <code>public/fixtures/README.md</code>, <code>spec/lib/engine/game/fixtures_spec.rb</code>, <code>DEVELOPMENT.md</code>.</em></p>
+</article>
+</main>
+</div>
+<script src="search.js"></script>
+<script src="ui.js"></script>
+</body>
+</html>

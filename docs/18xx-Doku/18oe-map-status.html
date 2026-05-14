@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>18OE — Map Implementation Status — 18OE Dev Docs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Playfair+Display:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({ startOnLoad: true, theme: 'base', themeVariables: {
+  primaryColor: '#0d1f38', primaryTextColor: '#faf6ec',
+  primaryBorderColor: '#c9a843', lineColor: '#c9a843',
+  secondaryColor: '#1a3a6a', tertiaryColor: '#2a4a80',
+  actorBkg: '#0d1f38', actorTextColor: '#faf6ec',
+  actorBorder: '#c9a843', actorLineColor: '#c9a843',
+  activationBkgColor: '#2a4ab0', activationBorderColor: '#c9a843',
+  signalColor: '#c9a843', signalTextColor: '#2a1a0a',
+  labelBoxBkgColor: '#0d1f38', labelBoxBorderColor: '#c9a843', labelTextColor: '#faf6ec',
+  loopTextColor: '#2a1a0a',
+  edgeLabelBackground: '#f0ead8',
+  noteBkgColor: '#f0e8d4', noteTextColor: '#2a1a0a', noteBorderColor: '#c9a843',
+  titleColor: '#2a1a0a',
+  clusterBkg: '#1a3a6a', clusterBorder: '#c9a843', clusterTextColor: '#faf6ec',
+  fillType0: '#0d1f38', fillType1: '#1a3a6a', fillType2: '#2a4a80',
+  fillType3: '#1a3a6a', fillType4: '#0d1f38', fillType5: '#2a4a80',
+  fillType6: '#1a3a6a', fillType7: '#0d1f38'
+} });</script>
+</head>
+<body>
+<header id="site-header">
+  <a href="index.html">18OE</a> &mdash; Developer Documentation
+</header>
+<div id="layout">
+<nav id="sidebar" aria-label="Navigation">
+<input id="nav-search" type="search" placeholder="Search…" aria-label="Search documentation" autocomplete="off">
+<div id="search-results" style="display:none">
+<p id="search-no-results" style="display:none">No results found.</p>
+<ul id="search-results-list"></ul>
+</div>
+<div class="track"><h3>18OE Status</h3><ul>
+<li><a href="rules-summary.html">Game Rules Summary</a></li>
+<li><a href="18oe-map-status.html" aria-current="page"><strong>Map Implementation Status</strong></a></li>
+<li><a href="status.html">Implementation Tracker</a></li>
+<li><a href="rulebook-coverage.html">Rulebook Coverage</a></li>
+<li><a href="alpha-gaps.html">Open for Alpha</a></li>
+</ul></div>
+<div class="track"><h3>Getting Involved</h3><ul>
+<li><a href="first-contribution.html">Your First Contribution</a></li>
+</ul></div>
+<div class="track"><h3>Building a New Game</h3><ul>
+<li><a href="engine-concepts.html">Understanding the Engine</a></li>
+<li><a href="getting-started.html">Development Setup</a></li>
+<li><a href="game-implementation.html">Game Structure</a></li>
+<li><a href="map.html">Map Configuration</a></li>
+<li><a href="entities.html">Corporations & Companies</a></li>
+<li><a href="trains-phases.html">Trains, Phases & Market</a></li>
+<li><a href="round-step-system.html">Rounds & Steps</a></li>
+<li><a href="auction-round.html">Auction Round</a></li>
+<li><a href="revenue-routing.html">Revenue & Routing</a></li>
+<li><a href="abilities.html">Abilities</a></li>
+<li><a href="tiles.html">Tile Reference</a></li>
+<li><a href="common-patterns.html">Common Patterns</a></li>
+<li><a href="testing.html">Testing Your Game</a></li>
+<li><a href="title-checklist.html">Title Checklist</a></li>
+<li><a href="coding-guidelines.html">Coding Guidelines</a></li>
+</ul></div>
+<div class="track"><h3>Reference</h3><ul>
+<li><a href="game-engine.html">Game Engine Reference</a></li>
+<li><a href="adrs.html">Architecture Decision Records</a></li>
+</ul></div>
+<div class="track"><h3>Platform & Testing Setup</h3><ul>
+<li><a href="architecture.html">Architecture Overview</a></li>
+<li><a href="konfiguration-betrieb.html">Configuration & Operations</a></li>
+<li><a href="systemgrenzen.html">System Boundaries</a></li>
+</ul></div>
+<div class="track"><h3>Working with Claude</h3><ul>
+<li><a href="codevelop.html">Co-developing with Claude</a></li>
+</ul></div>
+</nav>
+<main>
+<article>
+<h1 id="18oe--map-implementation-status">18OE — Map Implementation Status</h1>
+<p>Current state of <code>lib/engine/game/g_18_oe/map.rb</code>. Tracks what is implemented, what is verified against the physical map, and what is still outstanding.</p>
+<p>Map orientation: <code>LAYOUT = :pointy</code>, <code>AXES = { x: :number, y: :letter }</code> Coordinate system: rows A–Z then AA–AH (34 rows); columns 2–88.</p>
+<hr>
+<h2 id="overall-status">Overall Status</h2>
+<table><thead><tr><th>Area</th><th>Status</th></tr></thead><tbody><tr><td>Grid coverage</td><td>✓ 651 blue hexes</td></tr><tr><td>Regional home city coordinates</td><td>✓ All 24</td></tr><tr><td>National region hex lists</td><td>✓ All 8 (UK, SC, FR, PHS, AH, IT, SP, RU) — <code>NATIONAL_REGION_HEXES_COMPLETE = true</code></td></tr><tr><td>Location names</td><td>✓ All 255</td></tr><tr><td>Sea zones</td><td>✓ 19 named zones with hex lists; borders encoded as <code>type:province</code>; port stubs on 37 sea tiles</td></tr><tr><td>Custom tile codes</td><td>✓ OE1–OE8, OE12–OE18, OE23–OE44</td></tr><tr><td>Standard tile quantities</td><td>✓ Complete</td></tr><tr><td>Terrain costs</td><td>✓ UK, FR, SP, SC, Alps, IT, Adriatic, Carpathians, Balkans, Caucasus, river crossings</td></tr><tr><td>Station revenues</td><td>✓ All 255 named locations have correct starting revenue</td></tr><tr><td>Pre-printed yellows</td><td>✓ Liverpool J25, Manchester J27, Athinai AE72</td></tr><tr><td>Pre-printed whites (path edges)</td><td>~ Several cities missing path edges — see §3</td></tr><tr><td>Ferry paths / distances</td><td>? Outstanding</td></tr><tr><td>Double-town tile orientations</td><td>? OE9–11, OE20–22 outstanding</td></tr></tbody></table>
+<hr>
+<h2 id="grid-bounds">Grid Bounds</h2>
+<pre><code>A:  42-52, 66-74          B:  43-57, 63-81
+C:  42-58, 64-66, 72-82   D:  41-57, 67-85
+E:  24-28, 42-44, 48-58, 66-86
+F:  23-29, 49-55, 69-85   G:  16-20, 24-28, 44-46, 50-56, 64-86
+H:  15-21, 25-29, 43-47, 51-55, 63-87
+I:  14-20, 26-28, 44-52, 64-86
+J:  13-19, 23-29, 45-49, 63-87
+K:  22-30, 40-50, 54-86   L:  23-31, 37-87
+M:  22-30, 34-86          N:  31-85
+O:  24, 28-86             P:  19-87
+Q:  20-86                 R:  23-87
+S:  24-86                 T:  23-81
+U:  6-12, 22-80           V:  5-47, 51-79
+W:  6-48, 54-78           X:  5-29, 33-37, 43-49, 55-77
+Y:  2-28, 44-50, 56-78    Z:  3-27, 41, 45-51, 61-79
+AA: 2-22, 48-54, 62-86    AB: 1-19, 27, 39-41, 51-57, 63-71, 77, 83-85
+AC: 6-20, 38-40, 54-58, 64-68, 76-86
+AD: 5-17, 39, 55, 65-71, 79-87
+AE: 52, 68-72, 80-86      AF: 49-53, 67-69, 81-87
+AG: 50-52, 68-70</code></pre>
+<hr>
+<h2 id="red-off-board-hexes">Red (Off-Board) Hexes</h2>
+<p>19 red hexes. (A40 → blue/Skagerrak; E88 → removed entirely; AH87 → blue/no zone.)</p>
+<pre><code>A:54 A:56    North Sweden (×2)         B:41 B:83    Bergen, Arkhangelsk
+D:25         Scottish Highlands        F:87 G:88    Moskva (×2; G88 = gray through-track)
+N:1 N:87     New York, Kharkov         S:88 T:87    Sevastopol (×2; S88 = gray through-track)
+Z:1          Lisboa (2 station slots)  AB:87        Levant
+AD:1         North Africa &amp; Americas   AF:5 AF:11 AF:25   Casablanca, Melilla, Alger
+AG:40 AG:88  Tunis, Alexandria &amp; Suez</code></pre>
+<h3 id="off-board-revenue-values">Off-Board Revenue Values</h3>
+<p>All best-guess — verify against physical map.</p>
+<table><thead><tr><th>Hex</th><th>Name</th><th>Revenues (y/g/b/gray)</th><th>Path edges</th><th>Notes</th></tr></thead><tbody><tr><td>A54</td><td><s>North Sweden</s></td><td>—</td><td>1→4</td><td>Gray through-track hex</td></tr><tr><td>A56</td><td>North Sweden</td><td>30/50/80/100</td><td>0, 1, 4, 5</td><td></td></tr><tr><td>B41</td><td>Bergen</td><td>30/60/80/120</td><td>1, 3, 4</td><td></td></tr><tr><td>B83</td><td>Arkhangelsk</td><td>30/50/60/60</td><td>none</td><td>confirm isolated or needs edge</td></tr><tr><td>D25</td><td>Scottish Highlands</td><td>20/40/50/50</td><td>0, 5</td><td></td></tr><tr><td>F87</td><td>Moskva</td><td>30/50/80/100</td><td>0, 1, 2, 5</td><td></td></tr><tr><td>G88</td><td><s>Moskva</s></td><td>—</td><td>0→2</td><td>Gray through-track hex</td></tr><tr><td>N1</td><td>New York</td><td>—/60/100/160</td><td>5</td><td>no yellow phase</td></tr><tr><td>N87</td><td>Kharkov</td><td>30/40/60/80</td><td>0, 1, 2</td><td></td></tr><tr><td>S88</td><td><s>Sevastopol</s></td><td>—</td><td>0→1</td><td>Gray through-track hex</td></tr><tr><td>T87</td><td>Sevastopol</td><td>30/40/60/80</td><td>1</td><td></td></tr><tr><td>Z1</td><td>Lisboa (2 slots)</td><td>30/40/60/80</td><td>3, 4</td><td><code>city=revenue:0 ×2</code> also set</td></tr><tr><td>AB87</td><td>Levant</td><td>30/50/80/120</td><td>1, 2</td><td></td></tr><tr><td>AD1</td><td>North Africa & Americas</td><td>—/40/80/120</td><td>4</td><td>no yellow phase</td></tr><tr><td>AF5</td><td>Casablanca</td><td>30/40/60/80</td><td>3</td><td></td></tr><tr><td>AF11</td><td>Melilla</td><td>30/40/40/40</td><td>4</td><td></td></tr><tr><td>AF25</td><td>Alger</td><td>30/40/60/100</td><td>2, 3</td><td></td></tr><tr><td>AG40</td><td>Tunis</td><td>30/40/50/80</td><td>3, 4</td><td></td></tr><tr><td>AG88</td><td>Alexandria & Suez</td><td>—/50/80/120</td><td>1</td><td>no yellow phase</td></tr></tbody></table>
+<hr>
+<h2 id="pre-printed-tiles">Pre-Printed Tiles</h2>
+<h3 id="complete">✓ Complete</h3>
+<table><thead><tr><th>Hex</th><th>City</th><th>Tile string</th></tr></thead><tbody><tr><td>J25</td><td>Liverpool</td><td><code>city=revenue:30;label=Y;path=a:2,b:_0;path=a:_0,b:4</code></td></tr><tr><td>J27</td><td>Manchester</td><td><code>city=revenue:20;upgrade=cost:30,terrain:mountain;path=a:1,b:_0;path=a:_0,b:4</code></td></tr><tr><td>AE72</td><td>Athinai</td><td><code>city=revenue:20;path=a:1,b:_0;path=a:5,b:_0</code></td></tr></tbody></table>
+<h3 id="partial-revenue-set-path-edges-missing">~ Partial (revenue set, path edges missing)</h3>
+<table><thead><tr><th>Hex</th><th>City</th><th>Current string</th><th>Missing</th></tr></thead><tbody><tr><td>M28</td><td>London</td><td><code>city=revenue:30;label=L;upgrade=cost:30,terrain:water</code></td><td>both edges</td></tr><tr><td>AA82</td><td>Constantinople</td><td><code>city=revenue:20;city=revenue:20;upgrade=cost:45,terrain:water;label=C</code></td><td>both edges</td></tr><tr><td>N31</td><td>Lille</td><td><code>city=revenue:10;label=Y;border=edge:2,type:impassable;path=a:1,b:_0</code></td><td>edge 0</td></tr><tr><td>I20</td><td>Dublin</td><td><code>city=revenue:10</code></td><td>both edges</td></tr><tr><td>O28</td><td>Le Havre</td><td><code>city=revenue:10</code></td><td>both edges</td></tr><tr><td>X33</td><td>Marseille</td><td><code>city=revenue:20;label=Y</code></td><td>both edges</td></tr><tr><td>U24</td><td>Bordeaux</td><td><code>city=revenue:10</code></td><td>both edges</td></tr></tbody></table>
+<p>Once both edges are confirmed, move each hex from <code>white:</code> to <code>yellow:</code> section in <code>map.rb</code>.</p>
+<hr>
+<h2 id="sea-zones">Sea Zones</h2>
+<p>19 named zones implemented. Zone borders encoded as <code>border=edge:X,type:province</code> on all boundary edges. Port-entry stubs on 37 sea tiles (<code>junction;path=a:X,b:_0,terminal:1</code>).</p>
+<p>✓ All zones: Celtic Sea, North Atlantic Ocean, North Atlantic Silver Coast, Bay of Biscay, English Channel, North Sea, Skagerrak (incl. A40), German Bight, Gulf of Finland, Baltic Sea, Strait of Gibraltar, Balearic Sea, Sea of Sardinia, Tyrrhenian Sea, Adriatic Sea, Aegean Sea, Levantine Sea, Black Sea, Karkinitsky Bay.</p>
+<p><strong>Outstanding:</strong></p>
+<ul><li>? Ferry paths — start hex+edge, end hex+edge, distance number</li><li>? Sea zone distance numbers for cost calculation</li></ul>
+<hr>
+<h2 id="national-zone-boundaries">National Zone Boundaries</h2>
+<p>All 8 zones defined. <code>NATIONAL_REGION_HEXES_COMPLETE = true</code>. <code>CITY_NATIONAL_ZONE</code> overrides: Q38 → FR, O52 → PHS. <code>MINOR_EXCLUDED_HOME_CITIES</code> defined.</p>
+<p>⚠️ Two stale entries to fix:</p>
+<ul><li><code>NATIONAL_REGION_HEXES['SC']</code> still contains <code>A40</code> (now blue) — remove</li><li><code>NATIONAL_REGION_HEXES['RU']</code> still contains <code>E88</code> (removed hex) — remove</li></ul>
+<hr>
+<h2 id="terrain-costs">Terrain Costs</h2>
+<h3 id="carpathians-rows-pt-cols-5575">Carpathians (rows P–T, cols 55–75)</h3>
+<ul><li>£30: R51, Q70, O50, O68, P57</li><li>£45: Q60, Q62, Q64, Q68, R61, R69, N45, O62, P55, T67, T71, T73</li><li>£60: O54, R71, S52, S54, T49, T51</li></ul>
+<h3 id="balkans-rows-xag-cols-5580">Balkans (rows X–AG, cols 55–80)</h3>
+<ul><li>£30: X65, Z63, Z69, Z75, AA68, AB53, AC66, AD65, AF69, AG50</li><li>£45: X57, X61, X63, X67, Y62, Y68, Z61, Z65, Z71, AA64, AA72, AB67, AC54</li><li>£60: X67, Z67, AA66, AA86, AB65</li></ul>
+<h3 id="caucasus-rows-aaaf-cols-8088">Caucasus (rows AA–AF, cols 80–88)</h3>
+<ul><li>£45: AD81, AD83, AE80, AF83</li><li>£60: AA86, AB85, AE82, AE84</li></ul>
+<h3 id="river-crossings">River Crossings</h3>
+<ul><li>£5: E78</li><li>£30: N39, P41, K64, K66, L69, L71, L75, L77, M74, M76, M78, M80, N69–N79</li><li>£45: K44, N81, O82, AE52</li><li>£60: M34, T23, AB77, AC76, AD71, AG70</li></ul>
+<p>? <strong>Verify against physical map:</strong> Caucasus at AA86/AD81–AE84; river routing accuracy; combined terrain hexes (mountain + water).</p>
+<hr>
+<h2 id="custom-tile-codes">Custom Tile Codes</h2>
+<p>✓ Implemented: OE1–OE8, OE12–OE18, OE23–OE44</p>
+<p>? <strong>Outstanding — orientations unknown (double-town tiles, commented out):</strong></p>
+<table><thead><tr><th>Code</th><th>Colour</th><th>Qty</th><th>Missing</th></tr></thead><tbody><tr><td>OE9</td><td>green</td><td>3</td><td>edge pair</td></tr><tr><td>OE10</td><td>green</td><td>3</td><td>edge pair</td></tr><tr><td>OE11</td><td>green</td><td>3</td><td>edge pair</td></tr><tr><td>OE20</td><td>brown</td><td>3</td><td>edge pair</td></tr><tr><td>OE21</td><td>brown</td><td>2</td><td>edge pair</td></tr><tr><td>OE22</td><td>brown</td><td>6</td><td>edge pair</td></tr><tr><td>OE19</td><td>?</td><td>?</td><td>tile type (gap between OE18 green and OE20 brown)</td></tr></tbody></table>
+<p>? Do OE9–11 upgrade directly to OE20–22?</p>
+<hr>
+<h2 id="ports-and-ferry-routes">Ports and Ferry Routes</h2>
+<table><thead><tr><th>Item</th><th>Status</th></tr></thead><tbody><tr><td>Port city hexes (public light-blue / private red anchor)</td><td>?</td></tr><tr><td>Ferry route paths (start hex+edge → end hex+edge, distance)</td><td>?</td></tr><tr><td>North Sea port authority positions (8)</td><td>?</td></tr><tr><td>Mediterranean port authority positions (8)</td><td>?</td></tr><tr><td>White Cliffs Ferry token slot near Lille N31</td><td>?</td></tr><tr><td>Patronage tiles — fixed city list or game logic only?</td><td>?</td></tr></tbody></table>
+<hr>
+<h2 id="outstanding-bugs">Outstanding Bugs</h2>
+<table><thead><tr><th>Bug</th><th>Location</th><th>Fix</th></tr></thead><tbody><tr><td>Constantinople AA82 no path edges</td><td><code>map.rb white:</code></td><td>Add edges, move to <code>yellow:</code></td></tr><tr><td>London M28 no path edges</td><td><code>map.rb white:</code></td><td>Add edges, move to <code>yellow:</code></td></tr><tr><td>SC zone contains A40</td><td><code>game.rb NATIONAL_REGION_HEXES</code></td><td>Remove A40</td></tr><tr><td>RU zone contains E88</td><td><code>game.rb NATIONAL_REGION_HEXES</code></td><td>Remove E88</td></tr></tbody></table>
+<hr>
+<h2 id="open-issues-summary">Open Issues Summary</h2>
+<table><thead><tr><th>Priority</th><th>Item</th></tr></thead><tbody><tr><td><strong>High</strong></td><td>Pre-printed path edges for M28, AA82, N31, I20, O28, X33, U24</td></tr><tr><td><strong>High</strong></td><td>Verify all 19 red hex revenues and edges against physical map</td></tr><tr><td><strong>High</strong></td><td>Remove A40/E88 from national zone hex lists</td></tr><tr><td><strong>Medium</strong></td><td>Ferry paths and distance numbers (sea zone borders done)</td></tr><tr><td><strong>Medium</strong></td><td>Port markers, ferry routes, distances</td></tr><tr><td><strong>Medium</strong></td><td>Verify Caucasus terrain; river routing accuracy</td></tr><tr><td><strong>Low</strong></td><td>Confirm Venezia V47 town vs city</td></tr><tr><td><strong>Low</strong></td><td>OE9–11, OE20–22 edge pairs; OE19 tile type</td></tr><tr><td><strong>Low</strong></td><td>Patronage — fixed list or game logic only</td></tr></tbody></table>
+</article>
+</main>
+</div>
+<script src="search.js"></script>
+<script src="ui.js"></script>
+</body>
+</html>

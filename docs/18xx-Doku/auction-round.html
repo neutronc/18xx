@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Auction Rounds — 18OE Dev Docs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Playfair+Display:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({ startOnLoad: true, theme: 'base', themeVariables: {
+  primaryColor: '#0d1f38', primaryTextColor: '#faf6ec',
+  primaryBorderColor: '#c9a843', lineColor: '#c9a843',
+  secondaryColor: '#1a3a6a', tertiaryColor: '#2a4a80',
+  actorBkg: '#0d1f38', actorTextColor: '#faf6ec',
+  actorBorder: '#c9a843', actorLineColor: '#c9a843',
+  activationBkgColor: '#2a4ab0', activationBorderColor: '#c9a843',
+  signalColor: '#c9a843', signalTextColor: '#2a1a0a',
+  labelBoxBkgColor: '#0d1f38', labelBoxBorderColor: '#c9a843', labelTextColor: '#faf6ec',
+  loopTextColor: '#2a1a0a',
+  edgeLabelBackground: '#f0ead8',
+  noteBkgColor: '#f0e8d4', noteTextColor: '#2a1a0a', noteBorderColor: '#c9a843',
+  titleColor: '#2a1a0a',
+  clusterBkg: '#1a3a6a', clusterBorder: '#c9a843', clusterTextColor: '#faf6ec',
+  fillType0: '#0d1f38', fillType1: '#1a3a6a', fillType2: '#2a4a80',
+  fillType3: '#1a3a6a', fillType4: '#0d1f38', fillType5: '#2a4a80',
+  fillType6: '#1a3a6a', fillType7: '#0d1f38'
+} });</script>
+</head>
+<body>
+<header id="site-header">
+  <a href="index.html">18OE</a> &mdash; Developer Documentation
+</header>
+<div id="layout">
+<nav id="sidebar" aria-label="Navigation">
+<input id="nav-search" type="search" placeholder="Search…" aria-label="Search documentation" autocomplete="off">
+<div id="search-results" style="display:none">
+<p id="search-no-results" style="display:none">No results found.</p>
+<ul id="search-results-list"></ul>
+</div>
+<div class="track"><h3>18OE Status</h3><ul>
+<li><a href="rules-summary.html">Game Rules Summary</a></li>
+<li><a href="18oe-map-status.html">Map Implementation Status</a></li>
+<li><a href="status.html">Implementation Tracker</a></li>
+<li><a href="rulebook-coverage.html">Rulebook Coverage</a></li>
+<li><a href="alpha-gaps.html">Open for Alpha</a></li>
+</ul></div>
+<div class="track"><h3>Getting Involved</h3><ul>
+<li><a href="first-contribution.html">Your First Contribution</a></li>
+</ul></div>
+<div class="track"><h3>Building a New Game</h3><ul>
+<li><a href="engine-concepts.html">Understanding the Engine</a></li>
+<li><a href="getting-started.html">Development Setup</a></li>
+<li><a href="game-implementation.html">Game Structure</a></li>
+<li><a href="map.html">Map Configuration</a></li>
+<li><a href="entities.html">Corporations & Companies</a></li>
+<li><a href="trains-phases.html">Trains, Phases & Market</a></li>
+<li><a href="round-step-system.html">Rounds & Steps</a></li>
+<li><a href="auction-round.html" aria-current="page"><strong>Auction Round</strong></a></li>
+<li><a href="revenue-routing.html">Revenue & Routing</a></li>
+<li><a href="abilities.html">Abilities</a></li>
+<li><a href="tiles.html">Tile Reference</a></li>
+<li><a href="common-patterns.html">Common Patterns</a></li>
+<li><a href="testing.html">Testing Your Game</a></li>
+<li><a href="title-checklist.html">Title Checklist</a></li>
+<li><a href="coding-guidelines.html">Coding Guidelines</a></li>
+</ul></div>
+<div class="track"><h3>Reference</h3><ul>
+<li><a href="game-engine.html">Game Engine Reference</a></li>
+<li><a href="adrs.html">Architecture Decision Records</a></li>
+</ul></div>
+<div class="track"><h3>Platform & Testing Setup</h3><ul>
+<li><a href="architecture.html">Architecture Overview</a></li>
+<li><a href="konfiguration-betrieb.html">Configuration & Operations</a></li>
+<li><a href="systemgrenzen.html">System Boundaries</a></li>
+</ul></div>
+<div class="track"><h3>Working with Claude</h3><ul>
+<li><a href="codevelop.html">Co-developing with Claude</a></li>
+</ul></div>
+</nav>
+<main>
+<article>
+<h1 id="auction-rounds">Auction Rounds</h1>
+<p>Most 18xx titles begin with an auction or draft that distributes private companies to players before the first Stock Round. This page covers how to configure the two standard auction types, the constants that control bidding, and when to write a custom auction step.</p>
+<hr>
+<h2 id="how-auction-rounds-fit-in">How Auction Rounds Fit In</h2>
+<p>The engine calls <code>init_round()</code> on game start [<code>lib/engine/game/base.rb</code>]. The default implementation returns <code>new_auction_round()</code>, which produces a <code>Round::Auction</code> containing <code>Step::WaterfallAuction</code>. Override <code>new_auction_round</code> in your <code>game.rb</code> to choose a different auction style or step list.</p>
+<div class="mermaid">
+sequenceDiagram
+    participant Game as Game::Base
+    participant AR as Round::Auction
+    participant Step as Auction Step
+    participant Player as Player
+
+    Game->>AR: init_round → new_auction_round
+    AR->>Step: setup_auction (initialise @bids / @companies)
+    loop each player action
+        Player->>Step: bid / pass
+        Step->>Step: validate, record bid
+        Step->>Step: resolve_bids (when auction closes)
+        Step->>Game: after_buy_company(player, company, price)
+    end
+    AR->>Game: finish_round → new_stock_round
+</div>
+<hr>
+<h2 id="choosing-an-auction-style">Choosing an Auction Style</h2>
+<table><thead><tr><th>Style</th><th>Step class</th><th>How it works</th><th>Typical titles</th></tr></thead><tbody><tr><td><strong>Waterfall</strong></td><td><code>Step::WaterfallAuction</code></td><td>All companies visible at once. Players bid on the cheapest available company. A single bid buys it outright; two or more bids open a live auction. Unsold companies get cheaper each round until forced onto the last player.</td><td>1830, 1846, 18Chesapeake</td></tr><tr><td><strong>Selection</strong></td><td><code>Step::SelectionAuction</code></td><td>One company at a time. The active player either buys the cheapest company outright or nominates it for auction. All players then bid in sequence; highest bid wins.</td><td>1817, 1840</td></tr><tr><td><strong>Custom</strong></td><td>Your own Step subclass</td><td>Any other mechanic (Dutch auction, draft, concession).</td><td>1848, 1812</td></tr></tbody></table>
+<hr>
+<h2 id="waterfall-auction">Waterfall Auction</h2>
+<h3 id="wiring-it-up">Wiring it up</h3>
+<pre><code class="language-ruby"># In game.rb
+def new_auction_round
+  Round::Auction.new(self, [
+    Engine::Step::CompanyPendingPar,
+    Engine::Step::WaterfallAuction,
+  ])
+end</code></pre>
+<p><code>Step::CompanyPendingPar</code> handles the edge case where a company is bought but its associated corporation has not yet set a par price — include it whenever companies have <code>par</code> abilities.</p>
+<h3 id="how-bidding-resolves">How bidding resolves</h3>
+<ol><li>Companies are sorted cheapest-first.</li><li>A player may bid on <strong>only the cheapest unbought company</strong> while no live auction is running.</li><li>A single uncontested bid purchases the company at the bid price.</li><li>When two or more bids exist on the cheapest company, a live auction opens — other players may raise until all but one pass.</li><li>If all players pass on the cheapest company, its minimum price decreases by <code>WATERFALL_AUCTION_PRICE_DISCOUNT</code> (default: face value ÷ 2). When the company price hits zero, the current player is forced to take it for free.</li></ol>
+<h3 id="key-constants">Key constants</h3>
+<table><thead><tr><th>Constant</th><th>Default</th><th>Effect</th></tr></thead><tbody><tr><td><code>MIN_BID_INCREMENT</code></td><td><code>5</code></td><td>Minimum raise amount</td></tr><tr><td><code>MUST_BID_INCREMENT_MULTIPLE</code></td><td><code>false</code></td><td>If <code>true</code>, all bids must be multiples of <code>MIN_BID_INCREMENT</code></td></tr><tr><td><code>ONLY_HIGHEST_BID_COMMITTED</code></td><td><code>false</code></td><td>If <code>true</code>, only the highest bid per company locks up player cash; other bids are free to exceed cash</td></tr></tbody></table>
+<pre><code class="language-ruby"># In game.rb
+MIN_BID_INCREMENT = 5
+MUST_BID_INCREMENT_MULTIPLE = true</code></pre>
+<hr>
+<h2 id="selection-auction">Selection Auction</h2>
+<h3 id="wiring-it-up">Wiring it up</h3>
+<pre><code class="language-ruby">def new_auction_round
+  Round::Auction.new(self, [
+    Engine::Step::SelectionAuction,
+  ])
+end</code></pre>
+<h3 id="how-bidding-resolves">How bidding resolves</h3>
+<ol><li>The active player may buy the cheapest company at face value, or nominate it for auction.</li><li>If nominated, all other players bid in turn order. Each player may raise or pass. The last player standing wins at their bid price.</li><li>The player who triggered the auction bids last and may raise above their own trigger bid.</li><li>If no one bids against the nominator, they buy at face value.</li></ol>
+<hr>
+<h2 id="controlling-which-companies-auction">Controlling Which Companies Auction</h2>
+<p><code>initial_auction_companies</code> returns the list of companies that appear in the auction. The default returns all of <code>@companies</code>. Override to exclude certain companies or change the starting order:</p>
+<pre><code class="language-ruby"># Only auction the first four companies; the rest are assigned later
+def initial_auction_companies
+  @companies.first(4)
+end</code></pre>
+<pre><code class="language-ruby"># Exclude companies with the :minor type from the initial auction
+def initial_auction_companies
+  @companies.reject { |c| c.type == :minor }
+end</code></pre>
+<hr>
+<h2 id="post-purchase-hook">Post-Purchase Hook</h2>
+<p>After any company purchase <code>Step::WaterfallAuction</code> calls <code>game.after_buy_company(player, company, price)</code>. The base class does nothing; override to fire game-specific effects:</p>
+<pre><code class="language-ruby">def after_buy_company(player, company, price)
+  # Example: the cheapest company grants a free share of corporation A
+  return unless company.sym == 'RVR' &amp;&amp; price == company.min_price
+  share = @corporations.find { |c| c.sym == 'A' }.shares.first
+  @share_pool.buy_shares(player, share, exchange: :free)
+end</code></pre>
+<hr>
+<h2 id="auction-constants-in-gamerb">Auction Constants in game.rb</h2>
+<p>These constants are read by all auction steps:</p>
+<pre><code class="language-ruby"># In game.rb
+MIN_BID_INCREMENT             = 5      # minimum raise
+MUST_BID_INCREMENT_MULTIPLE   = false  # enforce multiples
+ONLY_HIGHEST_BID_COMMITTED    = false  # cash reservation scope</code></pre>
+<p><code>ONLY_HIGHEST_BID_COMMITTED = true</code> is useful when a player may bid on multiple companies simultaneously (common in waterfall). With this set, the player's cash is only locked for their highest bid on each company rather than the sum of all bids.</p>
+<hr>
+<h2 id="writing-a-custom-auction-step">Writing a Custom Auction Step</h2>
+<p>Use this when neither waterfall nor selection matches your rules.</p>
+<h3 id="step-1--choose-a-base">Step 1 — Choose a base</h3>
+<table><thead><tr><th>Base</th><th>When to use</th></tr></thead><tbody><tr><td>Include <code>Engine::Step::Auctioner</code></td><td>Multiple simultaneous auctions on different companies</td></tr><tr><td>Include <code>Engine::Step::PassableAuction</code></td><td>Single live auction, players eliminated on pass</td></tr><tr><td>Inherit <code>Engine::Step::WaterfallAuction</code></td><td>Minor variation of waterfall</td></tr><tr><td>Inherit <code>Engine::Step::SelectionAuction</code></td><td>Minor variation of selection</td></tr></tbody></table>
+<h3 id="step-2--required-overrides">Step 2 — Required overrides</h3>
+<pre><code class="language-ruby"># frozen_string_literal: true
+
+require_relative '../../../step/base'
+require_relative '../../../step/auctioner'
+
+module Engine
+  module Game
+    module G8888
+      module Step
+        class DraftAuction &lt; Engine::Step::Base
+          include Engine::Step::Auctioner
+
+          ACTIONS = %w[bid pass].freeze
+
+          def actions(entity)
+            return [] unless entity == current_entity
+            ACTIONS
+          end
+
+          def setup
+            setup_auction   # initialises @bids from Auctioner
+            @companies = @game.initial_auction_companies.sort_by(&amp;:value)
+          end
+
+          # Minimum bid for a company
+          def min_bid(company)
+            return company.min_price if @bids[company].empty?
+            high = @bids[company].max_by(&amp;:price)
+            high.price + min_increment
+          end
+
+          # Maximum a player may bid (limited by their cash)
+          def max_bid(entity, _company)
+            entity.cash
+          end
+
+          def process_bid(action)
+            add_bid(action)     # from Auctioner: validates, records
+            resolve_bids        # check if auction can close
+          end
+
+          def process_pass(action)
+            pass_auction(action.entity)   # from Auctioner
+          end
+
+          def resolve_bids
+            @companies.each do |company|
+              bids = @bids[company]
+              next if bids.empty?
+              next if bids.size &gt; 1   # still contested
+
+              buy_company(bids.first.entity, company, bids.first.price)
+            end
+          end
+
+          private
+
+          def buy_company(player, company, price)
+            @game.log &lt;&lt; "#{player.name} buys #{company.name} for #{@game.format_currency(price)}"
+            player.spend(price, @game.bank)
+            player.companies &lt;&lt; company
+            company.owner = player
+            @companies.delete(company)
+            @bids.delete(company)
+            @game.after_buy_company(player, company, price)
+          end
+        end
+      end
+    end
+  end
+end</code></pre>
+<h3 id="step-3--register-in-new_auction_round">Step 3 — Register in new_auction_round</h3>
+<pre><code class="language-ruby">require_relative 'step/draft_auction'
+
+def new_auction_round
+  Round::Auction.new(self, [
+    Engine::Step::CompanyPendingPar,
+    G8888::Step::DraftAuction,
+  ])
+end</code></pre>
+<hr>
+<h2 id="reference-titles">Reference Titles</h2>
+<table><thead><tr><th>Mechanic</th><th>Title</th><th>Step file</th></tr></thead><tbody><tr><td>Standard waterfall</td><td>1830</td><td><code>lib/engine/step/waterfall_auction.rb</code></td></tr><tr><td>Selection / priority bid</td><td>1817</td><td><code>lib/engine/step/selection_auction.rb</code></td></tr><tr><td>Waterfall with extra bid commit rules</td><td>1846</td><td><code>lib/engine/game/g_1846/step/</code></td></tr><tr><td>Dutch auction variant</td><td>1848</td><td><code>lib/engine/game/g_1848/step/dutch_auction.rb</code></td></tr><tr><td>Concession / hybrid</td><td>several</td><td><code>lib/engine/step/concession_auction.rb</code></td></tr></tbody></table>
+<p>Search for titles using a specific auction type:</p>
+<pre><code class="language-bash">grep -rl "WaterfallAuction"   lib/engine/game/
+grep -rl "SelectionAuction"   lib/engine/game/
+grep -rl "DutchAuction"       lib/engine/game/</code></pre>
+<hr>
+<h2 id="debugging-an-auction">Debugging an Auction</h2>
+<p>Load a fixture up to the end of the auction round in IRB:</p>
+<pre><code class="language-ruby">require_relative 'lib/engine'
+raw = JSON.parse(File.read('public/fixtures/1830/26855.json'))
+g = Engine::Game::G1830::Game.new(
+  raw['players'].map { |p| p['name'] },
+  id: raw['id'],
+  actions: raw['actions'].first(20)   # adjust to end of ISR
+)
+
+g.current_round.class               # =&gt; Engine::Round::Auction
+g.current_round.active_step.class   # =&gt; Engine::Step::WaterfallAuction
+
+step = g.current_round.active_step
+step.instance_variable_get(:@companies)   # remaining companies
+step.instance_variable_get(:@bids)        # current bids</code></pre>
+<hr>
+<h2 id="whats-next">What's Next</h2>
+<ul><li>Tile lays and map setup in the OR: <a href="map.html">Map Configuration</a></li><li>Custom dividend logic: <a href="round-step-system.html">Rounds & Steps</a></li><li>Testing the auction with a fixture: <a href="testing.html">Testing Your Game</a></li><li>Complete title tutorial from the beginning: <a href="game-implementation.html">Game Structure</a></li></ul>
+<hr>
+<p><em>Version: 2026-05-08 — derived from <code>lib/engine/round/auction.rb</code>, <code>lib/engine/step/waterfall_auction.rb</code>, <code>lib/engine/step/selection_auction.rb</code>, <code>lib/engine/step/auctioner.rb</code>, <code>lib/engine/step/passable_auction.rb</code>, <code>lib/engine/game/base.rb</code>.</em></p>
+</article>
+</main>
+</div>
+<script src="search.js"></script>
+<script src="ui.js"></script>
+</body>
+</html>

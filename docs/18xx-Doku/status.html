@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Implementation Tracker — 18OE Dev Docs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Playfair+Display:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({ startOnLoad: true, theme: 'base', themeVariables: {
+  primaryColor: '#0d1f38', primaryTextColor: '#faf6ec',
+  primaryBorderColor: '#c9a843', lineColor: '#c9a843',
+  secondaryColor: '#1a3a6a', tertiaryColor: '#2a4a80',
+  actorBkg: '#0d1f38', actorTextColor: '#faf6ec',
+  actorBorder: '#c9a843', actorLineColor: '#c9a843',
+  activationBkgColor: '#2a4ab0', activationBorderColor: '#c9a843',
+  signalColor: '#c9a843', signalTextColor: '#2a1a0a',
+  labelBoxBkgColor: '#0d1f38', labelBoxBorderColor: '#c9a843', labelTextColor: '#faf6ec',
+  loopTextColor: '#2a1a0a',
+  edgeLabelBackground: '#f0ead8',
+  noteBkgColor: '#f0e8d4', noteTextColor: '#2a1a0a', noteBorderColor: '#c9a843',
+  titleColor: '#2a1a0a',
+  clusterBkg: '#1a3a6a', clusterBorder: '#c9a843', clusterTextColor: '#faf6ec',
+  fillType0: '#0d1f38', fillType1: '#1a3a6a', fillType2: '#2a4a80',
+  fillType3: '#1a3a6a', fillType4: '#0d1f38', fillType5: '#2a4a80',
+  fillType6: '#1a3a6a', fillType7: '#0d1f38'
+} });</script>
+</head>
+<body>
+<header id="site-header">
+  <a href="index.html">18OE</a> &mdash; Developer Documentation
+</header>
+<div id="layout">
+<nav id="sidebar" aria-label="Navigation">
+<input id="nav-search" type="search" placeholder="Search…" aria-label="Search documentation" autocomplete="off">
+<div id="search-results" style="display:none">
+<p id="search-no-results" style="display:none">No results found.</p>
+<ul id="search-results-list"></ul>
+</div>
+<div class="track"><h3>18OE Status</h3><ul>
+<li><a href="rules-summary.html">Game Rules Summary</a></li>
+<li><a href="18oe-map-status.html">Map Implementation Status</a></li>
+<li><a href="status.html" aria-current="page"><strong>Implementation Tracker</strong></a></li>
+<li><a href="rulebook-coverage.html">Rulebook Coverage</a></li>
+<li><a href="alpha-gaps.html">Open for Alpha</a></li>
+</ul></div>
+<div class="track"><h3>Getting Involved</h3><ul>
+<li><a href="first-contribution.html">Your First Contribution</a></li>
+</ul></div>
+<div class="track"><h3>Building a New Game</h3><ul>
+<li><a href="engine-concepts.html">Understanding the Engine</a></li>
+<li><a href="getting-started.html">Development Setup</a></li>
+<li><a href="game-implementation.html">Game Structure</a></li>
+<li><a href="map.html">Map Configuration</a></li>
+<li><a href="entities.html">Corporations & Companies</a></li>
+<li><a href="trains-phases.html">Trains, Phases & Market</a></li>
+<li><a href="round-step-system.html">Rounds & Steps</a></li>
+<li><a href="auction-round.html">Auction Round</a></li>
+<li><a href="revenue-routing.html">Revenue & Routing</a></li>
+<li><a href="abilities.html">Abilities</a></li>
+<li><a href="tiles.html">Tile Reference</a></li>
+<li><a href="common-patterns.html">Common Patterns</a></li>
+<li><a href="testing.html">Testing Your Game</a></li>
+<li><a href="title-checklist.html">Title Checklist</a></li>
+<li><a href="coding-guidelines.html">Coding Guidelines</a></li>
+</ul></div>
+<div class="track"><h3>Reference</h3><ul>
+<li><a href="game-engine.html">Game Engine Reference</a></li>
+<li><a href="adrs.html">Architecture Decision Records</a></li>
+</ul></div>
+<div class="track"><h3>Platform & Testing Setup</h3><ul>
+<li><a href="architecture.html">Architecture Overview</a></li>
+<li><a href="konfiguration-betrieb.html">Configuration & Operations</a></li>
+<li><a href="systemgrenzen.html">System Boundaries</a></li>
+</ul></div>
+<div class="track"><h3>Working with Claude</h3><ul>
+<li><a href="codevelop.html">Co-developing with Claude</a></li>
+</ul></div>
+</nav>
+<main>
+<article>
+<h1>18OE — Implementation Tracker</h1>
+<p class="page-crosslink">For the full rulebook picture → <a href="rulebook-coverage.html">Rulebook Coverage</a> · Alpha gaps → <a href="alpha-gaps.html">Open for Alpha</a></p>
+<p class="bar-note">Bar widths reflect implementation effort (L3 step/round = 3× · L2 override = 2× · L1 constant = 1×), not item count.</p>
+<div class="bar-rows">
+<div class="bar-row">
+<span class="bar-label-left">Overall</span>
+<div class="progress-track">
+<div class="pb-done"    style="width:17.7%"></div>
+<div class="pb-pr"      style="width:2.0%"></div>
+<div class="pb-partial" style="width:4.3%"></div>
+<div class="pb-todo"    style="width:75.9%"></div>
+</div>
+<span class="bar-label-right">38&thinsp;/&thinsp;146 items</span>
+</div>
+<div class="bar-row">
+<span class="bar-label-left">Alpha</span>
+<div class="progress-track">
+<div class="pb-done"    style="width:34.2%"></div>
+<div class="pb-pr"      style="width:0.7%"></div>
+<div class="pb-partial" style="width:5.9%"></div>
+<div class="pb-todo"    style="width:59.3%"></div>
+</div>
+<span class="bar-label-right">35%<span class="bar-aside"> · 45 remaining · <span class="bar-beta">65 beta deferred</span></span></span>
+</div>
+</div>
+<div class="status-summary" style="margin:0.5rem 0 1.2rem">
+<div class="stat-chip stat-done">Done &amp; merged <span>35</span></div>
+<div class="stat-chip stat-pr">Needs PR <span>3</span></div>
+<div class="stat-chip stat-partial">Partial <span>9</span></div>
+<div class="stat-chip stat-todo">To do <span>99</span></div>
+<div class="stat-chip stat-beta">Beta deferred <span>65</span></div>
+</div>
+<div class="status-filters">
+<span class="filter-label">Milestone:</span>
+<button class="milestone-btn active" data-scope="">All</button>
+<button class="milestone-btn" data-scope="alpha">Alpha</button>
+<button class="milestone-btn" data-scope="beta">Beta</button>
+<span class="filter-sep"></span>
+<span class="filter-label">Layer:</span>
+<button class="layer-btn active" data-layer="">All</button>
+<button class="layer-btn" data-layer="L1">L1</button>
+<button class="layer-btn" data-layer="L2">L2</button>
+<button class="layer-btn" data-layer="L3">L3</button>
+<span class="filter-sep"></span>
+<span class="filter-label">Group by:</span>
+<button class="group-btn active" data-group="rules">Rules</button>
+<button class="group-btn" data-group="layer">Layer</button>
+</div>
+<div class="status-board">
+<div class="sb-col">
+<div class="sb-col-header done-col">Done &amp; Merged<span class="sb-col-count">35</span></div>
+<div class="sb-col-body">
+<div class="sb-done-card">
+<div class="sb-done-title">§1 — Game Setup</div>
+<div class="sb-done-summary">Player range 2–7 · starting cash formula · bank £54,000 · certificate limits · three-tier hierarchy · incremental capitalisation · regional float condition · regional dump restriction</div>
+</div>
+<div class="sb-done-card">
+<div class="sb-done-title">§2a — Company Definitions</div>
+<div class="sb-done-summary">All 24 regionals · all 12 minors · all 10 privates · all 12 minor auction cards · all 10 concession cards · charter colors for all 12 minors</div>
+</div>
+<div class="sb-done-card">
+<div class="sb-done-title">§2b — Map</div>
+<div class="sb-done-summary">Full 651-hex grid · 19 red off-board hexes · all terrain costs · 255 LOCATION_NAMES · 255 station slots with revenues · pre-printed yellow tiles (J25/J27/AE72/L37/I50/I48) · all pre-printed revenues · pre-printed ferry paths (N31/M28/AA82/I20/O28/X33) · NATIONAL_REGION_HEXES (8 zones) · stale entries removed · SEA_ZONES (19 zones) · city revenues set</div>
+</div>
+<div class="sb-done-card">
+<div class="sb-done-title">§3 — Track Rights Zones</div>
+<div class="sb-done-summary">All 8 zones defined · zone fee on par · zone token restriction · minor zone assignment · asterisked-zone cap (UK/PHS/FR, max 4) · `@minor_available_regions` dynamic · `home_token_locations` filtered · 20% terrain discount (IT/SP/RU/SC)</div>
+</div>
+<div class="sb-done-card">
+<div class="sb-done-title">§4 — Auction Phase</div>
+<div class="sb-done-summary">Waterfall auction with tiered rows · minor card → float right + £120 par</div>
+</div>
+<div class="sb-done-card">
+<div class="sb-done-title">§6a — Stock Market Grid</div>
+<div class="sb-done-summary">8×17 grid with correct prices · par colour bands (blue regional / red major)</div>
+</div>
+<div class="sb-done-card">
+<div class="sb-done-title">§6b — Share Price Movement</div>
+<div class="sb-done-summary">LEFT (zero dividend) · no movement (below price) · RIGHT (at/above price) · minors/regionals exempt from movement</div>
+</div>
+<div class="sb-done-card">
+<div class="sb-done-title">§6c — Stock Round Structure</div>
+<div class="sb-done-summary">Sell-then-buy order · home token placement during SR · regional→major conversion · share issuance for majors</div>
+</div>
+<div class="sb-done-card">
+<div class="sb-done-title">§6d — Dividend Options</div>
+<div class="sb-done-summary">Minors: half-pay only · Nationals: full payout only · Majors/regionals: all three options</div>
+</div>
+<div class="sb-done-card">
+<div class="sb-done-title">§7a — Train Data</div>
+<div class="sb-done-summary">7-level roster · rust triggers (L4/L6/L8) · L8 unlock after 4th L7</div>
+</div>
+<div class="sb-done-card">
+<div class="sb-done-title">§7b — Phase Structure</div>
+<div class="sb-done-summary">8 named phases with train limits · tile colour by phase · status flags · consolidation event on first L5 · national corp type · NATIONAL_REGION_HEXES_COMPLETE / CITY_NATIONAL_ZONE / MINOR_EXCLUDED_HOME_CITIES</div>
+</div>
+<div class="sb-done-card">
+<div class="sb-done-title">§8a — Operating Order</div>
+<div class="sb-done-summary">Float order: minors/regionals first (home-token order), then majors/nationals by share price</div>
+</div>
+<div class="sb-done-card">
+<div class="sb-done-title">§8b — Track Laying</div>
+<div class="sb-done-summary">OE1–OE3 (yellow double-town) · OE4–OE8 (yellow city) · OE12–OE18 (green city) · OE23–OE33 (brown city) · OE34–OE44 (gray city) · tile point budgets · tile point costs · TILE_UPGRADES_MUST_USE_MAX_EXITS · metropolis upgrade labels · nationals pay no terrain</div>
+</div>
+<div class="sb-done-card">
+<div class="sb-done-title">§8c — Token Placement</div>
+<div class="sb-done-summary">Zone restriction · connectivity check · nationals skip token step</div>
+</div>
+<div class="sb-done-card">
+<div class="sb-done-title">§8g — Train Purchase</div>
+<div class="sb-done-summary">Reserved 2+2 obligation (Set flag, phase-status check, depot gating, `process_buy_train` snapshot) · obligation waived if Phase 4 before first OR · depot level gating · inter-RR purchase Phase 4+</div>
+</div>
+<div class="sb-done-card">
+<div class="sb-done-title">§9 — Minor Ability Descriptions</div>
+<div class="sb-done-summary">All 12 minor ability texts entered (A–M)</div>
+</div>
+<div class="sb-done-card">
+<div class="sb-done-title">§10 — Private Ability Descriptions</div>
+<div class="sb-done-summary">All 10 private ability texts entered</div>
+</div>
+<div class="sb-done-card">
+<div class="sb-done-title">§11 — Nationals (base)</div>
+<div class="sb-done-summary">National type `:national` in train limits · NATIONAL_REGION_HEXES · `@minor_available_regions`</div>
+</div>
+<div class="sb-done-card">
+<div class="sb-done-title">§12A — Track-Rights Chit System</div>
+<div class="sb-done-summary">`MINOR_TRACK_RIGHTS_CHITS` · `ASTERISKED_ZONES` cap · `region_available?` / `track_rights_cost` / `claim_region!` · `HomeToken#process_place_token` · `major_phase?`</div>
+</div>
+<div class="sb-done-card">
+<div class="sb-done-title">§6e — Share Price: UP Movement + Post-Conversion Window</div>
+<div class="sb-done-summary">UP movement at end of SR for majors/nationals with no bank-pool shares (`sold_out_increase?`) · post-conversion sell window: sell-then-buy window after regional→major conversion, before mandatory president purchase (`@converted` flow in `BuySellParShares`)</div>
+</div>
+<div class="sb-done-card">
+<div class="sb-done-title">§9b — Minor Abilities: B E F G K</div>
+<div class="sb-done-summary">B (Orange Scroll): 1-point cheap upgrade via `CHEAP_UPGRADE_CORPORATIONS` + Track step · E (Blue Coast): 33% water terrain discount + extra tile lay (`upgrade_cost` + `terrain_discount_ability`) · F (White Peak): same pattern for mountain terrain · G (Indigo Foundry): +2 tile points (`EXTRA_TILE_POINTS`) · K (Vermilion Seal): mail contract revenue paid at OR start (`pay_mail_contract!` in `Operating#after_setup`)</div>
+</div>
+<div class="sb-done-card">
+<div class="sb-done-title">§13a — Consolidation Phase Scaffold</div>
+<div class="sb-done-summary">First L5 purchase → `consolidation_triggered` event → Consolidation Round (once, via `@consolidation_done`) · `Round::G18OE::Consolidation` + `Step::Consolidate`: pass-only scaffold</div>
+</div>
+<div class="sb-done-card">
+<div class="sb-done-title">§12A — Track-Rights Chit System (upstream PR #12542, merged 2026-05-10)</div>
+<div class="sb-done-summary">`MINOR_TRACK_RIGHTS_CHITS` · `ASTERISKED_ZONES` cap · `region_available?` / `track_rights_cost` / `claim_region!` · zone cap enforcement upstream</div>
+</div>
+<div class="sb-done-card">
+<div class="sb-done-title">§8g — Train Purchase Obligation (upstream PR #12543, merged 2026-05-12)</div>
+<div class="sb-done-summary">§8g 3.1/3.4–3.6 reserved 2+2 obligation · depot level gating · inter-RR purchase Phase 4+</div>
+</div>
+<div class="sb-done-card">
+<div class="sb-done-title">§6c — Stock Round: can_buy? guard + share issuance (upstream PR #12544, merged 2026-05-12)</div>
+<div class="sb-done-summary">`can_buy?` guard · share issuance for majors</div>
+</div>
+<div class="sb-done-card">
+<div class="sb-done-title">§2b — Port icons on map (upstream PR #12558, merged 2026-05-10)</div>
+<div class="sb-done-summary">§2a zone colors · §2b port icons on map hexes (alpha); port routing → beta</div>
+</div>
+<div class="sb-done-card">
+<div class="sb-done-title">§6d — Dividend types + HalfPay (upstream PR #12561, merged 2026-05-07)</div>
+<div class="sb-done-summary">`dividend_types` · `HalfPay` step for minors · full-pay only for nationals</div>
+</div>
+<div class="sb-done-card">
+<div class="sb-done-title">§6b — OR Share Price Movement: threshold rule + dead code removal (2026-05-14)</div>
+<div class="sb-done-summary">Three-way `share_price_change` override in `G18OE::Step::Dividend`: LEFT on zero, no move below price, RIGHT at or above price (BUG-013). Dead `game.rb#change_share_price` removed (BUG-014).</div>
+</div>
+<div class="sb-done-card">
+<div class="sb-done-title">§6b — Sold-out UP: share-price order at SR end (2026-05-14)</div>
+<div class="sb-done-summary">`G18OE::Round::Stock` with `finish_round` override — replaces alphabetical `.sort` with `.sort_by { |c| -c.share_price.price }` so highest-priced corps move first (BUG-015).</div>
+</div>
+<div class="sb-done-card">
+<div class="sb-done-title">§6c — Zone-based terrain discounts + E/F augmentation + rounding (2026-05-14)</div>
+<div class="sb-done-summary">`upgrade_cost` rewrite: 20% zone discount for SP/IT/SC/RU zone-matched track rights (`Rational(4,5)`); E/F ability augments to 50% when zone matches; all rounding `.floor` on cost so RR pays less on fractions (BUG-008, BUG-009, BUG-010).</div>
+</div>
+<div class="sb-done-card">
+<div class="sb-done-title">§6c — President above-60% pool purchase at 2× price (2026-05-14)</div>
+<div class="sb-done-summary">`president_pool_overcap_buy?` helper in `BuySellParShares`; `can_buy?` short-circuits before `super` to bypass `holding_ok?`; `process_buy_shares` charges `bundle.price * 2` via `exchange_price:` keyword (BUG-021, §10.2).</div>
+</div>
+<div class="sb-done-card">
+<div class="sb-done-title">§7a — Level-8 train gate (2026-05-14)</div>
+<div class="sb-done-summary">`buyable_trains` override in `G18OE::Step::BuyTrain` injects first `8+8` from `depot.upcoming` once `game.level8_train_available?` is true (≥4 level-7 trains sold); rejects `8+8` until gate opens. Gate predicate lives in `game.rb` as `level8_train_available?` (BUG-018, §11.6).</div>
+</div>
+<div class="sb-done-card">
+<div class="sb-done-title">§8h — OR share issuance DOWN movement (2026-05-14)</div>
+<div class="sb-done-summary">`G18OE::Step::IssueShares` overrides `process_sell_shares` to call `sell_shares_and_change_price` (triggering `SELL_MOVEMENT = :down_share`) instead of bare `share_pool.sell_shares` (BUG-022, §11.7).</div>
+</div>
+<div class="sb-done-card">
+<div class="sb-done-title">§2b — Province borders + partition engine (upstream PRs #12578 + #12592, merged 2026-05-14)</div>
+<div class="sb-done-summary">`type:province` partition engine (`partition.rb` −1 sentinel, `len` anchor param) · orange dashed border renderer (`partitions.rb`) · RU South hexes (Arkhangelsk + Black Sea approach hexes) · TILES.md partition DSL docs</div>
+</div>
+<div class="sb-done-card">
+<div class="sb-done-title">§13/§15 — Game-end timing: bank-break + level-8 trigger + remainder cash (2026-05-14)</div>
+<div class="sb-done-summary">`GAME_END_CHECK = { bank: :current_or, final_phase: :one_more_full_or_set }` · `bankrupt: :immediate` dropped (BUG-027) · `event_level8_train_purchased!` idempotent event injects `REMAINDER_CASH = 100_000` (20×£5,000 notes, §13) into bank via ivar and sets `@level8_train_purchased`; `game_end_check_final_phase?` returns that flag (BUG-024, BUG-025, §13).</div>
+</div>
+</div></div>
+<div class="sb-col">
+<div class="sb-col-header inwork-col">In Work<span class="sb-col-count">12</span></div>
+<div class="sb-col-body view-rules">
+<div class="sb-section">
+<div class="sb-section-title">Stock Round</div>
+<div class="sb-item sb-needs-pr" data-layer="L2/L3" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text"><strong>Minor SR merge action</strong> <code>[BETA]</code> — <code>can_merge_minors?</code> / <code>minor_by_id</code> / <code>mergeable_entity/entities</code> / <code>process_merge</code> / <code>merge_minor!</code> / <code>transfer_minor_track_rights!</code> implemented <strong>[L2/L3]</strong> <code>18oe_mergers</code></span><span class="layer-tag">L2/L3</span></div>
+</div>
+<div class="sb-section">
+<div class="sb-section-title">Minor Abilities</div>
+<div class="sb-item sb-partial" data-layer="L3" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text"><strong>C</strong> (Golden Bell) — <code>choose_ability</code>/<code>@golden_bell_position</code>/<code>operating_order</code> wired; <strong>still needed</strong>: OR-start choice-prompt step <strong>[L3]</strong> <code>18oe_abilities</code></span><span class="layer-tag">L3</span></div>
+<div class="sb-item sb-partial" data-layer="L3" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text"><strong>D</strong> (Green Junction) — <code>hex_bonus</code>/<code>event_d_token_phase_change!</code>/<code>assign_d_token!</code> wired; <strong>still needed</strong>: unreachable-city placement step (land cities only; sea/ferry variant → beta todo) <strong>[L3]</strong> <code>18oe_abilities</code></span><span class="layer-tag">L3</span></div>
+<div class="sb-item sb-needs-pr" data-layer="L1" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text"><strong>J</strong> (Grey Locomotive Works) — <code>train_discount</code> (0.1) wired; removed <code>owner_type</code>/TODO; ability-transfer to major → beta <strong>[L1]</strong> <code>18oe_abilities</code></span><span class="layer-tag">L1</span></div>
+<div class="sb-item sb-partial" data-layer="L3" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text"><strong>L</strong> (Krasnaya Strela) — <code>assign_krasnaya_strela!</code>/<code>restore_krasnaya_strela!</code> wired; <strong>still needed</strong>: train-choice step + D-train exception <strong>[L3]</strong> <code>18oe_abilities</code></span><span class="layer-tag">L3</span></div>
+</div>
+<div class="sb-section">
+<div class="sb-section-title">Private Abilities</div>
+<div class="sb-item sb-partial" data-layer="L3" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text"><strong>Central Circle</strong> — <code>token</code> (extra_slot, special_only) wired; <strong>still needed</strong>: town revenue scoring (£10/£20/£40/£60 by phase), SR window <strong>[L3]</strong> <code>18oe_abilities</code></span><span class="layer-tag">L3</span></div>
+<div class="sb-item sb-partial" data-layer="L3" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text"><strong>Hochberg Mining</strong> — <code>assign_hexes</code> wired; <strong>still needed</strong>: routing exclusion + placement eligibility (cost ≥ £45) <strong>[L3]</strong> <code>18oe_abilities</code></span><span class="layer-tag">L3</span></div>
+<div class="sb-item sb-partial" data-layer="L3" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text"><strong>Brandt & Brandau</strong> — <code>tile_lay</code> (free, count: 4) wired; <strong>still needed</strong>: per-OR cap (max 2/OR) <strong>[L3]</strong> <code>18oe_abilities</code></span><span class="layer-tag">L3</span></div>
+</div>
+<div class="sb-section">
+<div class="sb-section-title">Beta</div>
+<div class="sb-item sb-needs-pr" data-layer="L2/L3" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text"><strong>Nationals claim rusted trains</strong> <code>[BETA]</code> — <code>spend_minmax [0,0]</code>, fast-path in <code>process_buy_train</code>, <code>trigger_nationals_formation!</code> implemented <strong>[L2/L3]</strong> <code>18oe_mergers</code></span><span class="layer-tag">L2/L3</span></div>
+<div class="sb-item sb-partial" data-layer="L2→L3" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text"><strong>Wien Südbahnhof</strong> <code>[BETA]</code> — <code>token</code> (price: 0, teleport_price: 0, extra_action: true) wired; <strong>still needed</strong>: Token step zone-bypass for free placement anywhere + sea-zone crossing costs <strong>[L2→L3]</strong> <code>18oe_abilities</code></span><span class="layer-tag">L2→L3</span></div>
+<div class="sb-item sb-partial" data-layer="L3" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text"><strong>Star Harbor</strong> <code>[BETA]</code> — <code>token</code> (extra_slot, special_only) wired; <strong>still needed</strong>: port routing, revenue exclusion, SR window <strong>[L3]</strong> <code>18oe_abilities</code></span><span class="layer-tag">L3</span></div>
+<div class="sb-item sb-partial" data-layer="L3" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text"><strong>White Cliffs Ferry</strong> <code>[BETA]</code> — <code>token</code> (hexes: ['N31']) wired; <strong>still needed</strong>: Phase 5 start event hook + ferry routing <strong>[L3]</strong> <code>18oe_abilities</code></span><span class="layer-tag">L3</span></div>
+</div>
+</div>
+<div class="sb-col-body view-layer" style="display:none">
+<div class="sb-section">
+<div class="sb-section-title">L1</div>
+<div class="sb-item sb-needs-pr" data-layer="L1" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text"><strong>J</strong> (Grey Locomotive Works) — <code>train_discount</code> (0.1) wired; removed <code>owner_type</code>/TODO; ability-transfer to major → beta <strong>[L1]</strong> <code>18oe_abilities</code></span></div>
+</div>
+<div class="sb-section">
+<div class="sb-section-title">L2/L3</div>
+<div class="sb-item sb-needs-pr" data-layer="L2/L3" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text"><strong>Minor SR merge action</strong> <code>[BETA]</code> — <code>can_merge_minors?</code> / <code>minor_by_id</code> / <code>mergeable_entity/entities</code> / <code>process_merge</code> / <code>merge_minor!</code> / <code>transfer_minor_track_rights!</code> implemented <strong>[L2/L3]</strong> <code>18oe_mergers</code></span></div>
+<div class="sb-item sb-needs-pr" data-layer="L2/L3" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text"><strong>Nationals claim rusted trains</strong> <code>[BETA]</code> — <code>spend_minmax [0,0]</code>, fast-path in <code>process_buy_train</code>, <code>trigger_nationals_formation!</code> implemented <strong>[L2/L3]</strong> <code>18oe_mergers</code></span></div>
+</div>
+<div class="sb-section">
+<div class="sb-section-title">L3</div>
+<div class="sb-item sb-partial" data-layer="L3" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text"><strong>C</strong> (Golden Bell) — <code>choose_ability</code>/<code>@golden_bell_position</code>/<code>operating_order</code> wired; <strong>still needed</strong>: OR-start choice-prompt step <strong>[L3]</strong> <code>18oe_abilities</code></span></div>
+<div class="sb-item sb-partial" data-layer="L3" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text"><strong>D</strong> (Green Junction) — <code>hex_bonus</code>/<code>event_d_token_phase_change!</code>/<code>assign_d_token!</code> wired; <strong>still needed</strong>: unreachable-city placement step (land cities only; sea/ferry variant → beta todo) <strong>[L3]</strong> <code>18oe_abilities</code></span></div>
+<div class="sb-item sb-partial" data-layer="L3" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text"><strong>L</strong> (Krasnaya Strela) — <code>assign_krasnaya_strela!</code>/<code>restore_krasnaya_strela!</code> wired; <strong>still needed</strong>: train-choice step + D-train exception <strong>[L3]</strong> <code>18oe_abilities</code></span></div>
+<div class="sb-item sb-partial" data-layer="L3" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text"><strong>Central Circle</strong> — <code>token</code> (extra_slot, special_only) wired; <strong>still needed</strong>: town revenue scoring (£10/£20/£40/£60 by phase), SR window <strong>[L3]</strong> <code>18oe_abilities</code></span></div>
+<div class="sb-item sb-partial" data-layer="L3" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text"><strong>Hochberg Mining</strong> — <code>assign_hexes</code> wired; <strong>still needed</strong>: routing exclusion + placement eligibility (cost ≥ £45) <strong>[L3]</strong> <code>18oe_abilities</code></span></div>
+<div class="sb-item sb-partial" data-layer="L3" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text"><strong>Brandt & Brandau</strong> — <code>tile_lay</code> (free, count: 4) wired; <strong>still needed</strong>: per-OR cap (max 2/OR) <strong>[L3]</strong> <code>18oe_abilities</code></span></div>
+<div class="sb-item sb-partial" data-layer="L3" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text"><strong>Star Harbor</strong> <code>[BETA]</code> — <code>token</code> (extra_slot, special_only) wired; <strong>still needed</strong>: port routing, revenue exclusion, SR window <strong>[L3]</strong> <code>18oe_abilities</code></span></div>
+<div class="sb-item sb-partial" data-layer="L3" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text"><strong>White Cliffs Ferry</strong> <code>[BETA]</code> — <code>token</code> (hexes: ['N31']) wired; <strong>still needed</strong>: Phase 5 start event hook + ferry routing <strong>[L3]</strong> <code>18oe_abilities</code></span></div>
+</div>
+<div class="sb-section">
+<div class="sb-section-title">L2→L3</div>
+<div class="sb-item sb-partial" data-layer="L2→L3" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text"><strong>Wien Südbahnhof</strong> <code>[BETA]</code> — <code>token</code> (price: 0, teleport_price: 0, extra_action: true) wired; <strong>still needed</strong>: Token step zone-bypass for free placement anywhere + sea-zone crossing costs <strong>[L2→L3]</strong> <code>18oe_abilities</code></span></div>
+</div>
+</div></div>
+<div class="sb-col">
+<div class="sb-col-header todo-col">To Do<span class="sb-col-count">99</span></div>
+<div class="sb-col-body view-rules">
+<div class="sb-section">
+<div class="sb-section-title">Art / Non-Code</div>
+<div class="sb-item sb-todo" data-layer="non-code" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text"><strong>Logo SVGs</strong> — colors done; still missing: minors A/B/D/E/F/G/J/L; regionals BHB/POB/KSS/KBS/SB/MAV/SFAI/SFR/CHN/MZA/RCP/MSP/MKV/LRZD/WW/DSJ/BJV</span><span class="layer-tag">non-code</span></div>
+</div>
+<div class="sb-section">
+<div class="sb-section-title">Map</div>
+<div class="sb-item sb-todo" data-layer="L1" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">OE9–OE11 — green double-town path edge orientations needed</span><span class="layer-tag">L1</span></div>
+<div class="sb-item sb-todo" data-layer="L1" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">OE20–OE22 — brown double-town path edge orientations needed</span><span class="layer-tag">L1</span></div>
+<div class="sb-item sb-todo" data-layer="L1" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">OE19 — tile type unknown; must be identified and defined</span><span class="layer-tag">L1</span></div>
+<div class="sb-item sb-todo" data-layer="L1" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">Verify standard tile quantities against physical tile manifest</span><span class="layer-tag">L1</span></div>
+<div class="sb-item sb-todo" data-layer="L1" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">Audit OE-specific tile upgrade paths against physical manifest</span><span class="layer-tag">L1</span></div>
+</div>
+<div class="sb-section">
+<div class="sb-section-title">§4 — Auction Phase</div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">All-pass price reduction — if all players consecutively pass before opening packet is sold, privates pay dividends then all items on topmost row reduce by £5; repeats; items reaching £0 must all be taken by next player</span><span class="layer-tag">L2</span></div>
+</div>
+<div class="sb-section">
+<div class="sb-section-title">§5 — Concession Railroad Phase *(DEFERRED — Out of Scope)*</div>
+<div class="sb-item sb-todo" data-layer="L3" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">Define Concession round with ordered float actions (CON1–CON10)</span><span class="layer-tag">L3</span></div>
+<div class="sb-item sb-todo" data-layer="L1" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">Wire concession cards to specific regional/major home tokens and par values</span><span class="layer-tag">L1</span></div>
+<div class="sb-item sb-todo" data-layer="L3" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">Float obligation: holder pays 2× par; obligation transfers if holder cannot pay</span><span class="layer-tag">L3</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">Round sequencing: Auction → Concession → Regional/Minor Phase</span><span class="layer-tag">L2</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">2-player without-concessions variant: skip Concession Phase (starting cash already correct)</span><span class="layer-tag">L2</span></div>
+</div>
+<div class="sb-section">
+<div class="sb-section-title">§6 — Stock Round</div>
+<div class="sb-item sb-todo" data-layer="L2/L3" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">Voluntary regional removal — player may remove one unfloated regional during Regional/Minor Phase; max 6 total</span><span class="layer-tag">L2/L3</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">Reserved secondary shares — during Initial SR only, each player may designate one regional's secondary (25%) share as reserved; no other player may purchase it until the second SR; cancelled if regional expands to major before its first OR</span><span class="layer-tag">L2</span></div>
+</div>
+<div class="sb-section">
+<div class="sb-section-title">§8b — Track Laying</div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">First-OR green tile exception (§11.1.9) — Phase 2 only, first OR after float: if RR cannot connect home token to any town/city via land or ferry without a sea crossing, it may lay one non-city green tile at cost of all remaining tile points; requires ≥1 tile point; cannot be exploited deliberately</span><span class="layer-tag">L2</span></div>
+</div>
+<div class="sb-section">
+<div class="sb-section-title">§8f — Pullman Cars</div>
+<div class="sb-item sb-todo" data-layer="L3" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">Pullman asset type — does not count against train limit; max 1 per non-national company</span><span class="layer-tag">L3</span></div>
+<div class="sb-item sb-todo" data-layer="L2/L3" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">Revenue bonus: +£10 × assigned train level, once per OR</span><span class="layer-tag">L2/L3</span></div>
+<div class="sb-item sb-todo" data-layer="L3" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">Purchase from Minor M: £150 + £15 royalty; J-minor discount on price only</span><span class="layer-tag">L3</span></div>
+<div class="sb-item sb-todo" data-layer="L3" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">Purchase from Open Market: £150, no royalty; available Phase 4+</span><span class="layer-tag">L3</span></div>
+<div class="sb-item sb-todo" data-layer="L3" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">Purchase from another RR: negotiated price</span><span class="layer-tag">L3</span></div>
+<div class="sb-item sb-todo" data-layer="L2/L3" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">Minor M free Pullman: if Minor M not closed at Phase 4 start, places free Pullman</span><span class="layer-tag">L2/L3</span></div>
+<div class="sb-item sb-todo" data-layer="L3" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">Discard order: rusted trains first; Pullman voluntarily returnable to Open Market</span><span class="layer-tag">L3</span></div>
+<div class="sb-item sb-todo" data-layer="L3" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">Company with zero trains but holds Pullman: retain until next train acquired</span><span class="layer-tag">L3</span></div>
+</div>
+<div class="sb-section">
+<div class="sb-section-title">§8g — Train Purchase</div>
+<div class="sb-item sb-todo" data-layer="L3" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">Forced purchase — president covers shortfall; else national conversion (majors) or insolvency (minors/regionals)</span><span class="layer-tag">L3</span></div>
+<div class="sb-item sb-todo" data-layer="L3" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">First-round insolvency: president cash → treasury; company receives reserved 2+2; presidential cert → Open Market; president paid face value</span><span class="layer-tag">L3</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">Remove <code>Engine::Step::Bankrupt</code> from OR step list — base bankruptcy fires game-end immediately; 18OE force-buy should route to national conversion (BUG-019/BUG-027); replace with a custom no-op or override</span><span class="layer-tag">L2</span></div>
+</div>
+<div class="sb-section">
+<div class="sb-section-title">§8h — Major&#x27;s OR Buy/Sell Shares Step (§11.7)</div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">Investigate <code>Engine::Step::Exchange</code> in OR step list — minor exchange abilities fire in SR only; confirm Exchange never triggers during OR and remove if vestigial</span><span class="layer-tag">L2</span></div>
+</div>
+<div class="sb-section">
+<div class="sb-section-title">§9 — Minor Special Abilities</div>
+<div class="sb-item sb-todo" data-layer="L3" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text"><strong>7.13</strong> Minor M (CIWL) — holds 10 Pullman cars (see §8f)</span><span class="layer-tag">L3</span></div>
+</div>
+<div class="sb-section">
+<div class="sb-section-title">§10 — Private Special Abilities</div>
+<div class="sb-item sb-todo" data-layer="L3" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text"><strong>8.2</strong> Barclay, Bevan, Barclay & Tritton — owner selects one of three abilities at time of use</span><span class="layer-tag">L3</span></div>
+<div class="sb-item sb-todo" data-layer="L3" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text"><strong>8.8</strong> Swift Metropolitan Line — from Phase 4, one controlled RR may keep one 2+2 outside train limit</span><span class="layer-tag">L3</span></div>
+</div>
+<div class="sb-section">
+<div class="sb-section-title">§14 — Token Transfer Between Majors</div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">During major's OR Transfer Tokens step: controlling player transfers one token between two majors</span><span class="layer-tag">L2</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">Cost: token value (paying major) + token value (receiving major, same zone) + transfer fee (Normal £20 / Grand £40 / Metropolis £60)</span><span class="layer-tag">L2</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">Selling a token: returns to charter at highest-cost open position</span><span class="layer-tag">L2</span></div>
+</div>
+<div class="sb-section">
+<div class="sb-section-title">§15 — End Game Rules</div>
+<div class="sb-item sb-todo" data-layer="L3" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Second final OR: each company pays same revenue as first final OR; no track/token/train actions (BUG-026) <code>[BETA]</code></span><span class="layer-tag">L3</span></div>
+</div>
+<div class="sb-section">
+<div class="sb-section-title">§16 — Tests (Alpha)</div>
+<div class="sb-item sb-todo" data-layer="" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">Smoke spec — <code>Engine::Game::G18OE.new(%w[A B C D])</code> does not raise</span><span class="layer-tag"></span></div>
+<div class="sb-item sb-todo" data-layer="" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">Basic game flow (auction → regional/minor → major phase)</span><span class="layer-tag"></span></div>
+<div class="sb-item sb-todo" data-layer="" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">Train phase transitions (rusting, limits)</span><span class="layer-tag"></span></div>
+<div class="sb-item sb-todo" data-layer="" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">Stock market movement (right/left/up/down, edge cases)</span><span class="layer-tag"></span></div>
+<div class="sb-item sb-todo" data-layer="" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">Minor ability transfer</span><span class="layer-tag"></span></div>
+<div class="sb-item sb-todo" data-layer="" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">Pullman car revenue</span><span class="layer-tag"></span></div>
+</div>
+<div class="sb-section">
+<div class="sb-section-title">Map</div>
+<div class="sb-item sb-todo" data-layer="L1" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Ferry distance numbers — per-zone crossing distances needed for cross-water cost calculations (§8d); sea zone borders themselves are complete</span><span class="layer-tag">L1</span></div>
+<div class="sb-item sb-todo" data-layer="L1" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text"><strong>Ferry sea hexes</strong> — partial work exists; still needed: N29/G22/N25/I22/I24/AE12/AF13/AB21/AB23/AB25</span><span class="layer-tag">L1</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Ferry route engine override — <code>game.rb</code> override to whitelist exits toward blue hexes that carry a matching pre-printed path</span><span class="layer-tag">L2</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text"><strong>Lille↔London ferry</strong> — tiles connect correctly; all other ferry routes blocked pending L2 engine override</span><span class="layer-tag">L2</span></div>
+<div class="sb-item sb-todo" data-layer="L1/L2" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text"><strong>Port sea stubs</strong> <code>[BETA]</code> — blue tiles at port entry points use <code>junction;path=a:X,b:_0,terminal:1</code> as connectors between land port paths and sea ferry routes; model: land port → stub → sea ferry hexes → stub → land port; implement per port once ferry routing engine override is in place; public vs private port access distinction applies here (see §8d)</span><span class="layer-tag">L1/L2</span></div>
+<div class="sb-item sb-todo" data-layer="L1" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text"><strong>G30 inland port</strong> <code>[BETA]</code> — G30 currently has <code>junction;path=a:4,b:_0</code> (missing <code>terminal:1</code>); inland ports differ from coastal port stubs in routing rules — define and document the distinction before implementing; add <code>terminal:1</code> as part of this work</span><span class="layer-tag">L1</span></div>
+</div>
+<div class="sb-section">
+<div class="sb-section-title">§2 — Patronage Tiles (§11.1.8)</div>
+<div class="sb-item sb-todo" data-layer="L1" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Setup: randomise and place patronage tiles on map cities at game start (3 pink, 3 yellow, 3 white, 8 green drawn per group, rest discarded)</span><span class="layer-tag">L1</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Payout: when a RR first lays a track tile in a patronage hex during Lay Track step, bank pays one-time bonus equal to tile amount for the highest track color available in current Train Phase; patronage tile removed</span><span class="layer-tag">L2</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Float edge case: minor that places its home token on a patronage hex fulfils it immediately and receives the lowest payout shown on the tile</span><span class="layer-tag">L2</span></div>
+</div>
+<div class="sb-section">
+<div class="sb-section-title">§6 — Stock Round</div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">+3 RIGHT — on the first Orient Express run, share price moves 3 steps right (depends on §8e)</span><span class="layer-tag">L2</span></div>
+</div>
+<div class="sb-section">
+<div class="sb-section-title">§8d — Routing: Land + Cross-Water</div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Local train town counting: towns beyond city limit fill to train level; express trains skip towns</span><span class="layer-tag">L2</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Combined train runs: Level ≤4 trains combine (sum); Level 5+, 4D, 5D cannot combine</span><span class="layer-tag">L2</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Cross-water costs: Ferry = +£5 track / +£20 token × distance; Sea = +£10 track / +£40 token × zones</span><span class="layer-tag">L2</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Ferry mechanics: distance counts against city limit; public ferry usable by any RR; enemy tokens block</span><span class="layer-tag">L2</span></div>
+<div class="sb-item sb-todo" data-layer="L2/L3" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Port authority markers: each reduces sea zone count + ferry distance by 2; 16 total (8 North Sea, 8 Med)</span><span class="layer-tag">L2/L3</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Port authority purchase — majors only, one per major; £125 paid during OR at any point before Buy Trains step; North Sea covers light-blue zones, Mediterranean covers sea-green zones; also reduces cross-water track and token costs</span><span class="layer-tag">L2</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Port authority transfer — major may buy a PA marker from another major during its Transfer Tokens OR step; price exactly £125 to selling major's treasury</span><span class="layer-tag">L2</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Port types: public (any RR) vs private (owning RR only)</span><span class="layer-tag">L2</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Offshore port mechanics: train connects regardless of intervening hexes</span><span class="layer-tag">L2</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Channel passages at Copenhagen and Constantinople</span><span class="layer-tag">L2</span></div>
+</div>
+<div class="sb-section">
+<div class="sb-section-title">§8e — Orient Express</div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Detect valid OE route: Constantinople (AA82) + one of Paris/London/Berlin/Madrid/Sankt-Peterburg + land track</span><span class="layer-tag">L2</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">First-time bonus: £30 (Ph2–4), £60 (Ph5–6), £100 (Ph7–8); OE marker placed on major</span><span class="layer-tag">L2</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">+3 RIGHT on first OE run (also §6b)</span><span class="layer-tag">L2</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Train combining: Level ≤4 combine; combined level = sum; city limit = combined level</span><span class="layer-tag">L2</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Subsequent OE runs: no bonus, no extra stock movement</span><span class="layer-tag">L2</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Mandatory OE: if OE route is best possible, president must run it</span><span class="layer-tag">L2</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">OE blocked for nationals</span><span class="layer-tag">L2</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">D-train bonus does NOT apply to OE first-time bonus</span><span class="layer-tag">L2</span></div>
+</div>
+<div class="sb-section">
+<div class="sb-section-title">§8h — Major&#x27;s OR Buy/Sell Shares Step (§11.7)</div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Major purchases one abandoned minor from Open Market for £60 (to bank); minor's charter + assets added as if merged but no share of major stock issued to former owner</span><span class="layer-tag">L2</span></div>
+</div>
+<div class="sb-section">
+<div class="sb-section-title">§9 — Minor Special Abilities</div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text"><strong>7.9</strong> Minor H (Great Western Steamship) — reduces sea zones by 1 (Ph1–6) or 2 (Ph7–8)</span><span class="layer-tag">L2</span></div>
+<div class="sb-item sb-todo" data-layer="L3" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text"><strong>D (Green Junction)</strong> — sea/ferry variant: unreachable-city placement step where target city is accessible only via sea or ferry</span><span class="layer-tag">L3</span></div>
+</div>
+<div class="sb-section">
+<div class="sb-section-title">§10 — Private Special Abilities</div>
+<div class="sb-item sb-todo" data-layer="L2/L3" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text"><strong>Wien Südbahnhof</strong> — sea-zone crossing cost modifier for tokens placed via this private; WCF interaction (paying WCF token placement cost from Wien Südbahnhof)</span><span class="layer-tag">L2/L3</span></div>
+</div>
+<div class="sb-section">
+<div class="sb-section-title">§9 — Railroad Formation (Nationals) + Abandoning a Minor</div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Forming a national (trigger): phase 4/6/8 purchase → <code>trigger_nationals_formation!</code> → ordered queue</span><span class="layer-tag">L2</span></div>
+<div class="sb-item sb-todo" data-layer="L2/L3" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Forming a national (steps): <code>Step::ConvertToNational</code> — cash→bank, treasury certs→OM, tokens removed, national placed, trains inherited</span><span class="layer-tag">L2/L3</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Abandoning a minor (§9.5): triggered by national formation or consolidation failure — <code>abandon_minor!</code>: charter→Open Market; trains→Open Market; tokens removed; cash→bank; track rights chit stays</span><span class="layer-tag">L2</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">D minor token and L minor marker stay with their charters on abandonment</span><span class="layer-tag">L2</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">M minor Pullman stays with charter on abandonment</span><span class="layer-tag">L2</span></div>
+</div>
+<div class="sb-section">
+<div class="sb-section-title">§11 — Nationals</div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text"><code>national_revenue</code>: linked/unlinked split, best-first, D-train double, flat-rate fill; <code>[:payout]</code> only</span><span class="layer-tag">L2</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Inherent Pullman: <code>+£10 × highest non-rusted train level</code></span><span class="layer-tag">L2</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">No tokens / no terrain costs — <code>return 0 if entity.type == :national</code> in <code>upgrade_cost</code> (BUG-011); skip token step already done</span><span class="layer-tag">L2</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Train limit discard via <code>depot.reclaim_train</code></span><span class="layer-tag">L2</span></div>
+<div class="sb-item sb-todo" data-layer="L3" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Merged minors abandoned at national formation (depends on <code>@minor_track_rights</code>)</span><span class="layer-tag">L3</span></div>
+<div class="sb-item sb-todo" data-layer="L3" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Track rights / OE markers / private markers removed at formation</span><span class="layer-tag">L3</span></div>
+<div class="sb-item sb-todo" data-layer="L2/L3" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Exchange owned rusted train for higher-level unclaimed rusted train</span><span class="layer-tag">L2/L3</span></div>
+<div class="sb-item sb-todo" data-layer="L2/L3" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Flip owned rusted train from express to local side</span><span class="layer-tag">L2/L3</span></div>
+<div class="sb-item sb-todo" data-layer="L2/L3" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Upgrade rusted → non-rusted by purchasing from same-owner major</span><span class="layer-tag">L2/L3</span></div>
+</div>
+<div class="sb-section">
+<div class="sb-section-title">§10.5 — Minor SR Mergers (Full)</div>
+<div class="sb-item sb-todo" data-layer="L2/L3" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Minor SR merge action — <code>can_merge_minors?</code> / <code>merge_minor!</code> / <code>transfer_minor_track_rights!</code> implemented on <code>18oe_testgame</code>; PR pending <code>[BETA]</code></span><span class="layer-tag">L2/L3</span></div>
+<div class="sb-item sb-todo" data-layer="L3" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text"><strong>7.1</strong> Ability transfer — minor merges into regional/major; ability inherited; nationals cannot inherit</span><span class="layer-tag">L3</span></div>
+<div class="sb-item sb-todo" data-layer="L3" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text"><strong>7.2</strong> Minor A (Silver Banner) — bank pays major current share price at moment of merger</span><span class="layer-tag">L3</span></div>
+<div class="sb-item sb-todo" data-layer="L3" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">No-stock connection check: merge only if unlimited-city train can reach minor's token to major's network</span><span class="layer-tag">L3</span></div>
+<div class="sb-item sb-todo" data-layer="L3" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Player choice on token conflict and train decline</span><span class="layer-tag">L3</span></div>
+<div class="sb-item sb-todo" data-layer="L3" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Cross-player personal cash side payment UI</span><span class="layer-tag">L3</span></div>
+<div class="sb-item sb-todo" data-layer="L3" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Solicit-offers rule for unmergeable minors</span><span class="layer-tag">L3</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Cannot pass in Consolidation Phase if owns unfloated minors/regionals not yet merged</span><span class="layer-tag">L2</span></div>
+</div>
+<div class="sb-section">
+<div class="sb-section-title">§12E — Minor Merger Edge Cases (Beta)</div>
+<div class="sb-item sb-todo" data-layer="L3" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Consolidation Round forced mergers (§10.6) — hook into <code>Step::Consolidate</code></span><span class="layer-tag">L3</span></div>
+</div>
+<div class="sb-section">
+<div class="sb-section-title">§13 — Consolidation Phase</div>
+<div class="sb-item sb-todo" data-layer="L3" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Conditional merger: major/national may offer; if no offer, company is abandoned</span><span class="layer-tag">L3</span></div>
+</div>
+<div class="sb-section">
+<div class="sb-section-title">§14 — Token Transfer Between Majors</div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Port authority transfer: major buys PA marker from another major during Transfer Tokens step; price exactly £125 to selling major's treasury (see also §8d)</span><span class="layer-tag">L2</span></div>
+</div>
+<div class="sb-section">
+<div class="sb-section-title">§16 — Tests (Beta)</div>
+<div class="sb-item sb-todo" data-layer="" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">National revenue calculation</span><span class="layer-tag"></span></div>
+<div class="sb-item sb-todo" data-layer="" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Orient Express bonus (first run, subsequent runs)</span><span class="layer-tag"></span></div>
+</div>
+</div>
+<div class="sb-col-body view-layer" style="display:none">
+<div class="sb-section">
+<div class="sb-section-title">L1</div>
+<div class="sb-item sb-todo" data-layer="L1" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">OE9–OE11 — green double-town path edge orientations needed</span></div>
+<div class="sb-item sb-todo" data-layer="L1" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">OE20–OE22 — brown double-town path edge orientations needed</span></div>
+<div class="sb-item sb-todo" data-layer="L1" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">OE19 — tile type unknown; must be identified and defined</span></div>
+<div class="sb-item sb-todo" data-layer="L1" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">Verify standard tile quantities against physical tile manifest</span></div>
+<div class="sb-item sb-todo" data-layer="L1" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">Audit OE-specific tile upgrade paths against physical manifest</span></div>
+<div class="sb-item sb-todo" data-layer="L1" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">Wire concession cards to specific regional/major home tokens and par values</span></div>
+<div class="sb-item sb-todo" data-layer="L1" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Ferry distance numbers — per-zone crossing distances needed for cross-water cost calculations (§8d); sea zone borders themselves are complete</span></div>
+<div class="sb-item sb-todo" data-layer="L1" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text"><strong>Ferry sea hexes</strong> — partial work exists; still needed: N29/G22/N25/I22/I24/AE12/AF13/AB21/AB23/AB25</span></div>
+<div class="sb-item sb-todo" data-layer="L1" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text"><strong>G30 inland port</strong> <code>[BETA]</code> — G30 currently has <code>junction;path=a:4,b:_0</code> (missing <code>terminal:1</code>); inland ports differ from coastal port stubs in routing rules — define and document the distinction before implementing; add <code>terminal:1</code> as part of this work</span></div>
+<div class="sb-item sb-todo" data-layer="L1" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Setup: randomise and place patronage tiles on map cities at game start (3 pink, 3 yellow, 3 white, 8 green drawn per group, rest discarded)</span></div>
+</div>
+<div class="sb-section">
+<div class="sb-section-title">L1/L2</div>
+<div class="sb-item sb-todo" data-layer="L1/L2" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text"><strong>Port sea stubs</strong> <code>[BETA]</code> — blue tiles at port entry points use <code>junction;path=a:X,b:_0,terminal:1</code> as connectors between land port paths and sea ferry routes; model: land port → stub → sea ferry hexes → stub → land port; implement per port once ferry routing engine override is in place; public vs private port access distinction applies here (see §8d)</span></div>
+</div>
+<div class="sb-section">
+<div class="sb-section-title">L2</div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">All-pass price reduction — if all players consecutively pass before opening packet is sold, privates pay dividends then all items on topmost row reduce by £5; repeats; items reaching £0 must all be taken by next player</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">Round sequencing: Auction → Concession → Regional/Minor Phase</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">2-player without-concessions variant: skip Concession Phase (starting cash already correct)</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">Reserved secondary shares — during Initial SR only, each player may designate one regional's secondary (25%) share as reserved; no other player may purchase it until the second SR; cancelled if regional expands to major before its first OR</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">First-OR green tile exception (§11.1.9) — Phase 2 only, first OR after float: if RR cannot connect home token to any town/city via land or ferry without a sea crossing, it may lay one non-city green tile at cost of all remaining tile points; requires ≥1 tile point; cannot be exploited deliberately</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">Remove <code>Engine::Step::Bankrupt</code> from OR step list — base bankruptcy fires game-end immediately; 18OE force-buy should route to national conversion (BUG-019/BUG-027); replace with a custom no-op or override</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">Investigate <code>Engine::Step::Exchange</code> in OR step list — minor exchange abilities fire in SR only; confirm Exchange never triggers during OR and remove if vestigial</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">During major's OR Transfer Tokens step: controlling player transfers one token between two majors</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">Cost: token value (paying major) + token value (receiving major, same zone) + transfer fee (Normal £20 / Grand £40 / Metropolis £60)</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">Selling a token: returns to charter at highest-cost open position</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Ferry route engine override — <code>game.rb</code> override to whitelist exits toward blue hexes that carry a matching pre-printed path</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text"><strong>Lille↔London ferry</strong> — tiles connect correctly; all other ferry routes blocked pending L2 engine override</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Payout: when a RR first lays a track tile in a patronage hex during Lay Track step, bank pays one-time bonus equal to tile amount for the highest track color available in current Train Phase; patronage tile removed</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Float edge case: minor that places its home token on a patronage hex fulfils it immediately and receives the lowest payout shown on the tile</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">+3 RIGHT — on the first Orient Express run, share price moves 3 steps right (depends on §8e)</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Local train town counting: towns beyond city limit fill to train level; express trains skip towns</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Combined train runs: Level ≤4 trains combine (sum); Level 5+, 4D, 5D cannot combine</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Cross-water costs: Ferry = +£5 track / +£20 token × distance; Sea = +£10 track / +£40 token × zones</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Ferry mechanics: distance counts against city limit; public ferry usable by any RR; enemy tokens block</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Port authority purchase — majors only, one per major; £125 paid during OR at any point before Buy Trains step; North Sea covers light-blue zones, Mediterranean covers sea-green zones; also reduces cross-water track and token costs</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Port authority transfer — major may buy a PA marker from another major during its Transfer Tokens OR step; price exactly £125 to selling major's treasury</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Port types: public (any RR) vs private (owning RR only)</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Offshore port mechanics: train connects regardless of intervening hexes</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Channel passages at Copenhagen and Constantinople</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Detect valid OE route: Constantinople (AA82) + one of Paris/London/Berlin/Madrid/Sankt-Peterburg + land track</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">First-time bonus: £30 (Ph2–4), £60 (Ph5–6), £100 (Ph7–8); OE marker placed on major</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">+3 RIGHT on first OE run (also §6b)</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Train combining: Level ≤4 combine; combined level = sum; city limit = combined level</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Subsequent OE runs: no bonus, no extra stock movement</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Mandatory OE: if OE route is best possible, president must run it</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">OE blocked for nationals</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">D-train bonus does NOT apply to OE first-time bonus</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Major purchases one abandoned minor from Open Market for £60 (to bank); minor's charter + assets added as if merged but no share of major stock issued to former owner</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text"><strong>7.9</strong> Minor H (Great Western Steamship) — reduces sea zones by 1 (Ph1–6) or 2 (Ph7–8)</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Forming a national (trigger): phase 4/6/8 purchase → <code>trigger_nationals_formation!</code> → ordered queue</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Abandoning a minor (§9.5): triggered by national formation or consolidation failure — <code>abandon_minor!</code>: charter→Open Market; trains→Open Market; tokens removed; cash→bank; track rights chit stays</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">D minor token and L minor marker stay with their charters on abandonment</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">M minor Pullman stays with charter on abandonment</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text"><code>national_revenue</code>: linked/unlinked split, best-first, D-train double, flat-rate fill; <code>[:payout]</code> only</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Inherent Pullman: <code>+£10 × highest non-rusted train level</code></span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">No tokens / no terrain costs — <code>return 0 if entity.type == :national</code> in <code>upgrade_cost</code> (BUG-011); skip token step already done</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Train limit discard via <code>depot.reclaim_train</code></span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Cannot pass in Consolidation Phase if owns unfloated minors/regionals not yet merged</span></div>
+<div class="sb-item sb-todo" data-layer="L2" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Port authority transfer: major buys PA marker from another major during Transfer Tokens step; price exactly £125 to selling major's treasury (see also §8d)</span></div>
+</div>
+<div class="sb-section">
+<div class="sb-section-title">L2/L3</div>
+<div class="sb-item sb-todo" data-layer="L2/L3" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">Voluntary regional removal — player may remove one unfloated regional during Regional/Minor Phase; max 6 total</span></div>
+<div class="sb-item sb-todo" data-layer="L2/L3" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">Revenue bonus: +£10 × assigned train level, once per OR</span></div>
+<div class="sb-item sb-todo" data-layer="L2/L3" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">Minor M free Pullman: if Minor M not closed at Phase 4 start, places free Pullman</span></div>
+<div class="sb-item sb-todo" data-layer="L2/L3" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Port authority markers: each reduces sea zone count + ferry distance by 2; 16 total (8 North Sea, 8 Med)</span></div>
+<div class="sb-item sb-todo" data-layer="L2/L3" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text"><strong>Wien Südbahnhof</strong> — sea-zone crossing cost modifier for tokens placed via this private; WCF interaction (paying WCF token placement cost from Wien Südbahnhof)</span></div>
+<div class="sb-item sb-todo" data-layer="L2/L3" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Forming a national (steps): <code>Step::ConvertToNational</code> — cash→bank, treasury certs→OM, tokens removed, national placed, trains inherited</span></div>
+<div class="sb-item sb-todo" data-layer="L2/L3" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Exchange owned rusted train for higher-level unclaimed rusted train</span></div>
+<div class="sb-item sb-todo" data-layer="L2/L3" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Flip owned rusted train from express to local side</span></div>
+<div class="sb-item sb-todo" data-layer="L2/L3" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Upgrade rusted → non-rusted by purchasing from same-owner major</span></div>
+<div class="sb-item sb-todo" data-layer="L2/L3" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Minor SR merge action — <code>can_merge_minors?</code> / <code>merge_minor!</code> / <code>transfer_minor_track_rights!</code> implemented on <code>18oe_testgame</code>; PR pending <code>[BETA]</code></span></div>
+</div>
+<div class="sb-section">
+<div class="sb-section-title">L3</div>
+<div class="sb-item sb-todo" data-layer="L3" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">Define Concession round with ordered float actions (CON1–CON10)</span></div>
+<div class="sb-item sb-todo" data-layer="L3" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">Float obligation: holder pays 2× par; obligation transfers if holder cannot pay</span></div>
+<div class="sb-item sb-todo" data-layer="L3" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">Pullman asset type — does not count against train limit; max 1 per non-national company</span></div>
+<div class="sb-item sb-todo" data-layer="L3" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">Purchase from Minor M: £150 + £15 royalty; J-minor discount on price only</span></div>
+<div class="sb-item sb-todo" data-layer="L3" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">Purchase from Open Market: £150, no royalty; available Phase 4+</span></div>
+<div class="sb-item sb-todo" data-layer="L3" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">Purchase from another RR: negotiated price</span></div>
+<div class="sb-item sb-todo" data-layer="L3" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">Discard order: rusted trains first; Pullman voluntarily returnable to Open Market</span></div>
+<div class="sb-item sb-todo" data-layer="L3" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">Company with zero trains but holds Pullman: retain until next train acquired</span></div>
+<div class="sb-item sb-todo" data-layer="L3" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">Forced purchase — president covers shortfall; else national conversion (majors) or insolvency (minors/regionals)</span></div>
+<div class="sb-item sb-todo" data-layer="L3" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">First-round insolvency: president cash → treasury; company receives reserved 2+2; presidential cert → Open Market; president paid face value</span></div>
+<div class="sb-item sb-todo" data-layer="L3" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text"><strong>7.13</strong> Minor M (CIWL) — holds 10 Pullman cars (see §8f)</span></div>
+<div class="sb-item sb-todo" data-layer="L3" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text"><strong>8.2</strong> Barclay, Bevan, Barclay & Tritton — owner selects one of three abilities at time of use</span></div>
+<div class="sb-item sb-todo" data-layer="L3" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text"><strong>8.8</strong> Swift Metropolitan Line — from Phase 4, one controlled RR may keep one 2+2 outside train limit</span></div>
+<div class="sb-item sb-todo" data-layer="L3" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Second final OR: each company pays same revenue as first final OR; no track/token/train actions (BUG-026) <code>[BETA]</code></span></div>
+<div class="sb-item sb-todo" data-layer="L3" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text"><strong>D (Green Junction)</strong> — sea/ferry variant: unreachable-city placement step where target city is accessible only via sea or ferry</span></div>
+<div class="sb-item sb-todo" data-layer="L3" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Merged minors abandoned at national formation (depends on <code>@minor_track_rights</code>)</span></div>
+<div class="sb-item sb-todo" data-layer="L3" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Track rights / OE markers / private markers removed at formation</span></div>
+<div class="sb-item sb-todo" data-layer="L3" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text"><strong>7.1</strong> Ability transfer — minor merges into regional/major; ability inherited; nationals cannot inherit</span></div>
+<div class="sb-item sb-todo" data-layer="L3" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text"><strong>7.2</strong> Minor A (Silver Banner) — bank pays major current share price at moment of merger</span></div>
+<div class="sb-item sb-todo" data-layer="L3" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">No-stock connection check: merge only if unlimited-city train can reach minor's token to major's network</span></div>
+<div class="sb-item sb-todo" data-layer="L3" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Player choice on token conflict and train decline</span></div>
+<div class="sb-item sb-todo" data-layer="L3" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Cross-player personal cash side payment UI</span></div>
+<div class="sb-item sb-todo" data-layer="L3" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Solicit-offers rule for unmergeable minors</span></div>
+<div class="sb-item sb-todo" data-layer="L3" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Consolidation Round forced mergers (§10.6) — hook into <code>Step::Consolidate</code></span></div>
+<div class="sb-item sb-todo" data-layer="L3" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Conditional merger: major/national may offer; if no offer, company is abandoned</span></div>
+</div>
+<div class="sb-section">
+<div class="sb-section-title">untagged</div>
+<div class="sb-item sb-todo" data-layer="" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">Smoke spec — <code>Engine::Game::G18OE.new(%w[A B C D])</code> does not raise</span></div>
+<div class="sb-item sb-todo" data-layer="" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">Basic game flow (auction → regional/minor → major phase)</span></div>
+<div class="sb-item sb-todo" data-layer="" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">Train phase transitions (rusting, limits)</span></div>
+<div class="sb-item sb-todo" data-layer="" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">Stock market movement (right/left/up/down, edge cases)</span></div>
+<div class="sb-item sb-todo" data-layer="" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">Minor ability transfer</span></div>
+<div class="sb-item sb-todo" data-layer="" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text">Pullman car revenue</span></div>
+<div class="sb-item sb-todo" data-layer="" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">National revenue calculation</span></div>
+<div class="sb-item sb-todo" data-layer="" data-scope="beta"><div class="sb-status-dot"></div><span class="sb-item-text">Orient Express bonus (first run, subsequent runs)</span></div>
+</div>
+<div class="sb-section">
+<div class="sb-section-title">non-code</div>
+<div class="sb-item sb-todo" data-layer="non-code" data-scope="alpha"><div class="sb-status-dot"></div><span class="sb-item-text"><strong>Logo SVGs</strong> — colors done; still missing: minors A/B/D/E/F/G/J/L; regionals BHB/POB/KSS/KBS/SB/MAV/SFAI/SFR/CHN/MZA/RCP/MSP/MKV/LRZD/WW/DSJ/BJV</span></div>
+</div>
+</div></div>
+</div>
+</article>
+</main>
+</div>
+<script src="search.js"></script>
+<script src="ui.js"></script>
+</body>
+</html>

@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Co-developing a Game with Claude — 18OE Dev Docs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Playfair+Display:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({ startOnLoad: true, theme: 'base', themeVariables: {
+  primaryColor: '#0d1f38', primaryTextColor: '#faf6ec',
+  primaryBorderColor: '#c9a843', lineColor: '#c9a843',
+  secondaryColor: '#1a3a6a', tertiaryColor: '#2a4a80',
+  actorBkg: '#0d1f38', actorTextColor: '#faf6ec',
+  actorBorder: '#c9a843', actorLineColor: '#c9a843',
+  activationBkgColor: '#2a4ab0', activationBorderColor: '#c9a843',
+  signalColor: '#c9a843', signalTextColor: '#2a1a0a',
+  labelBoxBkgColor: '#0d1f38', labelBoxBorderColor: '#c9a843', labelTextColor: '#faf6ec',
+  loopTextColor: '#2a1a0a',
+  edgeLabelBackground: '#f0ead8',
+  noteBkgColor: '#f0e8d4', noteTextColor: '#2a1a0a', noteBorderColor: '#c9a843',
+  titleColor: '#2a1a0a',
+  clusterBkg: '#1a3a6a', clusterBorder: '#c9a843', clusterTextColor: '#faf6ec',
+  fillType0: '#0d1f38', fillType1: '#1a3a6a', fillType2: '#2a4a80',
+  fillType3: '#1a3a6a', fillType4: '#0d1f38', fillType5: '#2a4a80',
+  fillType6: '#1a3a6a', fillType7: '#0d1f38'
+} });</script>
+</head>
+<body>
+<header id="site-header">
+  <a href="index.html">18OE</a> &mdash; Developer Documentation
+</header>
+<div id="layout">
+<nav id="sidebar" aria-label="Navigation">
+<input id="nav-search" type="search" placeholder="Search…" aria-label="Search documentation" autocomplete="off">
+<div id="search-results" style="display:none">
+<p id="search-no-results" style="display:none">No results found.</p>
+<ul id="search-results-list"></ul>
+</div>
+<div class="track"><h3>18OE Status</h3><ul>
+<li><a href="rules-summary.html">Game Rules Summary</a></li>
+<li><a href="18oe-map-status.html">Map Implementation Status</a></li>
+<li><a href="status.html">Implementation Tracker</a></li>
+<li><a href="rulebook-coverage.html">Rulebook Coverage</a></li>
+<li><a href="alpha-gaps.html">Open for Alpha</a></li>
+</ul></div>
+<div class="track"><h3>Getting Involved</h3><ul>
+<li><a href="first-contribution.html">Your First Contribution</a></li>
+</ul></div>
+<div class="track"><h3>Building a New Game</h3><ul>
+<li><a href="engine-concepts.html">Understanding the Engine</a></li>
+<li><a href="getting-started.html">Development Setup</a></li>
+<li><a href="game-implementation.html">Game Structure</a></li>
+<li><a href="map.html">Map Configuration</a></li>
+<li><a href="entities.html">Corporations & Companies</a></li>
+<li><a href="trains-phases.html">Trains, Phases & Market</a></li>
+<li><a href="round-step-system.html">Rounds & Steps</a></li>
+<li><a href="auction-round.html">Auction Round</a></li>
+<li><a href="revenue-routing.html">Revenue & Routing</a></li>
+<li><a href="abilities.html">Abilities</a></li>
+<li><a href="tiles.html">Tile Reference</a></li>
+<li><a href="common-patterns.html">Common Patterns</a></li>
+<li><a href="testing.html">Testing Your Game</a></li>
+<li><a href="title-checklist.html">Title Checklist</a></li>
+<li><a href="coding-guidelines.html">Coding Guidelines</a></li>
+</ul></div>
+<div class="track"><h3>Reference</h3><ul>
+<li><a href="game-engine.html">Game Engine Reference</a></li>
+<li><a href="adrs.html">Architecture Decision Records</a></li>
+</ul></div>
+<div class="track"><h3>Platform & Testing Setup</h3><ul>
+<li><a href="architecture.html">Architecture Overview</a></li>
+<li><a href="konfiguration-betrieb.html">Configuration & Operations</a></li>
+<li><a href="systemgrenzen.html">System Boundaries</a></li>
+</ul></div>
+<div class="track"><h3>Working with Claude</h3><ul>
+<li><a href="codevelop.html" aria-current="page"><strong>Co-developing with Claude</strong></a></li>
+</ul></div>
+</nav>
+<main>
+<article>
+<h1 id="co-developing-a-game-with-claude">Co-developing a Game with Claude</h1>
+<p>This page describes the workflow used to implement 18OE on this engine collaboratively with Claude Code. The same pattern applies to any new title.</p>
+<p>The core idea: keep Claude's context sharp by maintaining a small set of always-current reference files, load only what is needed for each session, and establish a documentation-first habit so Claude never has to rediscover how the engine works mid-session.</p>
+<hr>
+<h2 id="setting-up-for-a-new-game-with-claude">Setting Up for a New Game with Claude</h2>
+<p>Everything below assumes your machine is running. If you are on Windows, use <strong>VS Code + WSL2 + Docker Desktop</strong> — see <a href="getting-started.html#vs-code-in-wsl">Development Setup</a> for the one-time installation steps. All commands run in a WSL terminal.</p>
+<h3 id="step-1--fork-and-clone-the-engine">Step 1 — Fork and clone the engine</h3>
+<p>Fork <code>tobymao/18xx</code> on GitHub, then clone your fork inside WSL:</p>
+<pre><code class="language-bash">mkdir -p ~/18xx
+git clone https://github.com/YOUR-USERNAME/18xx.git ~/18xx/18xx
+cd ~/18xx/18xx
+git remote add upstream https://github.com/tobymao/18xx.git</code></pre>
+<p>Verify the app boots:</p>
+<pre><code class="language-bash">docker compose up          # first build takes a few minutes
+# → open http://localhost:9292</code></pre>
+<h3 id="step-2--create-the-documentation-branch-and-worktree">Step 2 — Create the Documentation branch and worktree</h3>
+<p>The workflow keeps documentation on a separate branch so it is always accessible regardless of which feature branch you have checked out. A git worktree exposes the branch as a separate directory without a second clone.</p>
+<pre><code class="language-bash"># Create an orphan Documentation branch
+git -C ~/18xx/18xx checkout --orphan Documentation
+git -C ~/18xx/18xx rm -rf .          # clear the working tree
+git -C ~/18xx/18xx commit --allow-empty -m "chore: init Documentation branch"
+git -C ~/18xx/18xx push -u origin Documentation
+
+# Return to master
+git -C ~/18xx/18xx checkout master
+
+# Mount the Documentation branch as a worktree
+git -C ~/18xx/18xx worktree add ~/18xx-docs Documentation</code></pre>
+<p>Create the MD/ directory and seed the tracking files:</p>
+<pre><code class="language-bash">mkdir -p ~/18xx-docs/MD
+touch ~/18xx-docs/MD/CLAUDE.md \
+      ~/18xx-docs/MD/inwork.md \
+      ~/18xx-docs/MD/todo.md \
+      ~/18xx-docs/MD/done.md \
+      ~/18xx-docs/MD/bugs.md \
+      ~/18xx-docs/MD/decisions.md</code></pre>
+<p>Expose <code>MD/</code> and <code>CLAUDE.md</code> at the project root via symlinks:</p>
+<pre><code class="language-bash">ln -s ~/18xx-docs/MD           ~/18xx/MD
+ln -s ~/18xx-docs/MD/CLAUDE.md ~/18xx/CLAUDE.md</code></pre>
+<p>Now <code>~/18xx/MD/</code> and <code>~/18xx/CLAUDE.md</code> are visible on every feature branch without any branch switching.</p>
+<h3 id="step-3--import-the-engine-documentation">Step 3 — Import the engine documentation</h3>
+<p>The engine documentation (all <code>htmldoku/</code> pages, the HTML generator, and the rendered HTML) lives on the <code>Documentation</code> branch of <code>Witzman/18xx</code>. Import it into your own Documentation branch by adding it as a git remote — no manual copying needed.</p>
+<p><strong>From your Documentation worktree:</strong></p>
+<pre><code class="language-bash">cd ~/18xx-docs
+
+# Add this repo as a remote named "engine-docs"
+git remote add engine-docs https://github.com/Witzman/18xx.git
+git fetch engine-docs Documentation
+
+# Merge the engine docs into your Documentation branch
+# --allow-unrelated-histories is needed because both branches are orphans
+git merge engine-docs/Documentation --allow-unrelated-histories \
+    -m "docs: import engine documentation from Witzman/18xx"
+
+git push</code></pre>
+<p>This pulls in <code>htmldoku/<em>.md</code>, <code>htmldoku/generate-html.py</code>, <code>docs/18xx-Doku/</em>.html</code>, and <code>MD/</code> as a starting point. Your own <code>MD/CLAUDE.md</code>, <code>MD/inwork.md</code>, etc. will overlay on top — edit them after the merge to match your game.</p>
+<p>Verify the generator works:</p>
+<pre><code class="language-bash">python3 htmldoku/generate-html.py
+# → Done. 31 pages → docs/18xx-Doku/index.html</code></pre>
+<p><strong>Staying up to date</strong></p>
+<p>When the engine documentation is updated (new pages, corrections), re-fetch and merge:</p>
+<pre><code class="language-bash">cd ~/18xx-docs
+git fetch engine-docs Documentation
+git merge engine-docs/Documentation \
+    -m "docs: merge engine documentation updates"
+git push</code></pre>
+<p><strong>Using GitHub's Pull Request UI instead</strong></p>
+<p>If you prefer reviewing changes before merging, you can open a PR on GitHub:</p>
+<ol><li>Go to your fork on GitHub → <strong>Pull requests</strong> → <strong>New pull request</strong></li><li>Click <strong>compare across forks</strong></li><li>Set <strong>base repository</strong> to your fork, <strong>base</strong> to <code>Documentation</code></li><li>Set <strong>head repository</strong> to <code>Witzman/18xx</code>, <strong>compare</strong> to <code>Documentation</code></li><li>Review the diff, then merge</li></ol>
+<p>This works because both repos are forks of <code>tobymao/18xx</code> and share the same GitHub fork network. The PR shows exactly which htmldoku pages changed so you can review before accepting.</p>
+<h3 id="step-4--write-your-claudemd">Step 4 — Write your CLAUDE.md</h3>
+<p><code>CLAUDE.md</code> is the single file Claude reads at the start of every session. It eliminates re-orientation cost: Claude knows what the project is, where every file lives, and how the engine works — before the first prompt is typed.</p>
+<p>Minimum viable <code>CLAUDE.md</code>:</p>
+<pre><code class="language-markdown"># MyGame — Claude Context
+
+Read this file then `MD/inwork.md`. Do not proceed until both are read.
+
+## Project
+
+**MyGame** — 18xx-style train game on the 18xx.games engine. In-progress.
+
+- Engine: `~/18xx/18xx/`
+- Rules: `~/18xx/18xx/rules/MyGame_Rulebook.txt`
+
+## Physical Layout
+
+    ~/18xx/
+        18xx/       ← main git repo
+        MD/         ← symlink → ~/18xx-docs/MD/
+        CLAUDE.md   ← symlink → ~/18xx-docs/MD/CLAUDE.md
+    ~/18xx-docs/    ← Documentation worktree
+
+## Key Files
+
+| What | Path |
+|------|------|
+| Base game | `~/18xx/18xx/lib/engine/game/g_mygame/game.rb` |
+| In Work   | `MD/inwork.md` |
+
+## Documentation Lookup
+
+| Task | Read |
+|------|------|
+| Engine layers | `~/18xx-docs/htmldoku/engine-concepts.md` |
+| Map / HEXES   | `~/18xx-docs/htmldoku/map.md` |
+| Abilities     | `~/18xx-docs/htmldoku/abilities.md` |
+| Code recipes  | `~/18xx-docs/htmldoku/common-patterns.md` |
+
+## Layer Taxonomy
+
+L1 — constants · L2 — Game::Base override · L3 — new Step/Round file
+
+## Coding Rules
+
+- 130-char line limit · no puts/p/pp · frozen_string_literal: true</code></pre>
+<p>Extend it as you learn more about your game's rules.</p>
+<h3 id="step-5--seed-the-backlog">Step 5 — Seed the backlog</h3>
+<p><code>MD/todo.md</code> is your full backlog. Decompose your rulebook into discrete, layer-annotated items. Each item is a checkbox:</p>
+<pre><code class="language-markdown"># MyGame — Backlog
+
+## Trains &amp; Phases
+
+- [ ] **TRAINS constant** — 2/3/4/5/6 train roster with rust triggers **[L1]**
+- [ ] **PHASES constant** — 5 phases with tile colours and OR counts **[L1]**
+
+## Track
+
+- [ ] **Custom tile upgrades** — validate label restrictions **[L2]**
+- [ ] **Tile point budget** — 3pt minor / 6pt major **[L2]**
+
+## Revenue
+
+- [ ] **OE bonus** — revenue_for override **[L2]**</code></pre>
+<p>Layer annotations (<code>[L1]</code>, <code>[L2]</code>, <code>[L3]</code>) tell Claude how much new code is needed before any session starts. Commit <code>todo.md</code> to the Documentation branch.</p>
+<h3 id="step-6--open-claude-code-and-start-your-first-session">Step 6 — Open Claude Code and start your first session</h3>
+<p>Install Claude Code if you haven't already:</p>
+<pre><code class="language-bash">npm install -g @anthropic-ai/claude-code</code></pre>
+<p>Open Claude Code from your project root:</p>
+<pre><code class="language-bash">cd ~/18xx/18xx
+claude</code></pre>
+<p>Claude reads <code>CLAUDE.md</code> automatically and orients on your project. Tell it which item from <code>MD/todo.md</code> to start with. The session workflow (<a href="#how-a-session-works">How a Session Works</a>) takes it from there.</p>
+<h3 id="using-the-html-generator">Using the HTML generator</h3>
+<p>The HTML generator at <code>~/18xx-docs/htmldoku/generate-html.py</code> converts your <code>.md</code> source files to rendered HTML pages. Run it after every documentation edit:</p>
+<pre><code class="language-bash">cd ~/18xx-docs
+# 1. Edit htmldoku/somepage.md
+python3 htmldoku/generate-html.py          # regenerates docs/18xx-Doku/*.html
+git add htmldoku/somepage.md docs/18xx-Doku/somepage.html
+git commit -m "docs: update somepage"
+git push</code></pre>
+<p>The generator:</p>
+<ul><li>Converts all <code>htmldoku/<em>.md</code> files to <code>docs/18xx-Doku/</em>.html</code></li><li>Rebuilds the sidebar navigation from the <code>SIDEBAR</code> list at the top of the script</li><li>Rebuilds <code>search-index.json</code> for the in-page search</li></ul>
+<p>To add a new documentation page:</p>
+<ol><li>Create <code>htmldoku/mypage.md</code></li><li>Add an entry to <code>SIDEBAR</code> in <code>generate-html.py</code></li><li>Run the generator</li><li>Commit source <code>.md</code> <strong>and</strong> rendered <code>.html</code> together</li></ol>
+<hr>
+<h2 id="physical-setup">Physical Setup</h2>
+<pre><code>~/
+├── 18xx/                        ← project root (NOT a git repo)
+│   ├── 18xx/                    ← main git repo  (branch: your feature branch)
+│   ├── MD/   →  symlink         ← always points to ~/18xx-docs/MD/
+│   └── CLAUDE.md  →  symlink    ← always points to ~/18xx-docs/MD/CLAUDE.md
+└── 18xx-docs/                   ← git worktree, Documentation branch only
+    ├── MD/                      ← session context files (CLAUDE.md, inwork.md, etc.)
+    └── htmldoku/                ← this documentation (source .md files)</code></pre>
+<p>The symlinks are the key: <code>MD/</code> and <code>CLAUDE.md</code> are visible at the same path on every feature branch without switching branches or stashing. Documentation changes are committed separately from code, from the worktree directory.</p>
+<h3 id="one-time-setup">One-time setup</h3>
+<pre><code class="language-bash"># Create the Documentation worktree
+git -C ~/18xx/18xx worktree add ~/18xx-docs Documentation
+
+# Expose MD/ and CLAUDE.md at the project root
+ln -s ~/18xx-docs/MD           ~/18xx/MD
+ln -s ~/18xx-docs/MD/CLAUDE.md ~/18xx/CLAUDE.md</code></pre>
+<h3 id="committing-docs-vs-code">Committing docs vs code</h3>
+<pre><code class="language-bash"># Code commits (from the main repo)
+cd ~/18xx/18xx
+git add lib/engine/game/g_18_oe/...
+git commit -m "..."
+
+# Documentation commits (from the worktree)
+cd ~/18xx-docs
+git add MD/ htmldoku/ docs/
+git commit -m "..."
+git push</code></pre>
+<hr>
+<h2 id="the-context-files">The Context Files</h2>
+<p>Context is loaded in three tiers to keep token cost per session low.</p>
+<table><thead><tr><th>Tier</th><th>File</th><th>When loaded</th><th>What it contains</th></tr></thead><tbody><tr><td>Always</td><td><code>MD/CLAUDE.md</code></td><td>Session start (auto)</td><td>Project identity, file locations, layer taxonomy, doc lookup table, coding rules</td></tr><tr><td>Always</td><td><code>MD/inwork.md</code></td><td>Session start</td><td>Items currently in flight — <code>[~]</code> in dev · <code>[t]</code> testing in progress · <code>[&gt;]</code> needs PR</td></tr><tr><td>On demand</td><td><code>MD/sparring.md</code></td><td>Before first code task</td><td>Full sparring protocol and pre-code checklist</td></tr><tr><td>On demand</td><td><code>MD/todo.md</code></td><td>Planning sessions only</td><td>Full backlog — all <code>[ ]</code> items with layer annotations</td></tr><tr><td>On demand</td><td><code>MD/bugs.md</code>, <code>MD/decisions.md</code>, etc.</td><td>When relevant</td><td>Bugs, architecture decisions, rules summary</td></tr><tr><td>Never</td><td><code>MD/done.md</code></td><td>—</td><td>Completed items for record-keeping only</td></tr></tbody></table>
+<p><strong><code>CLAUDE.md</code> is the file that makes sessions coherent.</strong> It tells Claude what the project is, where every file lives, which layer a new task belongs to, and where to look for documentation — before the first prompt is typed. It is the symlink target for <code>~/18xx/CLAUDE.md</code>, so Claude Code loads it automatically on every session.</p>
+<p><strong><code>inwork.md</code> is the sprint board.</strong> It contains only what is currently in flight. Each item carries a branch tag (backtick-wrapped name at the end of the line) so Claude always knows which branch to check out without asking:</p>
+<pre><code>- [~] **UP movement** — end-of-SR **[L2]** `18oe_testgame`
+- [t] **Minor C** — OR-start prompt wired **[L3]** `18oe_abilities`
+- [&gt;] **Nationals formation** — all tests passed **[L2]** `18oe_testgame`</code></pre>
+<p>Use <code>?</code> when a branch hasn't been recorded yet. The item lifecycle follows a fixed pipeline:</p>
+<pre><code>[ ] todo.md  →  [~] developing  →  [t] testing  →  [&gt;] needs PR  →  done.md</code></pre>
+<p>When you finish a task and merge the PR, move it to <code>done.md</code>. When you want to start something new, load <code>todo.md</code> and pick from the backlog.</p>
+<hr>
+<h2 id="the-documentation-first-habit">The Documentation-First Habit</h2>
+<p>Before writing any code, Claude reads the relevant <code>.md</code> source file from this documentation directly. The lookup table in <code>CLAUDE.md</code> maps every topic to the right file:</p>
+<table><thead><tr><th>You're about to implement…</th><th>Read first (source file)</th></tr></thead><tbody><tr><td>A revenue bonus or route rule</td><td><code>~/18xx-docs/htmldoku/revenue-routing.md</code></td></tr><tr><td>An auction setup</td><td><code>~/18xx-docs/htmldoku/auction-round.md</code></td></tr><tr><td>A custom Step</td><td><code>~/18xx-docs/htmldoku/round-step-system.md</code></td></tr><tr><td>A new mechanic — which layer?</td><td><code>~/18xx-docs/htmldoku/engine-concepts.md</code></td></tr><tr><td>Something similar to an existing title</td><td><code>~/18xx-docs/htmldoku/common-patterns.md</code></td></tr></tbody></table>
+<p>Reading <code>.md</code> source files instead of the generated HTML saves roughly 30–40% tokens per page. After reading the doc page, Claude greps the engine source for existing implementations before proposing new code.</p>
+<hr>
+<h2 id="how-a-session-works">How a Session Works</h2>
+<p><strong>1. Orient</strong> — Claude reads <code>CLAUDE.md</code> (auto) and <code>MD/inwork.md</code>, then presents in-work items grouped by readiness: <code>[t]</code> testing-in-progress first (resume immediately — re-run IRB, continue browser testing), then <code>[&amp;gt;]</code> needs-PR, then <code>[~]</code> in development. Quick wins highlighted. User selects one item before anything else happens.</p>
+<p><strong>2. Branch</strong> — each item in <code>MD/inwork.md</code> carries a branch tag (backtick-wrapped name at the end of the line). Claude reads this before touching git:</p>
+<ul><li><strong>Named branch</strong> → check it out directly, no new branch needed</li><li><strong><code>?</code></strong> → branch unknown; Claude asks before proceeding</li><li><strong>No tag</strong> → new item; Claude runs the divergence check and creates a branch</li></ul>
+<p>For new branches, Claude checks divergence against upstream and cross-references the <strong>Outstanding Upstream PRs</strong> table to recommend the base that keeps the branch as close to upstream as possible:</p>
+<pre><code class="language-bash">git fetch upstream &amp;&amp; git fetch origin
+git log --oneline upstream/master..origin/18oe_testgame | head -20
+# → git checkout -b 18oe_featurename &lt;recommended-base&gt;</code></pre>
+<p>After creating a new branch, Claude immediately adds the branch tag to the item in <code>MD/inwork.md</code>.</p>
+<p><strong>3. Discover</strong> — Claude reads the relevant rules section from the rulebook and the matching <code>htmldoku/</code> documentation page, then greps the engine for existing implementations of the same mechanic.</p>
+<p><strong>4. Consult until clear</strong> — Claude and user work through every edge case, interaction, and ambiguity together. The phase ends with a <strong>sign-off card</strong> that must be confirmed before any code is written:</p>
+<pre><code>Rules cited:       §X.Y p.NN — &lt;summary&gt;
+Edge cases:        &lt;every one, explicitly named&gt;
+Interactions:      &lt;which other features are affected and how&gt;
+Ambiguities:       &lt;each one with its resolution and rule citation&gt;
+Layer:             L1 / L2 / L3
+Comparator title:  &lt;title read&gt;
+Test scenarios:    (see below)
+Proceed? ✓ / ✗</code></pre>
+<p>The <strong>test scenarios</strong> are written as part of the sign-off and reused in step 6 — written once, not twice. Each gets a test method classification and, where applicable, an IRB setup snippet generated by Claude:</p>
+<pre><code>Scenario:     &lt;game state prerequisite&gt;
+Action:       &lt;what the player does&gt;
+Expect:       &lt;exact outcome&gt;
+Test method:  IRB | Browser | Both
+IRB setup:    &lt;Ruby snippet — omitted for Browser-only scenarios&gt;</code></pre>
+<p>Classification: <strong>IRB</strong> for pure logic (revenue, phase triggers, share movement, train rules); <strong>Browser</strong> for UI (tile rendering, route highlighting, step sequencing); <strong>Both</strong> for anything with both a logic assertion and a visual component. No coding until the user confirms the card.</p>
+<p><strong>5. Implement</strong> — one task per session. If an adjacent bug surfaces, log it in <code>MD/bugs.md</code> and finish the current task first.</p>
+<p><strong>6. Test</strong> — two phases, in order:</p>
+<p><em>6a — Automated (internal):</em> Claude runs every IRB snippet from the sign-off card autonomously via <code>docker compose exec rack irb</code>. The user sees nothing. Any failure triggers a silent fix-and-rerun cycle until all IRB tests pass. When 6a completes, the item is marked <code>[&amp;gt;]</code> if no browser testing remains, or <code>[t]</code> if browser scenarios are still pending.</p>
+<p><em>6b — Manual (browser), only after 6a is clean:</em> Claude presents only the <code>Browser</code> / <code>Both</code> scenarios:</p>
+<blockquote><p>"All automated tests passed. N scenario(s) require browser verification:"</p></blockquote>
+<p>User performs each test and reports back per scenario:</p>
+<ul><li><strong>"test XY passed"</strong> → Claude commits <code>test(18oe): &lt;scenario name&gt; ✓</code></li><li><strong>Test fails</strong> → fix code → re-run IRB → re-present browser scenario → commit when passing</li></ul>
+<p>When all browser scenarios pass the item is updated to <code>[&amp;gt;]</code>. If there are no Browser/Both scenarios, 6b is skipped entirely. No item moves to done until every scenario has a passing commit.</p>
+<p>A session interrupted after 6a leaves the item as <code>[t]</code> in <code>inwork.md</code> — at the next session start Claude sees <code>[t]</code>, re-runs 6a to confirm still green, then resumes browser testing.</p>
+<p><strong>7. Wrap up</strong> — all test commits in place:</p>
+<ul><li>Move item from <code>MD/inwork.md</code> to <code>MD/done.md</code></li><li>Update internal tracking: <code>MD/bugs.md</code> · <code>MD/decisions.md</code> as needed</li><li>Ask: <em>"Does the documentation need updating?"</em> → edit <code>htmldoku/*.md</code>, run <code>generate-html.py</code>, commit both source and rendered HTML</li><li>Commit all <code>~/18xx-docs/</code> changes separately from code commits</li></ul>
+<hr>
+<h2 id="the-sparring-partner-protocol">The Sparring Partner Protocol</h2>
+<p>The full protocol lives in <code>MD/sparring.md</code> and is read at the start of any session that involves writing code. Key rules:</p>
+<ul><li><strong>State the layer first.</strong> Every task gets a layer classification (L1/L2/L3) with a reason before any code is discussed.</li><li><strong>Name the comparator.</strong> Before writing code, name and read the production title that handles the same mechanic.</li><li><strong>Present one rejected alternative.</strong> For every proposed approach, describe the alternative considered and why it was ruled out.</li><li><strong>Cite the rules before coding.</strong> If a mechanic is ambiguous, find the rule reference (<code>rules/18OE_Rulebook_v_1.0.txt</code>) before implementing.</li><li><strong>Push back on style.</strong> Magic numbers, duplicate expressions, lines over 130 characters — flag before the user has to.</li></ul>
+<p>This turns Claude from a code generator into a second reviewer who challenges assumptions at the design stage rather than after the code is written.</p>
+<hr>
+<h2 id="keeping-context-sharp">Keeping Context Sharp</h2>
+<p>The biggest risk in a long-running project is context drift — Claude accumulating stale assumptions. The secondary risk is token bloat — always-loaded files growing as the project matures.</p>
+<table><thead><tr><th>Risk</th><th>Mitigation</th></tr></thead><tbody><tr><td>Stale in-flight state</td><td><code>MD/inwork.md</code> is the only always-loaded state file; it contains only active items</td></tr><tr><td>Wrong branch checked out</td><td>Branch tag on every item in <code>inwork.md</code> — Claude reads it before touching git</td></tr><tr><td>Resuming half-tested work</td><td><code>[t]</code> status flags items where IRB passed but browser testing is incomplete</td></tr><tr><td>Backlog noise at session start</td><td><code>MD/todo.md</code> is never auto-loaded; consulted only during planning</td></tr><tr><td>Re-litigating architecture decisions</td><td><code>MD/decisions.md</code> records every non-obvious choice with the alternative rejected</td></tr><tr><td>Forgetting a rule fix</td><td><code>MD/bugs.md</code> logs every bug with the rule citation and fix</td></tr><tr><td>Claude re-deriving engine patterns</td><td><code>htmldoku/</code> pages are read before coding, not discovered mid-session</td></tr><tr><td>Drifting from upstream</td><td>Branch recommendation in step 2 checks upstream divergence + outstanding PRs</td></tr><tr><td>Documentation drifting from code</td><td>After-commit prompt: "does any MD/ or htmldoku/ page need updating?"</td></tr><tr><td>Token cost growing over time</td><td>Always-loaded files kept short; sparring protocol and backlog are on-demand</td></tr></tbody></table>
+<hr>
+<h2 id="reference">Reference</h2>
+<ul><li>Session context: <code>MD/CLAUDE.md</code></li><li>In-flight work: <code>MD/inwork.md</code></li><li>Backlog: <code>MD/todo.md</code></li><li>Sparring protocol: <code>MD/sparring.md</code></li><li>Completed features: <code>MD/done.md</code></li><li>Engine layer taxonomy: <a href="engine-concepts.html">Understanding the Engine</a></li><li>Code patterns from PR review: <a href="coding-guidelines.html">Coding Guidelines</a></li><li>Title readiness stages: <a href="title-checklist.html">Title Checklist</a></li></ul>
+<hr>
+<p><em>Version: 2026-05-08 — branch tags on inwork items; [t] testing state; IRB-first test pipeline; item lifecycle pipeline.</em></p>
+</article>
+</main>
+</div>
+<script src="search.js"></script>
+<script src="ui.js"></script>
+</body>
+</html>

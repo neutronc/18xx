@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Architecture Overview — 18OE Dev Docs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Playfair+Display:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({ startOnLoad: true, theme: 'base', themeVariables: {
+  primaryColor: '#0d1f38', primaryTextColor: '#faf6ec',
+  primaryBorderColor: '#c9a843', lineColor: '#c9a843',
+  secondaryColor: '#1a3a6a', tertiaryColor: '#2a4a80',
+  actorBkg: '#0d1f38', actorTextColor: '#faf6ec',
+  actorBorder: '#c9a843', actorLineColor: '#c9a843',
+  activationBkgColor: '#2a4ab0', activationBorderColor: '#c9a843',
+  signalColor: '#c9a843', signalTextColor: '#2a1a0a',
+  labelBoxBkgColor: '#0d1f38', labelBoxBorderColor: '#c9a843', labelTextColor: '#faf6ec',
+  loopTextColor: '#2a1a0a',
+  edgeLabelBackground: '#f0ead8',
+  noteBkgColor: '#f0e8d4', noteTextColor: '#2a1a0a', noteBorderColor: '#c9a843',
+  titleColor: '#2a1a0a',
+  clusterBkg: '#1a3a6a', clusterBorder: '#c9a843', clusterTextColor: '#faf6ec',
+  fillType0: '#0d1f38', fillType1: '#1a3a6a', fillType2: '#2a4a80',
+  fillType3: '#1a3a6a', fillType4: '#0d1f38', fillType5: '#2a4a80',
+  fillType6: '#1a3a6a', fillType7: '#0d1f38'
+} });</script>
+</head>
+<body>
+<header id="site-header">
+  <a href="index.html">18OE</a> &mdash; Developer Documentation
+</header>
+<div id="layout">
+<nav id="sidebar" aria-label="Navigation">
+<input id="nav-search" type="search" placeholder="Search…" aria-label="Search documentation" autocomplete="off">
+<div id="search-results" style="display:none">
+<p id="search-no-results" style="display:none">No results found.</p>
+<ul id="search-results-list"></ul>
+</div>
+<div class="track"><h3>18OE Status</h3><ul>
+<li><a href="rules-summary.html">Game Rules Summary</a></li>
+<li><a href="18oe-map-status.html">Map Implementation Status</a></li>
+<li><a href="status.html">Implementation Tracker</a></li>
+<li><a href="rulebook-coverage.html">Rulebook Coverage</a></li>
+<li><a href="alpha-gaps.html">Open for Alpha</a></li>
+</ul></div>
+<div class="track"><h3>Getting Involved</h3><ul>
+<li><a href="first-contribution.html">Your First Contribution</a></li>
+</ul></div>
+<div class="track"><h3>Building a New Game</h3><ul>
+<li><a href="engine-concepts.html">Understanding the Engine</a></li>
+<li><a href="getting-started.html">Development Setup</a></li>
+<li><a href="game-implementation.html">Game Structure</a></li>
+<li><a href="map.html">Map Configuration</a></li>
+<li><a href="entities.html">Corporations & Companies</a></li>
+<li><a href="trains-phases.html">Trains, Phases & Market</a></li>
+<li><a href="round-step-system.html">Rounds & Steps</a></li>
+<li><a href="auction-round.html">Auction Round</a></li>
+<li><a href="revenue-routing.html">Revenue & Routing</a></li>
+<li><a href="abilities.html">Abilities</a></li>
+<li><a href="tiles.html">Tile Reference</a></li>
+<li><a href="common-patterns.html">Common Patterns</a></li>
+<li><a href="testing.html">Testing Your Game</a></li>
+<li><a href="title-checklist.html">Title Checklist</a></li>
+<li><a href="coding-guidelines.html">Coding Guidelines</a></li>
+</ul></div>
+<div class="track"><h3>Reference</h3><ul>
+<li><a href="game-engine.html">Game Engine Reference</a></li>
+<li><a href="adrs.html">Architecture Decision Records</a></li>
+</ul></div>
+<div class="track"><h3>Platform & Testing Setup</h3><ul>
+<li><a href="architecture.html" aria-current="page"><strong>Architecture Overview</strong></a></li>
+<li><a href="konfiguration-betrieb.html">Configuration & Operations</a></li>
+<li><a href="systemgrenzen.html">System Boundaries</a></li>
+</ul></div>
+<div class="track"><h3>Working with Claude</h3><ul>
+<li><a href="codevelop.html">Co-developing with Claude</a></li>
+</ul></div>
+</nav>
+<main>
+<article>
+<h1 id="architecture-overview">Architecture Overview</h1>
+<p>18xx.games is a six-layer system: browser client, Roda API, game engine, PostgreSQL database, Redis message broker, and a background scheduler. This page explains each layer and why it is designed the way it is.</p>
+<div class="mermaid">
+graph TD
+    Browser["Browser (Opal/JS)"]
+    API["Roda API (rack container)"]
+    Engine["Engine::Game (Ruby)"]
+    DB["PostgreSQL"]
+    Redis["Redis (MessageBus)"]
+    Queue["Rufus-Scheduler (queue container)"]
+
+    Browser -->|"POST /api/game/:id/action"| API
+    API -->|"SELECT actions"| DB
+    API -->|"replay + process"| Engine
+    Engine -->|"validated state"| API
+    API -->|"INSERT action"| DB
+    API -->|"publish /game/:id"| Redis
+    Redis -->|"SSE push"| Browser
+    Queue -->|"archive jobs"| DB
+</div>
+<h2 id="layer-1--browser">Layer 1 — Browser</h2>
+<p>The browser runs the full engine as JavaScript transpiled by <a href="https://opalrb.com/">Opal</a> [<code>Gemfile:9</code>]. The UI framework is Snabberb, a minimal virtual-DOM library [<code>Gemfile:18</code>]. Before sending any action to the server, the local engine validates the move. This provides immediate feedback and prevents wasted round-trips. After the server confirms the action, the browser receives the updated state via Server-Sent Events.</p>
+<h2 id="layer-2--roda-api-apirb16">Layer 2 — Roda API (<code>api.rb:16</code>)</h2>
+<p><code>class Api &amp;lt; Roda</code> is the entry point for all HTTP requests. Roda plugins used:</p>
+<ul><li><code>:streaming</code> — Server-Sent Events</li><li><code>:json</code> / <code>:json_parser</code> — JSON request and response bodies</li><li><code>:assets</code> — serves compiled Opal JS bundles; each game title has its own bundle</li><li><code>:hash_routes</code> — routes delegated to <code>routes/game.rb</code> and <code>routes/user.rb</code></li></ul>
+<p>The API acquires a <strong>PostgreSQL Advisory Lock</strong> (via <code>sequel-pg_advisory_lock</code>) on the game ID before loading actions [<code>routes/game.rb:56</code>]. This serialises concurrent requests for the same game and prevents state corruption.</p>
+<h2 id="layer-3--engine">Layer 3 — Engine</h2>
+<p><code>Engine::Game::Base</code> (and title subclasses) is a pure Ruby state machine. It has no I/O dependency — it receives an array of Actions, replays them from scratch, and returns the new state. This design allows:</p>
+<ul><li>The same class to run in the browser (Opal) and on the server (MRI Ruby)</li><li>Deterministic reconstruction of any historical state by replaying a prefix of the action list</li><li>Simple testing: supply a fixture action list, assert final state</li></ul>
+<h2 id="layer-4--postgresql">Layer 4 — PostgreSQL</h2>
+<p>Three primary tables:</p>
+<table><thead><tr><th>Table</th><th>Columns of interest</th></tr></thead><tbody><tr><td><code>users</code></td><td><code>id</code>, <code>name</code>, <code>email</code>, <code>password</code> (Argon2 hash), <code>settings</code> (JSONB)</td></tr><tr><td><code>games</code></td><td><code>id</code>, <code>title</code>, <code>description</code>, <code>status</code>, <code>settings</code> (JSONB), <code>user_id</code>, <code>created_at</code></td></tr><tr><td><code>actions</code></td><td><code>id</code>, <code>game_id</code>, <code>action_id</code> (sequential per game), <code>action</code> (JSONB)</td></tr></tbody></table>
+<p>The game state is never persisted directly. Only the action list is stored. Full state is reconstructed by replaying the list every time a request is received [<code>lib/engine/game/base.rb:819-837</code>].</p>
+<h2 id="layer-5--redis-messagebus-libbusrb1">Layer 5 — Redis MessageBus (<code>lib/bus.rb:1</code>)</h2>
+<p>After each accepted action the API publishes the updated game state to Redis channel <code>/game/:id</code>. All browser clients subscribed to that game receive the push as a Server-Sent Event and update the UI. Cache entries for user timestamps (<code>user_ts</code>) have a 5-minute TTL; user stats have a 25-hour TTL.</p>
+<h2 id="layer-6--rufus-scheduler-queuerb">Layer 6 — Rufus-Scheduler (<code>queue.rb</code>)</h2>
+<p>The <code>queue</code> container runs background jobs:</p>
+<ul><li><strong>Daily archival</strong>: games finished more than one year ago, or inactive for more than 90 days, are archived. Archived games lose their action list [<code>queue.rb:35-48</code>].</li><li><strong>User stats</strong>: recalculates aggregate statistics for active users.</li></ul>
+<h2 id="why-action-replay-instead-of-snapshots">Why Action Replay Instead of Snapshots?</h2>
+<p>Storing only Actions and replaying on load keeps the persistence schema simple and version-independent. A snapshot would need to be migrated every time a game object changes. With replay, old games just need the Action list to be valid; the engine is re-run in its current form.</p>
+<p>The trade-off is replay latency: a game with thousands of actions takes longer to load than one with a snapshot. In practice, 18xx games are bounded in length, so replay time stays within acceptable limits.</p>
+<h2 id="whats-next">What's next</h2>
+<ul><li>Objects involved in a move: <a href="mental-model.html">Mental Model</a></li><li>A move step by step: <a href="kernablauf.html">Core Flow</a></li><li>Round and Step design: <a href="round-step-system.html">Round/Step System</a></li><li>Design decisions: <a href="adrs.html">ADRs</a></li></ul>
+<hr>
+<p><em>Version: 2026-05-08 — derived from <code>api.rb</code>, <code>lib/bus.rb</code>, <code>queue.rb</code>, <code>db.rb</code>, <code>Gemfile</code>, <code>lib/engine/game/base.rb</code>, <code>routes/game.rb</code>.</em></p>
+</article>
+</main>
+</div>
+<script src="search.js"></script>
+<script src="ui.js"></script>
+</body>
+</html>

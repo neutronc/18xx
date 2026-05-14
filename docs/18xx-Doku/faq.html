@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FAQ — 18OE Dev Docs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Playfair+Display:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({ startOnLoad: true, theme: 'base', themeVariables: {
+  primaryColor: '#0d1f38', primaryTextColor: '#faf6ec',
+  primaryBorderColor: '#c9a843', lineColor: '#c9a843',
+  secondaryColor: '#1a3a6a', tertiaryColor: '#2a4a80',
+  actorBkg: '#0d1f38', actorTextColor: '#faf6ec',
+  actorBorder: '#c9a843', actorLineColor: '#c9a843',
+  activationBkgColor: '#2a4ab0', activationBorderColor: '#c9a843',
+  signalColor: '#c9a843', signalTextColor: '#2a1a0a',
+  labelBoxBkgColor: '#0d1f38', labelBoxBorderColor: '#c9a843', labelTextColor: '#faf6ec',
+  loopTextColor: '#2a1a0a',
+  edgeLabelBackground: '#f0ead8',
+  noteBkgColor: '#f0e8d4', noteTextColor: '#2a1a0a', noteBorderColor: '#c9a843',
+  titleColor: '#2a1a0a',
+  clusterBkg: '#1a3a6a', clusterBorder: '#c9a843', clusterTextColor: '#faf6ec',
+  fillType0: '#0d1f38', fillType1: '#1a3a6a', fillType2: '#2a4a80',
+  fillType3: '#1a3a6a', fillType4: '#0d1f38', fillType5: '#2a4a80',
+  fillType6: '#1a3a6a', fillType7: '#0d1f38'
+} });</script>
+</head>
+<body>
+<header id="site-header">
+  <a href="index.html">18OE</a> &mdash; Developer Documentation
+</header>
+<div id="layout">
+<nav id="sidebar" aria-label="Navigation">
+<input id="nav-search" type="search" placeholder="Search…" aria-label="Search documentation" autocomplete="off">
+<div id="search-results" style="display:none">
+<p id="search-no-results" style="display:none">No results found.</p>
+<ul id="search-results-list"></ul>
+</div>
+<div class="track"><h3>18OE Status</h3><ul>
+<li><a href="rules-summary.html">Game Rules Summary</a></li>
+<li><a href="18oe-map-status.html">Map Implementation Status</a></li>
+<li><a href="status.html">Implementation Tracker</a></li>
+<li><a href="rulebook-coverage.html">Rulebook Coverage</a></li>
+<li><a href="alpha-gaps.html">Open for Alpha</a></li>
+</ul></div>
+<div class="track"><h3>Getting Involved</h3><ul>
+<li><a href="first-contribution.html">Your First Contribution</a></li>
+</ul></div>
+<div class="track"><h3>Building a New Game</h3><ul>
+<li><a href="engine-concepts.html">Understanding the Engine</a></li>
+<li><a href="getting-started.html">Development Setup</a></li>
+<li><a href="game-implementation.html">Game Structure</a></li>
+<li><a href="map.html">Map Configuration</a></li>
+<li><a href="entities.html">Corporations & Companies</a></li>
+<li><a href="trains-phases.html">Trains, Phases & Market</a></li>
+<li><a href="round-step-system.html">Rounds & Steps</a></li>
+<li><a href="auction-round.html">Auction Round</a></li>
+<li><a href="revenue-routing.html">Revenue & Routing</a></li>
+<li><a href="abilities.html">Abilities</a></li>
+<li><a href="tiles.html">Tile Reference</a></li>
+<li><a href="common-patterns.html">Common Patterns</a></li>
+<li><a href="testing.html">Testing Your Game</a></li>
+<li><a href="title-checklist.html">Title Checklist</a></li>
+<li><a href="coding-guidelines.html">Coding Guidelines</a></li>
+</ul></div>
+<div class="track"><h3>Reference</h3><ul>
+<li><a href="game-engine.html">Game Engine Reference</a></li>
+<li><a href="adrs.html">Architecture Decision Records</a></li>
+</ul></div>
+<div class="track"><h3>Platform & Testing Setup</h3><ul>
+<li><a href="architecture.html">Architecture Overview</a></li>
+<li><a href="konfiguration-betrieb.html">Configuration & Operations</a></li>
+<li><a href="systemgrenzen.html">System Boundaries</a></li>
+</ul></div>
+<div class="track"><h3>Working with Claude</h3><ul>
+<li><a href="codevelop.html">Co-developing with Claude</a></li>
+</ul></div>
+</nav>
+<main>
+<article>
+<h1 id="faq">FAQ</h1>
+<h2 id="moves-and-actions">Moves and Actions</h2>
+<p><strong>Why are some buttons greyed out?</strong> The interface only allows actions that the active Step currently permits. A greyed-out button means the action is not legal for your current turn — either it is not your turn, or the game rules forbid it at this moment.</p>
+<p><strong>I see a "Game out of sync" error. What should I do?</strong> Your browser has a stale game state. Reload the page (<code>F5</code>). The browser will fetch the current state from the server.</p>
+<p><strong>Can I undo a move that another player has already seen?</strong> No. Undo is only available while the following player has not yet responded. Once the next player has submitted an action, the previous move is locked.</p>
+<p><strong>Why does a move sometimes appear with a bullet (•) in the log?</strong> The bullet marks moves executed on your behalf in <em>Master Mode</em> by another player (e.g. the game creator) [<code>lib/engine/game/base.rb:882-885</code>].</p>
+<h2 id="game-management">Game Management</h2>
+<p><strong>How long is a finished game stored?</strong> Finished games are automatically archived one year after they were created. Archived games lose their action history; only metadata is retained [<code>queue.rb:35-48</code>].</p>
+<p><strong>What happens to active games that go idle?</strong> Active games are automatically archived after 90 days without activity [<code>queue.rb:38-41</code>].</p>
+<p><strong>What is a "pinned" game?</strong> When a breaking change is introduced to the codebase, running games are bound to an older JavaScript bundle. The game continues, but bug reports are not accepted; the game may be archived after 7 days (for Beta titles).</p>
+<h2 id="game-titles-and-development-status">Game Titles and Development Status</h2>
+<p><strong>What do Alpha / Beta / Production mean for a title?</strong> Production means a fully tested rule implementation. Beta means the implementation may still contain bugs; active games can be pinned when fixes are applied. Alpha titles are experimental; games are archived without notice if a fix breaks the active game state.</p>
+<p><strong>I found a rule bug. Where do I report it?</strong> Use the GitHub issue tracker at <a href="https://github.com/tobymao/18xx/issues">github.com/tobymao/18xx/issues</a>. The issue label matches the game title (e.g. <code>1830</code>). For discussion, join the 18xx Slack <code>#18xxgamesdev</code> channel.</p>
+<h2 id="whats-next">What's next</h2>
+<ul><li>Starting and joining a game: <a href="anwendungsfaelle.html">Use Cases</a></li><li>Full feature overview: <a href="userguide.html">User Guide</a></li></ul>
+<hr>
+<p><em>Version: 2026-05-08 — derived from <code>lib/engine/game/base.rb</code>, <code>queue.rb</code>, <code>routes/game.rb</code>.</em></p>
+</article>
+</main>
+</div>
+<script src="search.js"></script>
+<script src="ui.js"></script>
+</body>
+</html>

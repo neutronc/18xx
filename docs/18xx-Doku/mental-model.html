@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mental Model — 18xx.games — 18OE Dev Docs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Playfair+Display:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({ startOnLoad: true, theme: 'base', themeVariables: {
+  primaryColor: '#0d1f38', primaryTextColor: '#faf6ec',
+  primaryBorderColor: '#c9a843', lineColor: '#c9a843',
+  secondaryColor: '#1a3a6a', tertiaryColor: '#2a4a80',
+  actorBkg: '#0d1f38', actorTextColor: '#faf6ec',
+  actorBorder: '#c9a843', actorLineColor: '#c9a843',
+  activationBkgColor: '#2a4ab0', activationBorderColor: '#c9a843',
+  signalColor: '#c9a843', signalTextColor: '#2a1a0a',
+  labelBoxBkgColor: '#0d1f38', labelBoxBorderColor: '#c9a843', labelTextColor: '#faf6ec',
+  loopTextColor: '#2a1a0a',
+  edgeLabelBackground: '#f0ead8',
+  noteBkgColor: '#f0e8d4', noteTextColor: '#2a1a0a', noteBorderColor: '#c9a843',
+  titleColor: '#2a1a0a',
+  clusterBkg: '#1a3a6a', clusterBorder: '#c9a843', clusterTextColor: '#faf6ec',
+  fillType0: '#0d1f38', fillType1: '#1a3a6a', fillType2: '#2a4a80',
+  fillType3: '#1a3a6a', fillType4: '#0d1f38', fillType5: '#2a4a80',
+  fillType6: '#1a3a6a', fillType7: '#0d1f38'
+} });</script>
+</head>
+<body>
+<header id="site-header">
+  <a href="index.html">18OE</a> &mdash; Developer Documentation
+</header>
+<div id="layout">
+<nav id="sidebar" aria-label="Navigation">
+<input id="nav-search" type="search" placeholder="Search…" aria-label="Search documentation" autocomplete="off">
+<div id="search-results" style="display:none">
+<p id="search-no-results" style="display:none">No results found.</p>
+<ul id="search-results-list"></ul>
+</div>
+<div class="track"><h3>18OE Status</h3><ul>
+<li><a href="rules-summary.html">Game Rules Summary</a></li>
+<li><a href="18oe-map-status.html">Map Implementation Status</a></li>
+<li><a href="status.html">Implementation Tracker</a></li>
+<li><a href="rulebook-coverage.html">Rulebook Coverage</a></li>
+<li><a href="alpha-gaps.html">Open for Alpha</a></li>
+</ul></div>
+<div class="track"><h3>Getting Involved</h3><ul>
+<li><a href="first-contribution.html">Your First Contribution</a></li>
+</ul></div>
+<div class="track"><h3>Building a New Game</h3><ul>
+<li><a href="engine-concepts.html">Understanding the Engine</a></li>
+<li><a href="getting-started.html">Development Setup</a></li>
+<li><a href="game-implementation.html">Game Structure</a></li>
+<li><a href="map.html">Map Configuration</a></li>
+<li><a href="entities.html">Corporations & Companies</a></li>
+<li><a href="trains-phases.html">Trains, Phases & Market</a></li>
+<li><a href="round-step-system.html">Rounds & Steps</a></li>
+<li><a href="auction-round.html">Auction Round</a></li>
+<li><a href="revenue-routing.html">Revenue & Routing</a></li>
+<li><a href="abilities.html">Abilities</a></li>
+<li><a href="tiles.html">Tile Reference</a></li>
+<li><a href="common-patterns.html">Common Patterns</a></li>
+<li><a href="testing.html">Testing Your Game</a></li>
+<li><a href="title-checklist.html">Title Checklist</a></li>
+<li><a href="coding-guidelines.html">Coding Guidelines</a></li>
+</ul></div>
+<div class="track"><h3>Reference</h3><ul>
+<li><a href="game-engine.html">Game Engine Reference</a></li>
+<li><a href="adrs.html">Architecture Decision Records</a></li>
+</ul></div>
+<div class="track"><h3>Platform & Testing Setup</h3><ul>
+<li><a href="architecture.html">Architecture Overview</a></li>
+<li><a href="konfiguration-betrieb.html">Configuration & Operations</a></li>
+<li><a href="systemgrenzen.html">System Boundaries</a></li>
+</ul></div>
+<div class="track"><h3>Working with Claude</h3><ul>
+<li><a href="codevelop.html">Co-developing with Claude</a></li>
+</ul></div>
+</nav>
+<main>
+<article>
+<h1 id="mental-model--18xxgames">Mental Model — 18xx.games</h1>
+<p>18xx.games models a game session as a sequence of Actions that a game engine processes deterministically. All game objects — stock market, map, trains, corporations — exist only in the engine's memory; only the Actions themselves are persisted.</p>
+<div class="mermaid">
+classDiagram
+    class Game {
+        +id: Integer
+        +title: String
+        +status: String
+        +turn: Integer
+        +actions: Action[]
+        +process_action()
+        +next_round!()
+    }
+    class Player {
+        +id
+        +name
+        +cash: Integer
+        +shares: Share[]
+    }
+    class Corporation {
+        +id
+        +name
+        +cash: Integer
+        +trains: Train[]
+        +tokens: Token[]
+        +share_price: SharePrice
+    }
+    class Round {
+        +steps: Step[]
+        +entities: Entity[]
+        +process_action()
+        +active_step()
+    }
+    class Step {
+        +ACTIONS: Symbol[]
+        +active?()
+        +blocking?()
+        +process_*(action)
+    }
+    class Action {
+        +id: Integer
+        +type: String
+        +entity
+        +to_h(): Hash
+    }
+    class Phase {
+        +name: String
+        +operating_rounds: Integer
+        +buying_train!()
+    }
+    class Train {
+        +name
+        +distance
+        +price: Integer
+        +obsolete: Boolean
+    }
+    class StockMarket {
+        +market: SharePrice[][]
+        +par_prices: SharePrice[]
+        +move_up()
+        +move_down()
+    }
+    class Hex {
+        +id: String
+        +tile: Tile
+        +neighbors: Hex[]
+    }
+
+    Game "1" --> "1..*" Round : current
+    Game "1" --> "2..6" Player : has
+    Game "1" --> "1..*" Corporation : has
+    Game "1" --> "1" StockMarket : has
+    Game "1" --> "1" Phase : current
+    Game "1" --> "1..*" Hex : has
+    Round "1" --> "1..*" Step : contains
+    Corporation "1" --> "0..*" Train : owns
+    Phase "1" --> "0..*" Train : triggers
+</div>
+<h2 id="game">Game</h2>
+<p>A <code>Game</code> object is the engine's representation of a running session [<code>lib/engine/game/base.rb:91</code>]. It holds every game object (Corporations, Players, StockMarket, Hexes, Depot) and tracks the current Round. Each of the 100+ game titles is a subclass of <code>Game::Base</code> with its own constants (<code>TRAINS</code>, <code>CORPORATIONS</code>, <code>PHASES</code>, <code>HEXES</code>) [<code>lib/engine/game/base.rb:152-262</code>]. The database model <code>Game</code> (Sequel) stores metadata and references persisted moves via <code>has_many :actions</code> [<code>models/game.rb:1-10</code>].</p>
+<h2 id="player">Player</h2>
+<p>A <code>Player</code> [<code>lib/engine/player.rb:1</code>] represents a human participant inside the engine. It holds cash, a certificate portfolio, and owns the Corporations for which it serves as president.</p>
+<h2 id="corporation">Corporation</h2>
+<p>A <code>Corporation</code> [<code>lib/engine/corporation.rb:1</code>] is the investable railway company. It owns trains, has tokens on the map, and occupies a cell on the stock market. The share price determines its operating value and the dividend per share.</p>
+<h2 id="round">Round</h2>
+<p>A <code>Round</code> [<code>lib/engine/round/base.rb:12</code>] is the container for all Steps in a turn segment. The four basic types are Stock Round (<code>SR</code>), Operating Round (<code>OR</code>), Auction Round, and Draft Round. Every Round holds an ordered list of <code>entities</code> (players or corporations) that act in sequence.</p>
+<h2 id="step">Step</h2>
+<p>A <code>Step</code> [<code>lib/engine/step/base.rb:8</code>] models an atomic decision opportunity. It declares via <code>ACTIONS</code> which action types it can process, and signals whether it is <em>blocking</em> — meaning subsequent Steps only become active once this one is completed or passed [<code>lib/engine/round/base.rb:136-143</code>].</p>
+<h2 id="action">Action</h2>
+<p>An <code>Action</code> [<code>lib/engine/action/base.rb:1</code>] is a persisted move. It carries the entity (who acts), the type (<code>buy_shares</code>, <code>lay_tile</code>, <code>run_routes</code>, etc.), and type-specific arguments. All Actions are stored as JSON in the database and replayed sequentially on load [<code>lib/engine/game/base.rb:819-837</code>].</p>
+<h2 id="phase">Phase</h2>
+<p>The <code>Phase</code> [<code>lib/engine/phase.rb:1</code>] manages game progression. Each train purchase can trigger a new phase (<code>buying_train!</code>) [<code>lib/engine/phase.rb:11-29</code>], which obsoletes older trains, unlocks new track categories, and changes the number of Operating Rounds per set.</p>
+<h2 id="train">Train</h2>
+<p>A <code>Train</code> [<code>lib/engine/train.rb:1</code>] is the revenue engine of every Corporation. It has a reach (distance), a purchase price, and can become obsolete when a new phase begins. Without at least one train a Corporation earns no revenue.</p>
+<h2 id="stockmarket">StockMarket</h2>
+<p>The <code>StockMarket</code> [<code>lib/engine/stock_market.rb:1</code>] is a two-dimensional grid of <code>SharePrice</code> objects. Buys and sells move a corporation's marker on this grid; special cells mark par, endgame triggers, or closure.</p>
+<h2 id="hex--tile">Hex / Tile</h2>
+<p>A <code>Hex</code> [<code>lib/engine/hex.rb:1</code>] represents one hexagon on the game map. It contains a <code>Tile</code> with the current track layout and cities. <code>Tile</code> objects from the tile bank are placed onto Hexes during track-laying.</p>
+<h2 id="action-lifecycle">Action Lifecycle</h2>
+<p>An Action begins as a user gesture in the browser and ends as a persisted record in the database. The same engine code runs on both sides; the client uses it for optimistic validation, the server for authoritative processing.</p>
+<div class="mermaid">
+stateDiagram-v2
+    [*] --> Created : User clicks a UI control
+    Created --> LocalValidated : Client-side engine validates against local state
+    LocalValidated --> Sent : HTTP POST to /api/game/:id/action
+    Sent --> Replayed : Advisory Lock acquired; all prior Actions replayed
+    Replayed --> ServerValidated : New Action applied to fresh engine state
+    ServerValidated --> Persisted : Action inserted into actions table
+    Persisted --> Broadcast : Published to Redis /game/:id channel
+    Broadcast --> [*] : SSE delivers updated state to all connected clients
+    ServerValidated --> Rejected : Validation error — 422 response
+    Rejected --> [*] : Client shows error; no state change persisted
+</div>
+<p>The key invariant: the database stores only the Action, never the derived state. Every load replays the full action list from scratch.</p>
+<h2 id="phase--train-trigger">Phase / Train Trigger</h2>
+<p>Buying the first copy of a train can advance the game phase. This is the primary mechanism for progressing through the game's development arc.</p>
+<div class="mermaid">
+sequenceDiagram
+    participant Corp as Corporation
+    participant Depot as Depot
+    participant Phase as Phase
+    participant Game as Game::Base
+
+    Corp->>Depot: buy_train(train)
+    Depot->>Phase: buying_train!(train)
+    Phase->>Phase: check trigger (on: field in PHASES)
+    alt phase advances
+        Phase->>Game: dispatch phase events (event_close_companies! etc.)
+        Game->>Game: rust older trains (rusts_on: field in TRAINS)
+        Game->>Game: unlock track colours (tiles: field in PHASES)
+        Game->>Game: update operating round count
+    end
+</div>
+<p>The <code>on:</code> field in each <code>PHASES</code> entry names the train whose first purchase triggers that phase. A single train purchase can both advance the phase and fire multiple events simultaneously.</p>
+<h2 id="what-was-deliberately-omitted">What was deliberately omitted</h2>
+<p>Graph (routing graph for revenue calculation), SharePool (bank pool for shares), Depot (train supply), Loan (player debt in some titles), and Minor (small subsidiary) are all present in the system but are not needed to understand the basic game flow.</p>
+<h2 id="whats-next">What's next</h2>
+<ul><li>How Actions are processed: <a href="kernablauf.html">Core Flow</a></li><li>Technical internals of the engine: <a href="game-engine.html">Game Engine</a></li><li>Round/Step in depth: <a href="round-step-system.html">Round/Step System</a></li><li>Short definitions of all terms: <a href="glossary.html">Glossary</a></li></ul>
+<hr>
+<p><em>Version: 2026-05-08 — derived from <code>lib/engine/game/base.rb</code>, <code>lib/engine/round/base.rb</code>, <code>lib/engine/step/base.rb</code>.</em></p>
+</article>
+</main>
+</div>
+<script src="search.js"></script>
+<script src="ui.js"></script>
+</body>
+</html>

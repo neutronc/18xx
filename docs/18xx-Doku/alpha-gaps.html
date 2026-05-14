@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Open for Alpha — 18OE Dev Docs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Playfair+Display:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({ startOnLoad: true, theme: 'base', themeVariables: {
+  primaryColor: '#0d1f38', primaryTextColor: '#faf6ec',
+  primaryBorderColor: '#c9a843', lineColor: '#c9a843',
+  secondaryColor: '#1a3a6a', tertiaryColor: '#2a4a80',
+  actorBkg: '#0d1f38', actorTextColor: '#faf6ec',
+  actorBorder: '#c9a843', actorLineColor: '#c9a843',
+  activationBkgColor: '#2a4ab0', activationBorderColor: '#c9a843',
+  signalColor: '#c9a843', signalTextColor: '#2a1a0a',
+  labelBoxBkgColor: '#0d1f38', labelBoxBorderColor: '#c9a843', labelTextColor: '#faf6ec',
+  loopTextColor: '#2a1a0a',
+  edgeLabelBackground: '#f0ead8',
+  noteBkgColor: '#f0e8d4', noteTextColor: '#2a1a0a', noteBorderColor: '#c9a843',
+  titleColor: '#2a1a0a',
+  clusterBkg: '#1a3a6a', clusterBorder: '#c9a843', clusterTextColor: '#faf6ec',
+  fillType0: '#0d1f38', fillType1: '#1a3a6a', fillType2: '#2a4a80',
+  fillType3: '#1a3a6a', fillType4: '#0d1f38', fillType5: '#2a4a80',
+  fillType6: '#1a3a6a', fillType7: '#0d1f38'
+} });</script>
+</head>
+<body>
+<header id="site-header">
+  <a href="index.html">18OE</a> &mdash; Developer Documentation
+</header>
+<div id="layout">
+<nav id="sidebar" aria-label="Navigation">
+<input id="nav-search" type="search" placeholder="Search…" aria-label="Search documentation" autocomplete="off">
+<div id="search-results" style="display:none">
+<p id="search-no-results" style="display:none">No results found.</p>
+<ul id="search-results-list"></ul>
+</div>
+<div class="track"><h3>18OE Status</h3><ul>
+<li><a href="rules-summary.html">Game Rules Summary</a></li>
+<li><a href="18oe-map-status.html">Map Implementation Status</a></li>
+<li><a href="status.html">Implementation Tracker</a></li>
+<li><a href="rulebook-coverage.html">Rulebook Coverage</a></li>
+<li><a href="alpha-gaps.html" aria-current="page"><strong>Open for Alpha</strong></a></li>
+</ul></div>
+<div class="track"><h3>Getting Involved</h3><ul>
+<li><a href="first-contribution.html">Your First Contribution</a></li>
+</ul></div>
+<div class="track"><h3>Building a New Game</h3><ul>
+<li><a href="engine-concepts.html">Understanding the Engine</a></li>
+<li><a href="getting-started.html">Development Setup</a></li>
+<li><a href="game-implementation.html">Game Structure</a></li>
+<li><a href="map.html">Map Configuration</a></li>
+<li><a href="entities.html">Corporations & Companies</a></li>
+<li><a href="trains-phases.html">Trains, Phases & Market</a></li>
+<li><a href="round-step-system.html">Rounds & Steps</a></li>
+<li><a href="auction-round.html">Auction Round</a></li>
+<li><a href="revenue-routing.html">Revenue & Routing</a></li>
+<li><a href="abilities.html">Abilities</a></li>
+<li><a href="tiles.html">Tile Reference</a></li>
+<li><a href="common-patterns.html">Common Patterns</a></li>
+<li><a href="testing.html">Testing Your Game</a></li>
+<li><a href="title-checklist.html">Title Checklist</a></li>
+<li><a href="coding-guidelines.html">Coding Guidelines</a></li>
+</ul></div>
+<div class="track"><h3>Reference</h3><ul>
+<li><a href="game-engine.html">Game Engine Reference</a></li>
+<li><a href="adrs.html">Architecture Decision Records</a></li>
+</ul></div>
+<div class="track"><h3>Platform & Testing Setup</h3><ul>
+<li><a href="architecture.html">Architecture Overview</a></li>
+<li><a href="konfiguration-betrieb.html">Configuration & Operations</a></li>
+<li><a href="systemgrenzen.html">System Boundaries</a></li>
+</ul></div>
+<div class="track"><h3>Working with Claude</h3><ul>
+<li><a href="codevelop.html">Co-developing with Claude</a></li>
+</ul></div>
+</nav>
+<main>
+<article>
+<h1>18OE — Open for Alpha</h1>
+<p class="page-crosslink">Fast triage view · bugs and missing features sorted by impact. For full rulebook picture → <a href="rulebook-coverage.html">Rulebook Coverage</a> · For in-flight work → <a href="status.html">Implementation Tracker</a></p>
+<p class="bar-note">Bar weights: L3 step/round = 3× · L2 override = 2× · L1 data = 1×</p>
+<div class="bar-rows">
+<div class="bar-row">
+<span class="bar-label-left">Alpha scope</span>
+<div class="progress-track">
+<div class="pb-done"    style="width:73.5%"></div>
+<div class="pb-pr"      style="width:0.0%"></div>
+<div class="pb-partial" style="width:4.2%"></div>
+<div class="pb-todo"    style="width:22.2%"></div>
+</div>
+<span class="bar-label-right"><strong>74%</strong> complete (effort-weighted)</span>
+</div>
+</div>
+<div class="gap-stats">
+<div class="gap-stat gap-stat-high">HIGH bugs <span>4</span></div>
+<div class="gap-stat gap-stat-med">MEDIUM bugs <span>2</span></div>
+<div class="gap-stat gap-stat-low">LOW bugs <span>0</span></div>
+<div class="gap-stat gap-stat-feat">Missing features <span>21</span></div>
+<div class="gap-stat gap-stat-partial">Partial impl. <span>10</span></div>
+</div>
+<h2 class="gap-section-h">Critical Bugs — fix before any playtesting</h2>
+<table class="gap-table">
+<thead><tr><th>ID</th><th>Rule violated</th><th>Symptom</th></tr></thead><tbody>
+<tr class="gap-row-high"><td class="gap-id">BUG-026</td><td class="gap-title">Final two ORs (abbreviated second OR) not implemented</td><td class="gap-sym">Both final ORs run as normal ORs. Second OR is not abbreviated.</td></tr>
+<tr class="gap-row-high"><td class="gap-id">BUG-020</td><td class="gap-title">Orient Express first-run bonus (§12.2) not implemented</td><td class="gap-sym">No OE marker is awarded, no bonus revenue is calculated, no first-run choice is presented. The OE route runs as a normal train.</td></tr>
+<tr class="gap-row-high"><td class="gap-id">BUG-019</td><td class="gap-title">Force-buy mechanics not implemented (president cash contribution + national conversion)</td><td class="gap-sym">`must_buy_train?` correctly forces the buy but the engine has no mechanism to draw on the president&#x27;s personal cash when the treasury is short. A major or minor</td></tr>
+<tr class="gap-row-high"><td class="gap-id">BUG-011</td><td class="gap-title">Nationals not exempt from terrain costs</td><td class="gap-sym">A national operating in a rough-terrain hex would pay the full terrain cost; no exemption exists in `upgrade_cost` or `Track#lay_tile_action`.</td></tr>
+</tbody></table>
+<h2 class="gap-section-h">Missing Alpha Features — not yet implemented</h2>
+<table class="gap-table">
+<thead><tr><th>Area</th><th>Feature</th></tr></thead><tbody>
+<tr class="gap-section-row"><td colspan="2" class="gap-section-label">Stock Market Grid</td></tr>
+<tr class="gap-row-feat"><td class="gap-area"></td><td class="gap-feat">Reserved secondary shares</td></tr>
+<tr class="gap-row-feat"><td class="gap-area"></td><td class="gap-feat">Voluntary regional removal</td></tr>
+<tr class="gap-section-row"><td colspan="2" class="gap-section-label">Train Purchase</td></tr>
+<tr class="gap-row-feat"><td class="gap-area"></td><td class="gap-feat">First-round insolvency</td></tr>
+<tr class="gap-row-feat"><td class="gap-area"></td><td class="gap-feat">Forced purchase</td></tr>
+<tr class="gap-row-feat"><td class="gap-area"></td><td class="gap-feat">Train type lock inter-RR</td></tr>
+<tr class="gap-section-row"><td colspan="2" class="gap-section-label">OR Steps (Major)</td></tr>
+<tr class="gap-row-feat"><td class="gap-area"></td><td class="gap-feat">Buy Abandoned Minor (§11.7)</td></tr>
+<tr class="gap-row-feat"><td class="gap-area"></td><td class="gap-feat">Transfer Tokens</td></tr>
+<tr class="gap-section-row"><td colspan="2" class="gap-section-label">Stock Rounds</td></tr>
+<tr class="gap-row-feat"><td class="gap-area"></td><td class="gap-feat">Trade with another player</td></tr>
+<tr class="gap-section-row"><td colspan="2" class="gap-section-label">Track Laying</td></tr>
+<tr class="gap-row-feat"><td class="gap-area"></td><td class="gap-feat">First-OR green tile exception</td></tr>
+<tr class="gap-row-feat"><td class="gap-area"></td><td class="gap-feat">OE19 unknown tile</td></tr>
+<tr class="gap-row-feat"><td class="gap-area"></td><td class="gap-feat">OE20–OE22 brown double-town</td></tr>
+<tr class="gap-row-feat"><td class="gap-area"></td><td class="gap-feat">OE9–OE11 green double-town</td></tr>
+<tr class="gap-row-feat"><td class="gap-area"></td><td class="gap-feat">Tile quantities verify</td></tr>
+<tr class="gap-section-row"><td colspan="2" class="gap-section-label">Auction Phase</td></tr>
+<tr class="gap-row-feat"><td class="gap-area"></td><td class="gap-feat">All-pass price reduction</td></tr>
+<tr class="gap-section-row"><td colspan="2" class="gap-section-label">Map &amp; Components</td></tr>
+<tr class="gap-row-feat"><td class="gap-area"></td><td class="gap-feat">Logo SVGs</td></tr>
+<tr class="gap-section-row"><td colspan="2" class="gap-section-label">Minor Abilities</td></tr>
+<tr class="gap-row-feat"><td class="gap-area"></td><td class="gap-feat">A – Silver Banner</td></tr>
+<tr class="gap-section-row"><td colspan="2" class="gap-section-label">Private Abilities</td></tr>
+<tr class="gap-row-feat"><td class="gap-area"></td><td class="gap-feat">Barclay, Bevan &amp; Tritton</td></tr>
+<tr class="gap-row-feat"><td class="gap-area"></td><td class="gap-feat">Swift Metropolitan Line</td></tr>
+<tr class="gap-section-row"><td colspan="2" class="gap-section-label">Token Transfer Between Majors</td></tr>
+<tr class="gap-row-feat"><td class="gap-area"></td><td class="gap-feat">Sell token back to charter</td></tr>
+<tr class="gap-row-feat"><td class="gap-area"></td><td class="gap-feat">Transfer cost schedule</td></tr>
+<tr class="gap-row-feat"><td class="gap-area"></td><td class="gap-feat">Transfer token between majors</td></tr>
+</tbody></table>
+<h2 class="gap-section-h">Partial Implementations — need completion</h2>
+<table class="gap-table">
+<thead><tr><th>Area</th><th>Feature</th></tr></thead><tbody>
+<tr class="gap-section-row"><td colspan="2" class="gap-section-label">Token Placement</td></tr>
+<tr class="gap-row-partial"><td class="gap-area"></td><td class="gap-feat">Lille White Cliffs position</td></tr>
+<tr class="gap-section-row"><td colspan="2" class="gap-section-label">Map &amp; Components</td></tr>
+<tr class="gap-row-partial"><td class="gap-area"></td><td class="gap-feat">Port icons</td></tr>
+<tr class="gap-section-row"><td colspan="2" class="gap-section-label">Minor Abilities</td></tr>
+<tr class="gap-row-partial"><td class="gap-area"></td><td class="gap-feat">C – Golden Bell</td></tr>
+<tr class="gap-row-partial"><td class="gap-area"></td><td class="gap-feat">D – Green Junction</td></tr>
+<tr class="gap-row-partial"><td class="gap-area"></td><td class="gap-feat">J – Grey Locomotive</td></tr>
+<tr class="gap-row-partial"><td class="gap-area"></td><td class="gap-feat">L – Krasnaya Strela</td></tr>
+<tr class="gap-section-row"><td colspan="2" class="gap-section-label">Private Abilities</td></tr>
+<tr class="gap-row-partial"><td class="gap-area"></td><td class="gap-feat">Brandt &amp; Brandau</td></tr>
+<tr class="gap-row-partial"><td class="gap-area"></td><td class="gap-feat">Central Circle</td></tr>
+<tr class="gap-row-partial"><td class="gap-area"></td><td class="gap-feat">Hochberg Mining</td></tr>
+<tr class="gap-row-partial"><td class="gap-area"></td><td class="gap-feat">Wien Südbahn hof</td></tr>
+</tbody></table>
+<h2 class="gap-section-h">Medium Bugs — rule violations in specific cases</h2>
+<table class="gap-table">
+<thead><tr><th>ID</th><th>Rule violated</th><th>Symptom</th></tr></thead><tbody>
+<tr class="gap-row-med"><td class="gap-id">BUG-023</td><td class="gap-title">§11.7 abandoned-minor purchase by major in OR not implemented</td><td class="gap-sym">The `IssueShares` OR step has no mechanism for purchasing an abandoned minor. The action is entirely absent.</td></tr>
+<tr class="gap-row-med"><td class="gap-id">BUG-012</td><td class="gap-title">`close_corporation` skips parred-but-not-floated regionals at phase end</td><td class="gap-sym">When the 18th regional is floated, the cleanup loop skips any regional whose `ipoed` flag is `true`. A regional that was parred during the Concession Phase (pre</td></tr>
+</tbody></table>
+<h2 class="gap-section-h">Low Bugs — cosmetic / edge-case</h2>
+<p class="gap-none">No LOW bugs open.</p>
+</article>
+</main>
+</div>
+<script src="search.js"></script>
+<script src="ui.js"></script>
+</body>
+</html>

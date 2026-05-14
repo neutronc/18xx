@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Revenue & Routing — 18OE Dev Docs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Playfair+Display:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({ startOnLoad: true, theme: 'base', themeVariables: {
+  primaryColor: '#0d1f38', primaryTextColor: '#faf6ec',
+  primaryBorderColor: '#c9a843', lineColor: '#c9a843',
+  secondaryColor: '#1a3a6a', tertiaryColor: '#2a4a80',
+  actorBkg: '#0d1f38', actorTextColor: '#faf6ec',
+  actorBorder: '#c9a843', actorLineColor: '#c9a843',
+  activationBkgColor: '#2a4ab0', activationBorderColor: '#c9a843',
+  signalColor: '#c9a843', signalTextColor: '#2a1a0a',
+  labelBoxBkgColor: '#0d1f38', labelBoxBorderColor: '#c9a843', labelTextColor: '#faf6ec',
+  loopTextColor: '#2a1a0a',
+  edgeLabelBackground: '#f0ead8',
+  noteBkgColor: '#f0e8d4', noteTextColor: '#2a1a0a', noteBorderColor: '#c9a843',
+  titleColor: '#2a1a0a',
+  clusterBkg: '#1a3a6a', clusterBorder: '#c9a843', clusterTextColor: '#faf6ec',
+  fillType0: '#0d1f38', fillType1: '#1a3a6a', fillType2: '#2a4a80',
+  fillType3: '#1a3a6a', fillType4: '#0d1f38', fillType5: '#2a4a80',
+  fillType6: '#1a3a6a', fillType7: '#0d1f38'
+} });</script>
+</head>
+<body>
+<header id="site-header">
+  <a href="index.html">18OE</a> &mdash; Developer Documentation
+</header>
+<div id="layout">
+<nav id="sidebar" aria-label="Navigation">
+<input id="nav-search" type="search" placeholder="Search…" aria-label="Search documentation" autocomplete="off">
+<div id="search-results" style="display:none">
+<p id="search-no-results" style="display:none">No results found.</p>
+<ul id="search-results-list"></ul>
+</div>
+<div class="track"><h3>18OE Status</h3><ul>
+<li><a href="rules-summary.html">Game Rules Summary</a></li>
+<li><a href="18oe-map-status.html">Map Implementation Status</a></li>
+<li><a href="status.html">Implementation Tracker</a></li>
+<li><a href="rulebook-coverage.html">Rulebook Coverage</a></li>
+<li><a href="alpha-gaps.html">Open for Alpha</a></li>
+</ul></div>
+<div class="track"><h3>Getting Involved</h3><ul>
+<li><a href="first-contribution.html">Your First Contribution</a></li>
+</ul></div>
+<div class="track"><h3>Building a New Game</h3><ul>
+<li><a href="engine-concepts.html">Understanding the Engine</a></li>
+<li><a href="getting-started.html">Development Setup</a></li>
+<li><a href="game-implementation.html">Game Structure</a></li>
+<li><a href="map.html">Map Configuration</a></li>
+<li><a href="entities.html">Corporations & Companies</a></li>
+<li><a href="trains-phases.html">Trains, Phases & Market</a></li>
+<li><a href="round-step-system.html">Rounds & Steps</a></li>
+<li><a href="auction-round.html">Auction Round</a></li>
+<li><a href="revenue-routing.html" aria-current="page"><strong>Revenue & Routing</strong></a></li>
+<li><a href="abilities.html">Abilities</a></li>
+<li><a href="tiles.html">Tile Reference</a></li>
+<li><a href="common-patterns.html">Common Patterns</a></li>
+<li><a href="testing.html">Testing Your Game</a></li>
+<li><a href="title-checklist.html">Title Checklist</a></li>
+<li><a href="coding-guidelines.html">Coding Guidelines</a></li>
+</ul></div>
+<div class="track"><h3>Reference</h3><ul>
+<li><a href="game-engine.html">Game Engine Reference</a></li>
+<li><a href="adrs.html">Architecture Decision Records</a></li>
+</ul></div>
+<div class="track"><h3>Platform & Testing Setup</h3><ul>
+<li><a href="architecture.html">Architecture Overview</a></li>
+<li><a href="konfiguration-betrieb.html">Configuration & Operations</a></li>
+<li><a href="systemgrenzen.html">System Boundaries</a></li>
+</ul></div>
+<div class="track"><h3>Working with Claude</h3><ul>
+<li><a href="codevelop.html">Co-developing with Claude</a></li>
+</ul></div>
+</nav>
+<main>
+<article>
+<h1 id="revenue--routing">Revenue & Routing</h1>
+<p>Running routes and paying dividends is the economic core of every 18xx Operating Round. This page explains how the engine computes revenue, which hooks <code>game.rb</code> can override for title-specific rules, and how the dividend step processes the payout.</p>
+<hr>
+<h2 id="the-route-pipeline">The Route Pipeline</h2>
+<p>When a player submits a route set, the engine runs this pipeline:</p>
+<div class="mermaid">
+sequenceDiagram
+    participant UI as Browser
+    participant Step as Step::Route
+    participant Route as Route object
+    participant Game as game.rb hooks
+    participant Step2 as Step::Dividend
+
+    UI->>Step: process_run_routes(action)
+    Step->>Route: route.revenue (for each route)
+    Route->>Route: check_distance!(visits)
+    Route->>Game: game.check_distance(route, visits)
+    Route->>Route: check_other!
+    Route->>Game: game.check_other(route)
+    Route->>Game: game.revenue_for(route, stops)
+    Route->>Game: game.subsidy_for(route, stops)
+    Step->>Game: game.check_route_combination(routes)
+    Step->>Step2: activates dividend step
+    Step2->>UI: shows payout / withhold choice
+</div>
+<p>All revenue validation and calculation is delegated to game-level hooks. The <code>Route</code> object is the messenger; <code>game.rb</code> is the rule-book.</p>
+<hr>
+<h2 id="the-graph">The Graph</h2>
+<p><code>Engine::Graph</code> [<code>lib/engine/graph.rb</code>] builds the connectivity map for a corporation from the current tile layout and token positions. It answers: "which hexes can this corporation reach, run through, and token?"</p>
+<p>The engine creates a graph instance per corporation, caching it until the tile layout changes. You do not call <code>Graph</code> directly in most titles — the Step layer uses it automatically. But some overrides interact with it:</p>
+<table><thead><tr><th>Hook</th><th>When to use</th></tr></thead><tbody><tr><td><code>graph_skip_paths(corporation)</code></td><td>Exclude certain paths from connectivity (e.g. narrow-gauge-only track when the corporation runs broad gauge)</td></tr><tr><td><code>skip_token?(graph, corporation, city)</code></td><td>Allow a corporation to use a city it has not tokened</td></tr><tr><td><code>city_tokened_by?(city, entity)</code></td><td>Custom token ownership logic (e.g., minors share a parent's tokens)</td></tr></tbody></table>
+<hr>
+<h2 id="revenue-calculation-hooks">Revenue Calculation Hooks</h2>
+<h3 id="revenue_forroute-stops"><code>revenue_for(route, stops)</code></h3>
+<p>The primary revenue hook. Default implementation:</p>
+<pre><code class="language-ruby">def revenue_for(route, stops)
+  stops.sum { |stop| stop.route_revenue(route.phase, route.train) }
+end</code></pre>
+<p>Override this in <code>game.rb</code> to add bonuses, apply multipliers, or adjust stop values:</p>
+<pre><code class="language-ruby"># Add $20 bonus for every route that includes the port hex F8
+def revenue_for(route, stops)
+  base = super
+  port_stop = stops.find { |s| s.hex.id == 'F8' }
+  base + (port_stop ? 20 : 0)
+end</code></pre>
+<h3 id="routes_revenueroutes"><code>routes_revenue(routes)</code></h3>
+<p>Sums revenue across all routes run in one turn. Override only when routes interact — for example, an east-west bonus that applies only when the set of routes collectively spans the map:</p>
+<pre><code class="language-ruby">def routes_revenue(routes)
+  base = routes.sum(&amp;:revenue)
+  base + east_west_bonus(routes)
+end</code></pre>
+<h3 id="extra_revenueentity-routes"><code>extra_revenue(entity, routes)</code></h3>
+<p>Additional revenue beyond train routes (default: 0). Useful for per-turn flat bonuses that don't belong to any individual route.</p>
+<hr>
+<h2 id="stop-values">Stop Values</h2>
+<p>Each stop on a route contributes its <code>route_revenue(phase, train)</code> to the total. The stop's revenue comes from the tile definition (<code>city=revenue:30</code> or phase-based <code>revenue:yellow_30|green_40|brown_50</code>).</p>
+<p>You can override stop revenue at the game level without touching the tile definition:</p>
+<pre><code class="language-ruby">def revenue_for(route, stops)
+  stops.sum do |stop|
+    stop.route_revenue(route.phase, route.train) +
+      hex_bonus(stop.hex, route.train)
+  end
+end
+
+def hex_bonus(hex, train)
+  # Reference: lib/engine/game/g_18co/game.rb
+  BONUSES.fetch(hex.id, 0)
+end</code></pre>
+<hr>
+<h2 id="distance-validation">Distance Validation</h2>
+<h3 id="check_distanceroute-visits-train--nil"><code>check_distance(route, visits, train = nil)</code></h3>
+<p>Called automatically by <code>Route#check_distance!</code>. The base implementation handles both integer distance (a 4-train visits up to 4 cities/towns) and the complex array format (different limits per node type). You rarely need to override this unless your train type has custom counting rules.</p>
+<h3 id="route_distanceroute"><code>route_distance(route)</code></h3>
+<p>Returns the numeric distance consumed by a route. Override if some stops have a different visit cost — for example, towns that are free to pass through:</p>
+<pre><code class="language-ruby">def route_distance(route)
+  route.visited_stops.sum do |stop|
+    stop.tokened_by?(route.corporation) ? 1 : stop.visit_cost
+  end
+end</code></pre>
+<hr>
+<h2 id="route-validation-hooks">Route Validation Hooks</h2>
+<h3 id="check_otherroute"><code>check_other(route)</code></h3>
+<p>Single-route validation hook (no-op by default). Raise a <code>GameError</code> to reject the route:</p>
+<pre><code class="language-ruby">def check_other(route)
+  return if route.stops.any? { |s| home_hex?(s.hex, route.train.owner) }
+  raise GameError, "#{route.train.owner.name} must include its home city on every route"
+end</code></pre>
+<h3 id="check_route_combinationroutes"><code>check_route_combination(routes)</code></h3>
+<p>Multi-route validation hook — receives the complete set of routes a corporation is running. Raise a <code>GameError</code> to reject the combination:</p>
+<pre><code class="language-ruby"># Two routes may not share the same city stop
+def check_route_combination(routes)
+  cities = routes.flat_map { |r| r.stops.select(&amp;:city?) }
+  raise GameError, 'Routes may not share a city' if cities.uniq.length &lt; cities.length
+end</code></pre>
+<hr>
+<h2 id="subsidies-and-halts">Subsidies and Halts</h2>
+<h3 id="subsidy_forroute-stops"><code>subsidy_for(route, stops)</code></h3>
+<p>Optional hook. Not defined in <code>Game::Base</code> — add it when your title has halts (unoccupied towns that pay a subsidy instead of normal revenue):</p>
+<pre><code class="language-ruby">def subsidy_for(route, stops)
+  route.halts.size * halt_subsidy
+end</code></pre>
+<h3 id="routes_subsidyroutes"><code>routes_subsidy(routes)</code></h3>
+<p>Sums subsidies across all routes (default: 0). Override only when subsidies interact across routes.</p>
+<hr>
+<h2 id="dividend-step">Dividend Step</h2>
+<p>After routes are run, <code>Step::Dividend</code> presents the payout choice.</p>
+<h3 id="dividend_types"><code>dividend_types</code></h3>
+<p>Override in a custom Step to change which options the player sees:</p>
+<pre><code class="language-ruby">DIVIDEND_TYPES = %i[payout withhold half].freeze
+
+def dividend_types
+  DIVIDEND_TYPES
+end</code></pre>
+<p>Each symbol must have a corresponding method that returns a hash describing the cash flow:</p>
+<pre><code class="language-ruby">def half(entity, revenue)
+  amt = (revenue / 2 / entity.total_shares).floor * entity.total_shares
+  { corporation: revenue - amt, per_share: amt / entity.total_shares }
+end</code></pre>
+<h3 id="share_price_changeentity-revenue"><code>share_price_change(entity, revenue)</code></h3>
+<p>Controls stock market movement after dividend. The <code>revenue</code> argument is <strong>the amount paid to shareholders</strong> (total revenue minus the corporation's retained portion), computed in <code>dividend_options</code> as <code>revenue - payout[:corporation]</code>. The result hash is merged into the payout hash and executed by the step's <code>change_share_price</code>.</p>
+<p>Default: RIGHT if payout &gt; 0, LEFT if withhold:</p>
+<pre><code class="language-ruby">def share_price_change(entity, revenue)
+  return { share_direction: :right, share_times: 1 } if revenue.positive?
+  { share_direction: :left, share_times: 1 }
+end</code></pre>
+<p>For games with a <strong>three-way threshold rule</strong> (RIGHT only when dividend ≥ share price, no movement in between, LEFT on withhold), override in <code>Step::Dividend</code>, not in <code>game.rb</code> — the game-level <code>change_share_price</code> is never called by the dividend path:</p>
+<pre><code class="language-ruby"># In G18OE::Step::Dividend (correct pattern, not yet implemented — BUG-013)
+def share_price_change(entity, revenue)
+  return {} if entity.type == :minor || entity.type == :regional
+  return { share_direction: :left, share_times: 1 } if revenue.zero?
+  return {} if revenue &lt; entity.share_price.price
+  { share_direction: :right, share_times: 1 }
+end</code></pre>
+<blockquote><p><strong>Warning:</strong> <code>game.rb#change_share_price</code> is a dead-end override for this purpose — it is never invoked by the dividend step. Place three-way logic in <code>Step::Dividend#share_price_change</code> only.</p></blockquote>
+<h3 id="auto-processing">Auto-processing</h3>
+<p>When a corporation type has no choice (e.g. minors always half-pay), suppress the UI entirely. See the <a href="round-step-system.html">Rounds &amp; Steps</a> page for the <code>actions</code> / <code>skip!</code> pattern.</p>
+<hr>
+<h2 id="operating-order">Operating Order</h2>
+<p><code>operating_order()</code> in <code>game.rb</code> controls which corporations act and in what sequence. The default:</p>
+<ol><li>Floated minors, by share price descending (then by formation order)</li><li>Floated majors, by share price descending (then by formation order)</li></ol>
+<p>Override when your title has a different rule:</p>
+<pre><code class="language-ruby"># Corporations with a destination token operate last
+def operating_order
+  without_dest, with_dest = super.partition { |c| !c.destination_ran? }
+  without_dest + with_dest
+end</code></pre>
+<p>Reference: <code>lib/engine/game/base.rb</code> — search for <code>def operating_order</code>.</p>
+<hr>
+<h2 id="national-revenue-virtual-tokens">National Revenue (virtual tokens)</h2>
+<p>Some titles give a national corporation virtual tokens in every city/town in its home zone, without placing physical tokens. The engine mechanism:</p>
+<pre><code class="language-ruby"># Create a national-aware graph — pass to Graph.new in game.rb
+Engine::Graph.new(self, home_as_token: true, no_blocking: true)</code></pre>
+<p><code>home_as_token: true</code> treats each home-zone hex as if the national has a token there. <code>no_blocking: true</code> means other corporations' tokens do not block the national's routing through those hexes.</p>
+<p>Revenue calculation must then:</p>
+<ol><li>Identify all <strong>linked</strong> cities/towns in the zone via graph connectivity → count at face value (D trains double)</li><li>Fill remaining train capacity with <strong>unlinked</strong> stops → £60/city or £10/town (no linkage required)</li></ol>
+<p>Prerequisites: <code>NATIONAL_REGION_HEXES</code> must enumerate exactly which hexes belong to each zone, and cities must have non-zero revenues set.</p>
+<p>Reference pattern: <code>lib/engine/game/g_1867/game.rb</code> — <code>national_revenue</code>.</p>
+<hr>
+<h2 id="common-revenue-patterns">Common Revenue Patterns</h2>
+<table><thead><tr><th>Pattern</th><th>Hook to override</th><th>Reference title</th></tr></thead><tbody><tr><td>Hex revenue bonus</td><td><code>revenue_for</code></td><td>18CO</td></tr><tr><td>East-west route bonus</td><td><code>routes_revenue</code></td><td>1830</td></tr><tr><td>Halt subsidy</td><td><code>subsidy_for</code></td><td>1860</td></tr><tr><td>Revenue multiplier for special train</td><td><code>revenue_for</code> + <code>extra_revenue</code></td><td>1817</td></tr><tr><td>Mandatory home-city route</td><td><code>check_other</code></td><td>18Chesapeake</td></tr><tr><td>No route overlap per segment</td><td><code>check_route_combination</code></td><td>base engine default</td></tr><tr><td>Half-pay dividend</td><td>custom Step::Dividend subclass</td><td>1822, 1867</td></tr><tr><td>Hold-price on withhold</td><td><code>share_price_change</code></td><td>many titles</td></tr></tbody></table>
+<hr>
+<h2 id="debugging-revenue">Debugging Revenue</h2>
+<p>Load a fixture in IRB and inspect routes:</p>
+<pre><code class="language-ruby">require_relative 'lib/engine'
+raw = JSON.parse(File.read('public/fixtures/1830/26855.json'))
+g = Engine::Game::G1830::Game.new(
+  raw['players'].map { |p| p['name'] },
+  id: raw['id'],
+  actions: raw['actions'].first(60)
+)
+
+# Inspect what routes are available for the current corporation
+corp = g.current_entity
+g.graph.reachable_hexes(corp).keys.map(&amp;:id)
+
+# Compute revenue for a hypothetical route
+train = corp.trains.first
+# routes are built by the UI; in IRB build one manually:
+# Engine::Route.new(g, g.phase, train, routes: [], hexes: [hex_a, hex_b], ...)</code></pre>
+<hr>
+<h2 id="whats-next">What's Next</h2>
+<ul><li>Writing a custom Step for dividend logic: <a href="round-step-system.html">Rounds & Steps</a></li><li>Ability types that interact with routes: <a href="abilities.html">Abilities</a></li><li>Testing revenue rules with fixtures: <a href="testing.html">Testing Your Game</a></li><li>Reference game for complex routing: <code>lib/engine/game/g_1817/game.rb</code></li></ul>
+<hr>
+<p><em>Version: 2026-05-08 — derived from <code>lib/engine/route.rb</code>, <code>lib/engine/graph.rb</code>, <code>lib/engine/step/route.rb</code>, <code>lib/engine/step/dividend.rb</code>, <code>lib/engine/game/base.rb</code>.</em></p>
+</article>
+</main>
+</div>
+<script src="search.js"></script>
+<script src="ui.js"></script>
+</body>
+</html>

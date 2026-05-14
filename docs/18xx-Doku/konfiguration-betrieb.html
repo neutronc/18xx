@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Configuration and Operations Reference — 18OE Dev Docs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Playfair+Display:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({ startOnLoad: true, theme: 'base', themeVariables: {
+  primaryColor: '#0d1f38', primaryTextColor: '#faf6ec',
+  primaryBorderColor: '#c9a843', lineColor: '#c9a843',
+  secondaryColor: '#1a3a6a', tertiaryColor: '#2a4a80',
+  actorBkg: '#0d1f38', actorTextColor: '#faf6ec',
+  actorBorder: '#c9a843', actorLineColor: '#c9a843',
+  activationBkgColor: '#2a4ab0', activationBorderColor: '#c9a843',
+  signalColor: '#c9a843', signalTextColor: '#2a1a0a',
+  labelBoxBkgColor: '#0d1f38', labelBoxBorderColor: '#c9a843', labelTextColor: '#faf6ec',
+  loopTextColor: '#2a1a0a',
+  edgeLabelBackground: '#f0ead8',
+  noteBkgColor: '#f0e8d4', noteTextColor: '#2a1a0a', noteBorderColor: '#c9a843',
+  titleColor: '#2a1a0a',
+  clusterBkg: '#1a3a6a', clusterBorder: '#c9a843', clusterTextColor: '#faf6ec',
+  fillType0: '#0d1f38', fillType1: '#1a3a6a', fillType2: '#2a4a80',
+  fillType3: '#1a3a6a', fillType4: '#0d1f38', fillType5: '#2a4a80',
+  fillType6: '#1a3a6a', fillType7: '#0d1f38'
+} });</script>
+</head>
+<body>
+<header id="site-header">
+  <a href="index.html">18OE</a> &mdash; Developer Documentation
+</header>
+<div id="layout">
+<nav id="sidebar" aria-label="Navigation">
+<input id="nav-search" type="search" placeholder="Search…" aria-label="Search documentation" autocomplete="off">
+<div id="search-results" style="display:none">
+<p id="search-no-results" style="display:none">No results found.</p>
+<ul id="search-results-list"></ul>
+</div>
+<div class="track"><h3>18OE Status</h3><ul>
+<li><a href="rules-summary.html">Game Rules Summary</a></li>
+<li><a href="18oe-map-status.html">Map Implementation Status</a></li>
+<li><a href="status.html">Implementation Tracker</a></li>
+<li><a href="rulebook-coverage.html">Rulebook Coverage</a></li>
+<li><a href="alpha-gaps.html">Open for Alpha</a></li>
+</ul></div>
+<div class="track"><h3>Getting Involved</h3><ul>
+<li><a href="first-contribution.html">Your First Contribution</a></li>
+</ul></div>
+<div class="track"><h3>Building a New Game</h3><ul>
+<li><a href="engine-concepts.html">Understanding the Engine</a></li>
+<li><a href="getting-started.html">Development Setup</a></li>
+<li><a href="game-implementation.html">Game Structure</a></li>
+<li><a href="map.html">Map Configuration</a></li>
+<li><a href="entities.html">Corporations & Companies</a></li>
+<li><a href="trains-phases.html">Trains, Phases & Market</a></li>
+<li><a href="round-step-system.html">Rounds & Steps</a></li>
+<li><a href="auction-round.html">Auction Round</a></li>
+<li><a href="revenue-routing.html">Revenue & Routing</a></li>
+<li><a href="abilities.html">Abilities</a></li>
+<li><a href="tiles.html">Tile Reference</a></li>
+<li><a href="common-patterns.html">Common Patterns</a></li>
+<li><a href="testing.html">Testing Your Game</a></li>
+<li><a href="title-checklist.html">Title Checklist</a></li>
+<li><a href="coding-guidelines.html">Coding Guidelines</a></li>
+</ul></div>
+<div class="track"><h3>Reference</h3><ul>
+<li><a href="game-engine.html">Game Engine Reference</a></li>
+<li><a href="adrs.html">Architecture Decision Records</a></li>
+</ul></div>
+<div class="track"><h3>Platform & Testing Setup</h3><ul>
+<li><a href="architecture.html">Architecture Overview</a></li>
+<li><a href="konfiguration-betrieb.html" aria-current="page"><strong>Configuration & Operations</strong></a></li>
+<li><a href="systemgrenzen.html">System Boundaries</a></li>
+</ul></div>
+<div class="track"><h3>Working with Claude</h3><ul>
+<li><a href="codevelop.html">Co-developing with Claude</a></li>
+</ul></div>
+</nav>
+<main>
+<article>
+<h1 id="configuration-and-operations-reference">Configuration and Operations Reference</h1>
+<h2 id="environment-variables">Environment Variables</h2>
+<table><thead><tr><th>Variable</th><th>Required</th><th>Default</th><th>Purpose</th></tr></thead><tbody><tr><td><code>RACK_ENV</code></td><td>Yes</td><td><code>development</code></td><td><code>production</code> enables New Relic, disables source maps, precompiles assets</td></tr><tr><td><code>DATABASE_URL</code></td><td>Yes</td><td>—</td><td>PostgreSQL connection string, e.g. <code>postgres://user:pass@db:5432/18xx</code></td></tr><tr><td><code>APP_DATABASE_URL</code></td><td>No</td><td>falls back to <code>DATABASE_URL</code></td><td>Alternative DB URL for the app (useful if queue uses a different connection)</td></tr><tr><td><code>NEW_RELIC_LICENSE_KEY</code></td><td>No</td><td>—</td><td>Enables New Relic APM in production</td></tr><tr><td><code>ELASTIC_KEY</code></td><td>No</td><td>—</td><td>Elasticsearch integration key</td></tr><tr><td><code>SLACK_WEBHOOK_URL</code></td><td>No</td><td>—</td><td>Slack webhook for deployment notifications</td></tr><tr><td><code>RUBYOPT</code></td><td>No</td><td>—</td><td>Set to <code>--yjit</code> in production to enable YJIT JIT compiler</td></tr><tr><td><code>PORT</code></td><td>No</td><td><code>9292</code></td><td>Port the Unicorn server binds to</td></tr><tr><td><code>OPAL_PREFORK_DISABLE</code></td><td>No</td><td>—</td><td>Set to <code>"true"</code> to skip Opal prefork initialisation in production</td></tr></tbody></table>
+<h2 id="docker-compose-profiles">Docker Compose Profiles</h2>
+<table><thead><tr><th>Profile</th><th>Command</th><th>Purpose</th></tr></thead><tbody><tr><td>Development</td><td><code>make</code></td><td>Runs <code>docker compose up</code> with <code>docker-compose.dev.yml</code> override; uses <code>rerun</code> for auto-restart</td></tr><tr><td>Development (rebuild)</td><td><code>make dev_up_b</code></td><td>Same as above but forces a container rebuild</td></tr><tr><td>Production</td><td><code>make prod_up</code></td><td>Uses <code>docker-compose.prod.yml</code>; Unicorn server, YJIT, asset precompilation</td></tr><tr><td>Production (rebuild)</td><td><code>make prod_up_b</code></td><td>Forces rebuild before starting</td></tr><tr><td>Production (deploy)</td><td><code>make prod_deploy</code></td><td>Pulls latest master, rebuilds, restarts</td></tr></tbody></table>
+<p><strong>Containers:</strong></p>
+<table><thead><tr><th>Name</th><th>Role</th><th>Exposed port</th></tr></thead><tbody><tr><td><code>rack</code></td><td>Roda web server (Unicorn)</td><td><code>9292</code></td></tr><tr><td><code>rack_backup</code></td><td>Hot standby (production only)</td><td>—</td></tr><tr><td><code>queue</code></td><td>Rufus-Scheduler background jobs</td><td>—</td></tr><tr><td><code>db</code></td><td>PostgreSQL</td><td><code>5433</code> (host)</td></tr><tr><td><code>redis</code></td><td>Redis</td><td><code>6380</code> (host)</td></tr><tr><td><code>nginx</code></td><td>Reverse proxy (production only)</td><td><code>80</code>, <code>443</code></td></tr></tbody></table>
+<h2 id="database">Database</h2>
+<p>The database schema is managed by Sequel migrations in <code>migrate/</code>. To run all pending migrations:</p>
+<pre><code class="language-bash">docker compose exec rack bundle exec rake migrate</code></pre>
+<p>Database data is mounted from <code>./db/data</code> on the host (UID 1000). To restore from backup:</p>
+<ol><li>Stop the stack.</li><li>Remove <code>db/data/</code>: <code>rm -rf db/data</code>.</li><li>Restart the stack (creates a fresh cluster).</li><li>Restore: <code>docker compose exec -T db pg_restore ...</code></li></ol>
+<h2 id="background-jobs-queuerb">Background Jobs (<code>queue.rb</code>)</h2>
+<p>The <code>queue</code> container runs <code>bundle exec ruby queue.rb</code>. It registers one cron job:</p>
+<p><strong>Daily at 09:00 UTC</strong> [<code>queue.rb:35</code>]:</p>
+<ol><li>Recalculates user statistics.</li><li>Archives games: finished games older than <strong>365 days</strong> and active games with no activity for <strong>90 days</strong>. Archival removes the action list; only metadata is retained [<code>queue.rb:38-48</code>].</li><li>Deletes unused pin bundles (retains the two newest) [<code>queue.rb:50-62</code>].</li><li>Destroys unlisted <code>new</code>-status games older than 180 days; listed <code>new</code> games older than 14 days.</li></ol>
+<p><strong>MessageBus subscribers</strong> in <code>queue.rb</code>:</p>
+<table><thead><tr><th>Channel</th><th>Trigger</th><th>Action</th></tr></thead><tbody><tr><td><code>/turn</code></td><td>After each accepted action</td><td>Sends email or webhook notification to active players</td></tr><tr><td><code>/test_notification</code></td><td>Manual test</td><td>Sends a test webhook to one user</td></tr><tr><td><code>/delete_user</code></td><td>Account deletion</td><td>Removes all games and the user record</td></tr></tbody></table>
+<h2 id="pinned-game-bundles">Pinned Game Bundles</h2>
+<p>Old JavaScript bundles are stored at <code>/18xx/public/pinned/&amp;lt;pin&amp;gt;.js.gz</code> (inside the container; mounted from <code>./public</code> on the host). The <code>queue.rb</code> cleanup job removes pin files that are no longer referenced by any active or finished game [<code>queue.rb:50-62</code>].</p>
+<h2 id="logging">Logging</h2>
+<p>All containers write to stdout with <code>max-size: 10m</code> (development) or <code>50m</code> (production) log rotation. Application logs use Ruby's <code>Logger</code> writing to <code>$stdout</code>. New Relic APM is active when <code>NEW_RELIC_LICENSE_KEY</code> is set and <code>RACK_ENV=production</code>.</p>
+<h2 id="whats-next">What's next</h2>
+<ul><li>Background job rationale: <a href="architecture.html">Architecture Overview</a></li><li>System boundaries and external dependencies: <a href="systemgrenzen.html">System Boundaries</a></li></ul>
+<hr>
+<p><em>Version: 2026-05-08 — derived from <code>queue.rb</code>, <code>docker-compose.yml</code>, <code>docker-compose.prod.yml</code>, <code>Makefile</code>, <code>db.rb</code>, <code>DEVELOPMENT.md</code>.</em></p>
+</article>
+</main>
+</div>
+<script src="search.js"></script>
+<script src="ui.js"></script>
+</body>
+</html>

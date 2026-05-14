@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Corporations & Companies — 18OE Dev Docs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Playfair+Display:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({ startOnLoad: true, theme: 'base', themeVariables: {
+  primaryColor: '#0d1f38', primaryTextColor: '#faf6ec',
+  primaryBorderColor: '#c9a843', lineColor: '#c9a843',
+  secondaryColor: '#1a3a6a', tertiaryColor: '#2a4a80',
+  actorBkg: '#0d1f38', actorTextColor: '#faf6ec',
+  actorBorder: '#c9a843', actorLineColor: '#c9a843',
+  activationBkgColor: '#2a4ab0', activationBorderColor: '#c9a843',
+  signalColor: '#c9a843', signalTextColor: '#2a1a0a',
+  labelBoxBkgColor: '#0d1f38', labelBoxBorderColor: '#c9a843', labelTextColor: '#faf6ec',
+  loopTextColor: '#2a1a0a',
+  edgeLabelBackground: '#f0ead8',
+  noteBkgColor: '#f0e8d4', noteTextColor: '#2a1a0a', noteBorderColor: '#c9a843',
+  titleColor: '#2a1a0a',
+  clusterBkg: '#1a3a6a', clusterBorder: '#c9a843', clusterTextColor: '#faf6ec',
+  fillType0: '#0d1f38', fillType1: '#1a3a6a', fillType2: '#2a4a80',
+  fillType3: '#1a3a6a', fillType4: '#0d1f38', fillType5: '#2a4a80',
+  fillType6: '#1a3a6a', fillType7: '#0d1f38'
+} });</script>
+</head>
+<body>
+<header id="site-header">
+  <a href="index.html">18OE</a> &mdash; Developer Documentation
+</header>
+<div id="layout">
+<nav id="sidebar" aria-label="Navigation">
+<input id="nav-search" type="search" placeholder="Search…" aria-label="Search documentation" autocomplete="off">
+<div id="search-results" style="display:none">
+<p id="search-no-results" style="display:none">No results found.</p>
+<ul id="search-results-list"></ul>
+</div>
+<div class="track"><h3>18OE Status</h3><ul>
+<li><a href="rules-summary.html">Game Rules Summary</a></li>
+<li><a href="18oe-map-status.html">Map Implementation Status</a></li>
+<li><a href="status.html">Implementation Tracker</a></li>
+<li><a href="rulebook-coverage.html">Rulebook Coverage</a></li>
+<li><a href="alpha-gaps.html">Open for Alpha</a></li>
+</ul></div>
+<div class="track"><h3>Getting Involved</h3><ul>
+<li><a href="first-contribution.html">Your First Contribution</a></li>
+</ul></div>
+<div class="track"><h3>Building a New Game</h3><ul>
+<li><a href="engine-concepts.html">Understanding the Engine</a></li>
+<li><a href="getting-started.html">Development Setup</a></li>
+<li><a href="game-implementation.html">Game Structure</a></li>
+<li><a href="map.html">Map Configuration</a></li>
+<li><a href="entities.html" aria-current="page"><strong>Corporations & Companies</strong></a></li>
+<li><a href="trains-phases.html">Trains, Phases & Market</a></li>
+<li><a href="round-step-system.html">Rounds & Steps</a></li>
+<li><a href="auction-round.html">Auction Round</a></li>
+<li><a href="revenue-routing.html">Revenue & Routing</a></li>
+<li><a href="abilities.html">Abilities</a></li>
+<li><a href="tiles.html">Tile Reference</a></li>
+<li><a href="common-patterns.html">Common Patterns</a></li>
+<li><a href="testing.html">Testing Your Game</a></li>
+<li><a href="title-checklist.html">Title Checklist</a></li>
+<li><a href="coding-guidelines.html">Coding Guidelines</a></li>
+</ul></div>
+<div class="track"><h3>Reference</h3><ul>
+<li><a href="game-engine.html">Game Engine Reference</a></li>
+<li><a href="adrs.html">Architecture Decision Records</a></li>
+</ul></div>
+<div class="track"><h3>Platform & Testing Setup</h3><ul>
+<li><a href="architecture.html">Architecture Overview</a></li>
+<li><a href="konfiguration-betrieb.html">Configuration & Operations</a></li>
+<li><a href="systemgrenzen.html">System Boundaries</a></li>
+</ul></div>
+<div class="track"><h3>Working with Claude</h3><ul>
+<li><a href="codevelop.html">Co-developing with Claude</a></li>
+</ul></div>
+</nav>
+<main>
+<article>
+<h1 id="corporations--companies">Corporations & Companies</h1>
+<p>This page documents the fields for <code>CORPORATIONS</code> and <code>COMPANIES</code> — the two entity arrays that define who plays, who invests, and what special abilities are in the game. Both are defined in <code>entities.rb</code> and included into the main <code>Game</code> class.</p>
+<p>For trains, phases, and market configuration see <a href="trains-phases.html">Trains, Phases &amp; Market</a>.</p>
+<hr>
+<h2 id="corporations">CORPORATIONS</h2>
+<p><code>CORPORATIONS</code> is an array of hashes, one per major corporation. Each hash is read by <code>Engine::Game::Base</code> during initialisation to construct <code>Engine::Corporation</code> objects [<code>lib/engine/corporation.rb:1</code>].</p>
+<h3 id="required-fields">Required fields</h3>
+<table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>sym</code></td><td>String</td><td>Short identifier shown on share certificates (e.g. <code>'PRR'</code>)</td></tr><tr><td><code>name</code></td><td>String</td><td>Full display name</td></tr><tr><td><code>logo</code></td><td>String</td><td>Path under <code>public/logos/</code> without the <code>.svg</code> extension (e.g. <code>'1830/PRR'</code>)</td></tr><tr><td><code>tokens</code></td><td>Array\<Integer\></td><td>Token cost at each city; first element is always <code>0</code> (home token is free)</td></tr><tr><td><code>coordinates</code></td><td>String</td><td>Hex coordinate for the home token (e.g. <code>'H12'</code>)</td></tr><tr><td><code>color</code></td><td>String</td><td>CSS colour string for the corporation card</td></tr></tbody></table>
+<h3 id="common-optional-fields">Common optional fields</h3>
+<table><thead><tr><th>Field</th><th>Type</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>float_percent</code></td><td>Integer</td><td><code>60</code></td><td>Percentage of shares sold before the corporation floats and receives treasury cash</td></tr><tr><td><code>max_ownership_percent</code></td><td>Integer</td><td><code>60</code></td><td>Maximum percentage of shares a single player may hold</td></tr><tr><td><code>type</code></td><td>Symbol</td><td><code>:major</code></td><td>Corporation type; affects which Steps are available and how revenue is split</td></tr><tr><td><code>simple_logo</code></td><td>String</td><td>—</td><td>Simplified logo path for small icon views</td></tr><tr><td><code>shares</code></td><td>Array\<Integer\></td><td>default IPO spread</td><td>Custom share distribution percentages</td></tr><tr><td><code>always_market_price</code></td><td>Boolean</td><td><code>false</code></td><td>If <code>true</code>, all purchases use market price rather than IPO price</td></tr><tr><td><code>capitalization</code></td><td>Symbol</td><td><code>CAPITALIZATION</code> constant</td><td>Per-corporation override for <code>:full</code> or <code>:incremental</code> capitalisation</td></tr><tr><td><code>president_percent</code></td><td>Integer</td><td><code>20</code></td><td>Size of the president's certificate</td></tr><tr><td><code>par_via_exchange</code></td><td>Boolean</td><td><code>false</code></td><td>Corporation is pared by exchanging a private company</td></tr><tr><td><code>reservation_color</code></td><td>String</td><td>—</td><td>Hex colour used for the IPO reservation</td></tr><tr><td><code>city</code></td><td>Integer</td><td>—</td><td>Which city slot on the home hex receives the home token (for multi-city hexes)</td></tr><tr><td><code>second_city</code></td><td>String</td><td>—</td><td>Second token coordinate for corporations that start with two tokens</td></tr><tr><td><code>abilities</code></td><td>Array</td><td><code>[]</code></td><td>Corporation-level abilities (same structure as company abilities)</td></tr></tbody></table>
+<h3 id="where-to-look-for-more-options">Where to look for more options</h3>
+<p>Many titles add custom corporation types or fields. Before adding new fields, check:</p>
+<ul><li><code>lib/engine/corporation.rb</code> — full list of attributes read from the hash</li><li><code>lib/engine/game/g_1830/entities.rb</code> — canonical 1830 example</li><li><code>lib/engine/game/g_1867/entities.rb</code> — title with both minors and majors</li></ul>
+<h3 id="example">Example</h3>
+<pre><code class="language-ruby">CORPORATIONS = [
+  {
+    float_percent: 60,
+    sym:          'PRR',
+    name:         'Pennsylvania Railroad',
+    logo:         '1830/PRR',
+    simple_logo:  '1830/PRR.alt',
+    tokens:       [0, 40, 100, 100],
+    coordinates:  'H12',
+    color:        '#32763f',
+  },
+].freeze</code></pre>
+<hr>
+<h2 id="companies">COMPANIES</h2>
+<p><code>COMPANIES</code> is an array of hashes defining private companies (privates). Each hash becomes an <code>Engine::Company</code> object [<code>lib/engine/company.rb:1</code>]. Privates are auctioned or distributed at the start of the game.</p>
+<h3 id="required-fields">Required fields</h3>
+<table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>name</code></td><td>String</td><td>Full display name</td></tr><tr><td><code>sym</code></td><td>String</td><td>Short identifier (e.g. <code>'CS'</code>)</td></tr><tr><td><code>value</code></td><td>Integer</td><td>Face value / purchase price</td></tr><tr><td><code>revenue</code></td><td>Integer</td><td>Income collected each OR while player-owned</td></tr></tbody></table>
+<h3 id="common-optional-fields">Common optional fields</h3>
+<table><thead><tr><th>Field</th><th>Type</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>desc</code></td><td>String</td><td><code>''</code></td><td>Text description shown in the UI</td></tr><tr><td><code>abilities</code></td><td>Array</td><td><code>[]</code></td><td>Special abilities granted to the owner</td></tr><tr><td><code>color</code></td><td>String</td><td><code>nil</code></td><td>Card background colour (nil uses the default yellow)</td></tr><tr><td><code>min_price</code></td><td>Integer</td><td><code>value / 2</code> rounded up</td><td>Minimum resale price to another player</td></tr><tr><td><code>max_price</code></td><td>Integer</td><td><code>value * 2</code></td><td>Maximum resale price</td></tr><tr><td><code>type</code></td><td>Symbol</td><td>—</td><td>Company type (used by some custom Steps to filter)</td></tr><tr><td><code>treasury</code></td><td>Integer</td><td><code>value</code></td><td>Starting cash inside the company (rare)</td></tr><tr><td><code>discount</code></td><td>Integer</td><td><code>0</code></td><td>Reduces the minimum auction bid</td></tr></tbody></table>
+<h3 id="abilities">Abilities</h3>
+<p>Each ability is a hash with at least a <code>type:</code> key. Common types:</p>
+<table><thead><tr><th>Type</th><th>Key fields</th><th>Effect</th></tr></thead><tbody><tr><td><code>blocks_hexes</code></td><td><code>owner_type:</code>, <code>hexes:</code></td><td>Prevents corporations from placing tokens on listed hexes while condition holds</td></tr><tr><td><code>tile_lay</code></td><td><code>owner_type:</code>, <code>hexes:</code>, <code>tiles:</code>, <code>when:</code>, <code>count:</code></td><td>Grants a free or discounted tile lay on specified hexes</td></tr><tr><td><code>teleport</code></td><td><code>owner_type:</code>, <code>tiles:</code>, <code>hexes:</code></td><td>Allows token placement without connectivity</td></tr><tr><td><code>exchange</code></td><td><code>corporation:</code>, <code>owner_type:</code>, <code>when:</code>, <code>from:</code></td><td>Allows exchange for a share of the named corporation</td></tr><tr><td><code>shares</code></td><td><code>shares:</code></td><td>Purchaser automatically receives specified shares</td></tr><tr><td><code>no_buy</code></td><td>—</td><td>Company cannot be sold to corporations</td></tr><tr><td><code>close</code></td><td><code>when:</code>, <code>corporation:</code></td><td>Closes the company when the condition is met</td></tr><tr><td><code>revenue_change</code></td><td><code>revenue:</code>, <code>when:</code></td><td>Changes revenue at a phase trigger</td></tr></tbody></table>
+<p>For the full ability vocabulary see <a href="abilities.html">Ability Types</a>.</p>
+<h3 id="example">Example</h3>
+<pre><code class="language-ruby">COMPANIES = [
+  {
+    name:    'Champlain &amp; St.Lawrence',
+    sym:     'CS',
+    value:   40,
+    revenue: 10,
+    desc:    'The owning corporation may lay a free tile on B20.',
+    abilities: [
+      { type: 'blocks_hexes', owner_type: 'player', hexes: ['B20'] },
+      {
+        type: 'tile_lay',
+        owner_type: 'corporation',
+        hexes: ['B20'],
+        tiles: %w[3 4 58],
+        when: 'owning_corp_or_turn',
+        count: 1,
+      },
+    ],
+    color: nil,
+  },
+].freeze</code></pre>
+<hr>
+<h2 id="whats-next">What's Next</h2>
+<ul><li>Train, phase, and market configuration: <a href="trains-phases.html">Trains, Phases & Market</a></li><li>Map and hex layout: <a href="map.html">Map Configuration</a></li><li>Complete ability type reference: <a href="abilities.html">Ability Types</a></li><li>Step-by-step implementation guide: <a href="game-implementation.html">Game Structure</a></li></ul>
+<hr>
+<p><em>Version: 2026-05-08 — derived from <code>lib/engine/corporation.rb</code>, <code>lib/engine/company.rb</code>, <code>lib/engine/game/g_1830/entities.rb</code>.</em></p>
+</article>
+</main>
+</div>
+<script src="search.js"></script>
+<script src="ui.js"></script>
+</body>
+</html>

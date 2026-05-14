@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Development Setup — 18OE Dev Docs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Playfair+Display:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({ startOnLoad: true, theme: 'base', themeVariables: {
+  primaryColor: '#0d1f38', primaryTextColor: '#faf6ec',
+  primaryBorderColor: '#c9a843', lineColor: '#c9a843',
+  secondaryColor: '#1a3a6a', tertiaryColor: '#2a4a80',
+  actorBkg: '#0d1f38', actorTextColor: '#faf6ec',
+  actorBorder: '#c9a843', actorLineColor: '#c9a843',
+  activationBkgColor: '#2a4ab0', activationBorderColor: '#c9a843',
+  signalColor: '#c9a843', signalTextColor: '#2a1a0a',
+  labelBoxBkgColor: '#0d1f38', labelBoxBorderColor: '#c9a843', labelTextColor: '#faf6ec',
+  loopTextColor: '#2a1a0a',
+  edgeLabelBackground: '#f0ead8',
+  noteBkgColor: '#f0e8d4', noteTextColor: '#2a1a0a', noteBorderColor: '#c9a843',
+  titleColor: '#2a1a0a',
+  clusterBkg: '#1a3a6a', clusterBorder: '#c9a843', clusterTextColor: '#faf6ec',
+  fillType0: '#0d1f38', fillType1: '#1a3a6a', fillType2: '#2a4a80',
+  fillType3: '#1a3a6a', fillType4: '#0d1f38', fillType5: '#2a4a80',
+  fillType6: '#1a3a6a', fillType7: '#0d1f38'
+} });</script>
+</head>
+<body>
+<header id="site-header">
+  <a href="index.html">18OE</a> &mdash; Developer Documentation
+</header>
+<div id="layout">
+<nav id="sidebar" aria-label="Navigation">
+<input id="nav-search" type="search" placeholder="Search…" aria-label="Search documentation" autocomplete="off">
+<div id="search-results" style="display:none">
+<p id="search-no-results" style="display:none">No results found.</p>
+<ul id="search-results-list"></ul>
+</div>
+<div class="track"><h3>18OE Status</h3><ul>
+<li><a href="rules-summary.html">Game Rules Summary</a></li>
+<li><a href="18oe-map-status.html">Map Implementation Status</a></li>
+<li><a href="status.html">Implementation Tracker</a></li>
+<li><a href="rulebook-coverage.html">Rulebook Coverage</a></li>
+<li><a href="alpha-gaps.html">Open for Alpha</a></li>
+</ul></div>
+<div class="track"><h3>Getting Involved</h3><ul>
+<li><a href="first-contribution.html">Your First Contribution</a></li>
+</ul></div>
+<div class="track"><h3>Building a New Game</h3><ul>
+<li><a href="engine-concepts.html">Understanding the Engine</a></li>
+<li><a href="getting-started.html" aria-current="page"><strong>Development Setup</strong></a></li>
+<li><a href="game-implementation.html">Game Structure</a></li>
+<li><a href="map.html">Map Configuration</a></li>
+<li><a href="entities.html">Corporations & Companies</a></li>
+<li><a href="trains-phases.html">Trains, Phases & Market</a></li>
+<li><a href="round-step-system.html">Rounds & Steps</a></li>
+<li><a href="auction-round.html">Auction Round</a></li>
+<li><a href="revenue-routing.html">Revenue & Routing</a></li>
+<li><a href="abilities.html">Abilities</a></li>
+<li><a href="tiles.html">Tile Reference</a></li>
+<li><a href="common-patterns.html">Common Patterns</a></li>
+<li><a href="testing.html">Testing Your Game</a></li>
+<li><a href="title-checklist.html">Title Checklist</a></li>
+<li><a href="coding-guidelines.html">Coding Guidelines</a></li>
+</ul></div>
+<div class="track"><h3>Reference</h3><ul>
+<li><a href="game-engine.html">Game Engine Reference</a></li>
+<li><a href="adrs.html">Architecture Decision Records</a></li>
+</ul></div>
+<div class="track"><h3>Platform & Testing Setup</h3><ul>
+<li><a href="architecture.html">Architecture Overview</a></li>
+<li><a href="konfiguration-betrieb.html">Configuration & Operations</a></li>
+<li><a href="systemgrenzen.html">System Boundaries</a></li>
+</ul></div>
+<div class="track"><h3>Working with Claude</h3><ul>
+<li><a href="codevelop.html">Co-developing with Claude</a></li>
+</ul></div>
+</nav>
+<main>
+<article>
+<h1 id="development-setup">Development Setup</h1>
+<p>Get Docker running, create a stub title, and confirm it loads — in about 15 minutes.</p>
+<p>You need Docker, Docker Compose, and Make. No local Ruby or Node installation is required.</p>
+<hr>
+<h2 id="vs-code-in-wsl">VS Code in WSL</h2>
+<p>The recommended development environment for Windows users is <strong>VS Code + WSL2 + Docker Desktop</strong>. All development happens inside WSL — the Linux filesystem, terminal, and Docker daemon — and VS Code on Windows connects to it transparently via the Remote-WSL extension.</p>
+<h3 id="why-this-stack">Why this stack</h3>
+<table><thead><tr><th>Component</th><th>Role</th></tr></thead><tbody><tr><td>WSL2</td><td>Full Linux environment inside Windows — no dual-boot, native I/O speed</td></tr><tr><td>Docker Desktop (WSL2 backend)</td><td>Runs the app containers; bind-mounts stay on the Linux filesystem</td></tr><tr><td>VS Code Remote-WSL</td><td>Editor, terminal, and file system all in the same Linux context — no path translation</td></tr></tbody></table>
+<blockquote><p><strong>Do not clone inside <code>/mnt/c/</code></strong> (the Windows C: drive). Docker bind-mounts from the Windows filesystem are slow. Clone under <code>~/</code> in WSL for full Linux I/O speed.</p></blockquote>
+<h3 id="one-time-setup">One-time setup</h3>
+<p><strong>1 — Install WSL2</strong> (PowerShell as administrator):</p>
+<pre><code class="language-powershell">wsl --install
+# Reboot when prompted. Ubuntu 22.04 is installed by default.</code></pre>
+<p><strong>2 — Install Docker Desktop</strong> — download from <a href="https://www.docker.com/products/docker-desktop/">docker.com</a>. During install, enable <em>Use the WSL 2 based engine</em>. After install:</p>
+<ul><li>Docker Desktop → Settings → General → ✓ Use the WSL 2 based engine</li><li>Docker Desktop → Settings → Resources → WSL Integration → enable your distro</li></ul>
+<p><strong>3 — Install VS Code</strong> and the <strong>Remote - WSL</strong> extension (extension ID: <code>ms-vscode-remote.remote-wsl</code>).</p>
+<p><strong>4 — Open a WSL terminal</strong> (search "Ubuntu" in the Start menu, or <code>wsl</code> in PowerShell) and clone the engine:</p>
+<pre><code class="language-bash">mkdir -p ~/18xx
+git clone https://github.com/tobymao/18xx.git ~/18xx/18xx</code></pre>
+<p><strong>5 — Open VS Code from WSL:</strong></p>
+<pre><code class="language-bash">cd ~/18xx/18xx
+code .</code></pre>
+<p>VS Code opens on Windows but connects to the WSL filesystem. The integrated terminal runs bash inside WSL. All git, Docker, and Ruby commands work natively from that terminal — no switching between environments.</p>
+<h3 id="verify-docker-works-from-wsl">Verify Docker works from WSL</h3>
+<pre><code class="language-bash">cd ~/18xx/18xx
+docker compose up
+# → rack container starts; open http://localhost:9292</code></pre>
+<p>If <code>docker</code> is not found, check that Docker Desktop is running and the WSL Integration is enabled for your distro.</p>
+<hr>
+<h2 id="before-you-begin--designerpublisher-approval">Before You Begin — Designer/Publisher Approval</h2>
+<p><strong>Implementing a game on this platform requires permission from the game's designer or publisher.</strong></p>
+<p>Do not open a pull request for a new title without confirmation that the rights holder has approved it. Check the <a href="https://github.com/tobymao/18xx/blob/master/GAMES.html">18xx.games supported titles list</a> to see if approval is already on record.</p>
+<p>For questions about approval status, contact the community on Slack: <strong>#18xxgamesdev</strong></p>
+<hr>
+<h2 id="1-clone-and-start">1. Clone and Start</h2>
+<pre><code class="language-bash">git clone https://github.com/tobymao/18xx.git
+cd 18xx
+make</code></pre>
+<p><code>make</code> runs <code>docker compose up</code> with <code>docker-compose.dev.yml</code> as override. Four containers start:</p>
+<table><thead><tr><th>Container</th><th>Role</th></tr></thead><tbody><tr><td><code>rack</code></td><td>Roda web server — <code>http://localhost:9292</code></td></tr><tr><td><code>queue</code></td><td>Rufus-Scheduler background jobs</td></tr><tr><td><code>db</code></td><td>PostgreSQL on host port 5433</td></tr><tr><td><code>redis</code></td><td>Redis on host port 6380</td></tr></tbody></table>
+<p>First build takes a few minutes. Open <code>http://localhost:9292</code> when the rack container logs <code>Listening on…</code>.</p>
+<p><strong>Apple Silicon:</strong> set <code>DEV_DOCKERFILE=Dockerfile.amd64</code> before every <code>make</code> or <code>docker compose</code> command, or persist it with <a href="https://direnv.net/">direnv</a>.</p>
+<hr>
+<h2 id="2-create-a-developer-account">2. Create a Developer Account</h2>
+<p>Go to <code>http://localhost:9292/signup</code> and register. No confirmation email is sent — the local instance has no mail delivery.</p>
+<hr>
+<h2 id="3-create-your-title-stub">3. Create Your Title Stub</h2>
+<p>Create the four required files. Replace <code>g_8888</code> and <code>G8888</code> with your title throughout.</p>
+<pre><code class="language-bash">mkdir -p lib/engine/game/g_8888/step lib/engine/game/g_8888/round</code></pre>
+<p><strong><code>lib/engine/game/g_8888/meta.rb</code></strong></p>
+<pre><code class="language-ruby"># frozen_string_literal: true
+
+require_relative '../meta'
+
+module Engine
+  module Game
+    module G8888
+      module Meta
+        include Game::Meta
+
+        DEV_STAGE = :prealpha
+
+        GAME_SUBTITLE  = 'My New Title'
+        GAME_DESIGNER  = 'Your Name'
+        GAME_LOCATION  = 'Somewhere'
+        GAME_PUBLISHER = :self_published
+        GAME_RULES_URL = 'https://example.com/rules'
+
+        PLAYER_RANGE = [3, 5].freeze
+      end
+    end
+  end
+end</code></pre>
+<p><strong><code>lib/engine/game/g_8888/entities.rb</code></strong> — start with 1830's corporations and trim later:</p>
+<pre><code class="language-ruby"># frozen_string_literal: true
+
+module Engine
+  module Game
+    module G8888
+      module Entities
+        COMPANIES = [].freeze
+
+        CORPORATIONS = [
+          {
+            sym: 'A', name: 'A Railroad', logo: '1830/PRR',
+            tokens: [0, 40], coordinates: 'D4', color: '#0000cc',
+          },
+          {
+            sym: 'B', name: 'B Railroad', logo: '1830/NYC',
+            tokens: [0, 40], coordinates: 'B4', color: '#333333',
+          },
+        ].freeze
+      end
+    end
+  end
+end</code></pre>
+<p><strong><code>lib/engine/game/g_8888/map.rb</code></strong></p>
+<pre><code class="language-ruby"># frozen_string_literal: true
+
+module Engine
+  module Game
+    module G8888
+      module Map
+        TILES = { '7' =&gt; 4, '8' =&gt; 8, '9' =&gt; 7, '57' =&gt; 4 }.freeze
+
+        LOCATION_NAMES = { 'D4' =&gt; 'Alpha', 'B4' =&gt; 'Beta' }.freeze
+
+        HEXES = {
+          white: {
+            %w[C3 D2 E3] =&gt; '',
+            ['D4']       =&gt; 'city=revenue:0',
+            ['B4']       =&gt; 'city=revenue:0',
+          },
+        }.freeze
+
+        LAYOUT = :pointy
+      end
+    end
+  end
+end</code></pre>
+<p><strong><code>lib/engine/game/g_8888/game.rb</code></strong></p>
+<pre><code class="language-ruby"># frozen_string_literal: true
+
+require_relative 'entities'
+require_relative 'map'
+require_relative 'meta'
+require_relative '../base'
+
+module Engine
+  module Game
+    module G8888
+      class Game &lt; Game::Base
+        include_meta(G8888::Meta)
+        include Entities
+        include Map
+
+        CURRENCY_FORMAT_STR = '$%s'
+        BANK_CASH    = 6_000
+        CERT_LIMIT   = { 3 =&gt; 16, 4 =&gt; 12 }.freeze
+        STARTING_CASH = { 3 =&gt; 400, 4 =&gt; 300 }.freeze
+        CAPITALIZATION   = :full
+        MUST_SELL_IN_BLOCKS = false
+
+        MARKET = [
+          %w[60y 67 71 76 82 90 100p 112 126],
+          %w[53y 60y 66 70 76 82  90p 100 112],
+          %w[46y 55y 60y 65 70 76  82p  90 100],
+        ].freeze
+
+        PHASES = [
+          { name: '2', train_limit: 4, tiles: [:yellow],           operating_rounds: 1 },
+          { name: '3', on: '3', train_limit: 4, tiles: %i[yellow green], operating_rounds: 2 },
+        ].freeze
+
+        TRAINS = [
+          { name: '2', distance: 2, price: 80, rusts_on: '4', num: 6 },
+          { name: '3', distance: 3, price: 180, num: 5 },
+        ].freeze
+      end
+    end
+  end
+end</code></pre>
+<hr>
+<h2 id="4-verify-the-title-loads">4. Verify the Title Loads</h2>
+<pre><code class="language-bash">docker compose exec rack irb</code></pre>
+<pre><code class="language-ruby">require_relative 'lib/engine'
+g = Engine::Game::G8888::Game.new(%w[Alice Bob Charlie])
+g.current_round.class   # =&gt; Engine::Round::Auction or Engine::Round::Stock</code></pre>
+<p>If you get a <code>NameError</code> or <code>LoadError</code>, check:</p>
+<ul><li>Module name in <code>game.rb</code> matches <code>Engine::Game::G8888</code> exactly</li><li><code>meta.rb</code> has a <code>module Meta</code> (not <code>class Meta</code>) with <code>include Game::Meta</code></li><li>All four files are saved and the container has picked up the changes (check <code>docker compose logs rack -f</code>)</li></ul>
+<p>Navigate to <code>http://localhost:9292/</code> → New Game → select "8888". If the title does not appear, restart the rack container: <code>docker compose restart rack</code>.</p>
+<hr>
+<h2 id="5-inspect-your-tiles-and-map">5. Inspect Your Tiles and Map</h2>
+<table><thead><tr><th>URL</th><th>What it shows</th></tr></thead><tbody><tr><td><code>http://localhost:9292/tiles/8888/all</code></td><td>Every tile defined for your title</td></tr><tr><td><code>http://localhost:9292/map/8888</code></td><td>Your full hex map</td></tr><tr><td><code>http://localhost:9292/tiles/57</code></td><td>Standard tile 57 for reference</td></tr></tbody></table>
+<p>Optional URL params: <code>r=&amp;lt;rotation&amp;gt;</code> (integer or <code>all</code>), <code>n=&amp;lt;location_name&amp;gt;</code>, <code>grid</code> (show triangular grid overlay).</p>
+<hr>
+<h2 id="6-run-the-test-suite">6. Run the Test Suite</h2>
+<pre><code class="language-bash"># Your title only (fast)
+docker compose exec rack bundle exec rspec spec/lib/engine/game/fixtures_spec.rb -e "8888"
+
+# Full suite in parallel (before submitting a PR)
+docker compose exec rack bundle exec parallel_rspec spec/</code></pre>
+<p>There are no fixtures yet for a new title, so the first command just confirms there are no syntax errors. Add a fixture as soon as you have a complete game — see <a href="testing.html">Testing Your Game</a>.</p>
+<hr>
+<h2 id="7-code--reload-cycle">7. Code → Reload Cycle</h2>
+<ul><li>Edit any file under <code>lib/</code>, <code>models/</code>, or <code>routes/</code></li><li>The <code>rack</code> container auto-restarts via <code>rerun</code> within a few seconds</li><li>Refresh the browser — no manual restart needed</li><li>IRB sessions do <strong>not</strong> auto-reload; <code>exit</code> and reopen to pick up changes</li></ul>
+<hr>
+<h2 id="day-to-day-commands">Day-to-Day Commands</h2>
+<h3 id="lint">Lint</h3>
+<pre><code class="language-bash">docker compose exec rack bundle exec rubocop lib/engine/game/g_18_oe/</code></pre>
+<p>130-character line limit · no <code>puts</code>/<code>p</code> in committed code.</p>
+<h3 id="irb-logic-testing">IRB (logic testing)</h3>
+<pre><code class="language-bash">docker compose exec rack irb -r ./lib/engine</code></pre>
+<h3 id="smoke-spec-recommended-not-yet-committed">Smoke spec (recommended, not yet committed)</h3>
+<pre><code class="language-ruby"># spec/games/g_18_oe/smoke_spec.rb
+require 'spec_helper'
+require 'engine/game/g_18_oe/game'
+
+describe Engine::Game::G18OE do
+  it 'initialises a 4-player game without errors' do
+    expect { described_class.new(%w[A B C D]) }.not_to raise_error
+  end
+end</code></pre>
+<pre><code class="language-bash">docker compose exec rack bundle exec rspec spec/games/g_18_oe/smoke_spec.rb</code></pre>
+<h3 id="pre-commit-hook-install-once-after-smoke-spec-is-committed">Pre-commit hook (install once, after smoke spec is committed)</h3>
+<pre><code class="language-bash">cat &gt; ~/18xx/18xx/.git/hooks/pre-commit &lt;&lt;'SH'
+#!/usr/bin/env bash
+set -euo pipefail
+bundle exec rspec spec/games/g_18_oe/smoke_spec.rb
+bundle exec rubocop lib/engine/game/g_18_oe/
+SH
+chmod +x ~/18xx/18xx/.git/hooks/pre-commit</code></pre>
+<h3 id="quick-file-lookups">Quick file lookups</h3>
+<pre><code class="language-bash"># All 18OE Ruby files
+ls ~/18xx/18xx/lib/engine/game/g_18_oe/{,step/,round/}
+
+# Rules text
+less ~/18xx/18xx/rules/18OE_Rulebook_v_1.0.txt
+less ~/18xx/18xx/rules/18OE_Playbook_v_1.0.txt</code></pre>
+<hr>
+<h2 id="whats-next">What's Next</h2>
+<p>Continue the tutorial in order:</p>
+<ol><li><a href="game-implementation.html">Game Structure</a> — all four files in detail with full examples</li><li><a href="map.html">Map Configuration</a> — hex grid, terrain costs, location names</li><li><a href="entities.html">Corporations & Companies</a> — full CORPORATIONS/COMPANIES field reference</li><li><a href="trains-phases.html">Trains, Phases & Market</a> — economic arc configuration</li><li><a href="testing.html">Testing Your Game</a> — fixtures, parallel_rspec, IRB debugging</li></ol>
+<hr>
+<p><em>Version: 2026-05-08 — derived from <code>DEVELOPMENT.md</code>, <code>Makefile</code>, <code>docker-compose.yml</code>, <code>scripts/import_game.rb</code>.</em></p>
+</article>
+</main>
+</div>
+<script src="search.js"></script>
+<script src="ui.js"></script>
+</body>
+</html>

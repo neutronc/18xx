@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Implementing a New Game Title — 18OE Dev Docs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Playfair+Display:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({ startOnLoad: true, theme: 'base', themeVariables: {
+  primaryColor: '#0d1f38', primaryTextColor: '#faf6ec',
+  primaryBorderColor: '#c9a843', lineColor: '#c9a843',
+  secondaryColor: '#1a3a6a', tertiaryColor: '#2a4a80',
+  actorBkg: '#0d1f38', actorTextColor: '#faf6ec',
+  actorBorder: '#c9a843', actorLineColor: '#c9a843',
+  activationBkgColor: '#2a4ab0', activationBorderColor: '#c9a843',
+  signalColor: '#c9a843', signalTextColor: '#2a1a0a',
+  labelBoxBkgColor: '#0d1f38', labelBoxBorderColor: '#c9a843', labelTextColor: '#faf6ec',
+  loopTextColor: '#2a1a0a',
+  edgeLabelBackground: '#f0ead8',
+  noteBkgColor: '#f0e8d4', noteTextColor: '#2a1a0a', noteBorderColor: '#c9a843',
+  titleColor: '#2a1a0a',
+  clusterBkg: '#1a3a6a', clusterBorder: '#c9a843', clusterTextColor: '#faf6ec',
+  fillType0: '#0d1f38', fillType1: '#1a3a6a', fillType2: '#2a4a80',
+  fillType3: '#1a3a6a', fillType4: '#0d1f38', fillType5: '#2a4a80',
+  fillType6: '#1a3a6a', fillType7: '#0d1f38'
+} });</script>
+</head>
+<body>
+<header id="site-header">
+  <a href="index.html">18OE</a> &mdash; Developer Documentation
+</header>
+<div id="layout">
+<nav id="sidebar" aria-label="Navigation">
+<input id="nav-search" type="search" placeholder="Search…" aria-label="Search documentation" autocomplete="off">
+<div id="search-results" style="display:none">
+<p id="search-no-results" style="display:none">No results found.</p>
+<ul id="search-results-list"></ul>
+</div>
+<div class="track"><h3>18OE Status</h3><ul>
+<li><a href="rules-summary.html">Game Rules Summary</a></li>
+<li><a href="18oe-map-status.html">Map Implementation Status</a></li>
+<li><a href="status.html">Implementation Tracker</a></li>
+<li><a href="rulebook-coverage.html">Rulebook Coverage</a></li>
+<li><a href="alpha-gaps.html">Open for Alpha</a></li>
+</ul></div>
+<div class="track"><h3>Getting Involved</h3><ul>
+<li><a href="first-contribution.html">Your First Contribution</a></li>
+</ul></div>
+<div class="track"><h3>Building a New Game</h3><ul>
+<li><a href="engine-concepts.html">Understanding the Engine</a></li>
+<li><a href="getting-started.html">Development Setup</a></li>
+<li><a href="game-implementation.html" aria-current="page"><strong>Game Structure</strong></a></li>
+<li><a href="map.html">Map Configuration</a></li>
+<li><a href="entities.html">Corporations & Companies</a></li>
+<li><a href="trains-phases.html">Trains, Phases & Market</a></li>
+<li><a href="round-step-system.html">Rounds & Steps</a></li>
+<li><a href="auction-round.html">Auction Round</a></li>
+<li><a href="revenue-routing.html">Revenue & Routing</a></li>
+<li><a href="abilities.html">Abilities</a></li>
+<li><a href="tiles.html">Tile Reference</a></li>
+<li><a href="common-patterns.html">Common Patterns</a></li>
+<li><a href="testing.html">Testing Your Game</a></li>
+<li><a href="title-checklist.html">Title Checklist</a></li>
+<li><a href="coding-guidelines.html">Coding Guidelines</a></li>
+</ul></div>
+<div class="track"><h3>Reference</h3><ul>
+<li><a href="game-engine.html">Game Engine Reference</a></li>
+<li><a href="adrs.html">Architecture Decision Records</a></li>
+</ul></div>
+<div class="track"><h3>Platform & Testing Setup</h3><ul>
+<li><a href="architecture.html">Architecture Overview</a></li>
+<li><a href="konfiguration-betrieb.html">Configuration & Operations</a></li>
+<li><a href="systemgrenzen.html">System Boundaries</a></li>
+</ul></div>
+<div class="track"><h3>Working with Claude</h3><ul>
+<li><a href="codevelop.html">Co-developing with Claude</a></li>
+</ul></div>
+</nav>
+<main>
+<article>
+<h1 id="implementing-a-new-game-title">Implementing a New Game Title</h1>
+<p>This tutorial walks through adding a new 18xx game title from an empty directory to a working, registered title. It uses an imaginary title "8888" as the running example. After completing this tutorial you can run the title locally, play through a full auction round, and lay the first tiles.</p>
+<p>Before starting, ensure your local Docker stack is running — see <a href="getting-started.html">Getting Started</a>.</p>
+<h2 id="file-structure">File Structure</h2>
+<p>Every title lives under <code>lib/engine/game/g_&amp;lt;fs_name&amp;gt;/</code>. The directory name is lowercase, using underscores. For 8888:</p>
+<pre><code>lib/engine/game/g_8888/
+├── meta.rb       — Title metadata: designer, rules URL, player range
+├── entities.rb   — Companies and corporations (included as modules)
+├── map.rb        — Tile supply, location names, hex layout
+└── game.rb       — Phases, trains, market grid, round configuration</code></pre>
+<p>Custom Steps and Rounds go in subdirectories:</p>
+<pre><code>lib/engine/game/g_8888/
+├── round/
+│   └── special_auction.rb
+└── step/
+    └── bid.rb</code></pre>
+<p>The engine discovers the title automatically at startup: <code>lib/engine.rb</code> scans for every <code>Engine::Game::G*</code> module that contains a <code>Meta</code> submodule. No explicit registration is needed.</p>
+<h2 id="step-1--metarb">Step 1 — meta.rb</h2>
+<p><code>meta.rb</code> describes the title to the platform: who designed it, where the rules live, and how many players may participate.</p>
+<pre><code class="language-ruby"># frozen_string_literal: true
+
+require_relative '../meta'
+
+module Engine
+  module Game
+    module G8888
+      module Meta
+        include Game::Meta
+
+        DEV_STAGE = :prealpha
+
+        GAME_SUBTITLE = 'Railways of the German Empire'
+        GAME_DESIGNER = 'Example Designer'
+        GAME_LOCATION = 'Germany'
+        GAME_PUBLISHER = :self_published
+        GAME_RULES_URL = 'https://example.com/8888-rules'
+        GAME_INFO_URL  = 'https://github.com/tobymao/18xx/wiki/8888'
+
+        PLAYER_RANGE = [3, 5].freeze
+      end
+    end
+  end
+end</code></pre>
+<p><strong><code>DEV_STAGE</code> controls the warning banner and archival behaviour:</strong></p>
+<table><thead><tr><th>Value</th><th>Meaning</th></tr></thead><tbody><tr><td><code>:prealpha</code></td><td>Active development; shown only to the implementer</td></tr><tr><td><code>:alpha</code></td><td>Testing with a small group; warning banner shown</td></tr><tr><td><code>:beta</code></td><td>Broader testing; warning banner shown</td></tr><tr><td><code>:production</code></td><td>Released; no warning banner</td></tr></tbody></table>
+<p>Start at <code>:prealpha</code>. Move to <code>:beta</code> only after at least five complete games have been played.</p>
+<p><strong>Optional fields you may also set:</strong></p>
+<table><thead><tr><th>Constant</th><th>Purpose</th></tr></thead><tbody><tr><td><code>GAME_TITLE</code></td><td>Override the canonical title string (defaults to module name without the <code>G</code> prefix)</td></tr><tr><td><code>GAME_DISPLAY_TITLE</code></td><td>Override the UI display name</td></tr><tr><td><code>GAME_ALIASES</code></td><td>Array of alternate title strings that the engine recognises</td></tr><tr><td><code>OPTIONAL_RULES</code></td><td>Array of rule variant hashes (<code>sym:</code>, <code>short_name:</code>, <code>desc:</code>)</td></tr><tr><td><code>MUTEX_RULES</code></td><td>Array of rule symbol groups that are mutually exclusive</td></tr><tr><td><code>KEYWORDS</code></td><td>Array of search keywords</td></tr></tbody></table>
+<h2 id="step-2--entitiesrb">Step 2 — entities.rb</h2>
+<p><code>entities.rb</code> defines private companies and major corporations as a module that <code>game.rb</code> includes.</p>
+<pre><code class="language-ruby"># frozen_string_literal: true
+
+module Engine
+  module Game
+    module G8888
+      module Entities
+        COMPANIES = [
+          {
+            name: 'Rhine Valley Railway',
+            sym:  'RVR',
+            value: 20,
+            revenue: 5,
+            desc: 'Blocks hex C7 while owned by a player.',
+            abilities: [{ type: 'blocks_hexes', owner_type: 'player', hexes: ['C7'] }],
+            color: nil,
+          },
+          {
+            name: 'Bavarian Central Railway',
+            sym:  'BCR',
+            value: 80,
+            revenue: 15,
+            desc: 'The owning corporation may lay one free tile on D8.',
+            abilities: [
+              { type: 'blocks_hexes', owner_type: 'player', hexes: ['D8'] },
+              {
+                type: 'tile_lay',
+                owner_type: 'corporation',
+                hexes: ['D8'],
+                tiles: %w[3 4 58],
+                when: 'owning_corp_or_turn',
+                count: 1,
+              },
+            ],
+            color: nil,
+          },
+        ].freeze
+
+        CORPORATIONS = [
+          {
+            sym:          'KBR',
+            name:         'Königlich Bayerische Staatsbahnen',
+            logo:         '8888/KBR',
+            simple_logo:  '8888/KBR.alt',
+            tokens:       [0, 40, 100],
+            coordinates:  'D8',
+            color:        '#0000cc',
+            float_percent: 60,
+          },
+          {
+            sym:          'PR',
+            name:         'Preußische Staatsbahnen',
+            logo:         '8888/PR',
+            simple_logo:  '8888/PR.alt',
+            tokens:       [0, 40, 100, 100],
+            coordinates:  'B4',
+            color:        '#333333',
+            float_percent: 60,
+          },
+        ].freeze
+      end
+    end
+  end
+end</code></pre>
+<p><strong>Key corporation fields:</strong></p>
+<table><thead><tr><th>Field</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>sym</code></td><td>Yes</td><td>Short identifier shown on share certificates</td></tr><tr><td><code>name</code></td><td>Yes</td><td>Full display name</td></tr><tr><td><code>logo</code></td><td>Yes</td><td>Path under <code>public/logos/</code> (without <code>.svg</code> extension)</td></tr><tr><td><code>tokens</code></td><td>Yes</td><td>Array of token costs; first element is always <code>0</code> (home token is free)</td></tr><tr><td><code>coordinates</code></td><td>Yes</td><td>Starting hex for the home token</td></tr><tr><td><code>color</code></td><td>Yes</td><td>CSS colour string</td></tr><tr><td><code>float_percent</code></td><td>No</td><td>Percent sold before the corporation floats; default <code>60</code></td></tr></tbody></table>
+<p>For the complete field list see <a href="entities.html">Corporations &amp; Companies</a>.</p>
+<h2 id="step-3--maprb">Step 3 — map.rb</h2>
+<p><code>map.rb</code> provides three things: the tile supply, location name labels, and the hex grid definition.</p>
+<pre><code class="language-ruby"># frozen_string_literal: true
+
+module Engine
+  module Game
+    module G8888
+      module Map
+        TILES = {
+          '3'  =&gt; 2,
+          '4'  =&gt; 2,
+          '7'  =&gt; 4,
+          '8'  =&gt; 8,
+          '9'  =&gt; 7,
+          '14' =&gt; 3,
+          '15' =&gt; 3,
+          '57' =&gt; 4,
+          '58' =&gt; 2,
+        }.freeze
+
+        LOCATION_NAMES = {
+          'D8' =&gt; 'Munich',
+          'B4' =&gt; 'Berlin',
+          'C5' =&gt; 'Leipzig',
+          'E7' =&gt; 'Nuremberg',
+          'A5' =&gt; 'Hamburg',
+        }.freeze
+
+        HEXES = {
+          red: {
+            ['A3'] =&gt; 'offboard=revenue:yellow_30|brown_60;path=a:4,b:_0;path=a:5,b:_0',
+          },
+          gray: {
+            ['A5'] =&gt; 'city=revenue:30;path=a:3,b:_0;path=a:4,b:_0',
+          },
+          white: {
+            %w[C5 E7]       =&gt; 'city=revenue:0',
+            %w[B6 D6 C7 D4] =&gt; 'town=revenue:0',
+            %w[C3 D2 E5 F8] =&gt; '',
+            %w[B2 C1 E3]    =&gt; 'upgrade=cost:80,terrain:mountain',
+            ['D8']          =&gt; 'city=revenue:0;upgrade=cost:40,terrain:water',
+          },
+          yellow: {
+            ['B4'] =&gt; 'city=revenue:30;city=revenue:30;path=a:0,b:_0;path=a:3,b:_1;label=OO',
+          },
+        }.freeze
+
+        LAYOUT = :pointy
+      end
+    end
+  end
+end</code></pre>
+<p><strong>Hex colour convention:</strong></p>
+<table><thead><tr><th>Colour</th><th>Meaning</th></tr></thead><tbody><tr><td><code>white</code></td><td>Empty; players lay and upgrade tiles here</td></tr><tr><td><code>yellow</code></td><td>Pre-printed yellow tile; upgradeable during play</td></tr><tr><td><code>gray</code></td><td>Fixed tile; never upgradeable</td></tr><tr><td><code>red</code></td><td>Off-map revenue space; never upgradeable</td></tr></tbody></table>
+<p>For the complete tile string syntax see <a href="map.html">Map Configuration</a>.</p>
+<h2 id="step-4--gamerb">Step 4 — game.rb</h2>
+<p><code>game.rb</code> is the main game class. It includes the other three modules, declares game mechanics as constants, and overrides the Round factory methods.</p>
+<pre><code class="language-ruby"># frozen_string_literal: true
+
+require_relative 'entities'
+require_relative 'map'
+require_relative 'meta'
+require_relative '../base'
+
+module Engine
+  module Game
+    module G8888
+      class Game &lt; Game::Base
+        include_meta(G8888::Meta)
+        include Entities
+        include Map
+
+        CURRENCY_FORMAT_STR = 'M%s'
+        BANK_CASH = 8_000
+        CERT_LIMIT   = { 3 =&gt; 16, 4 =&gt; 12, 5 =&gt; 10 }.freeze
+        STARTING_CASH = { 3 =&gt; 500, 4 =&gt; 375, 5 =&gt; 300 }.freeze
+        CAPITALIZATION = :full
+        MUST_SELL_IN_BLOCKS = false
+
+        MARKET = [
+          %w[60y 67 71 76 82 90 100p 112 126 142 160 180 200 220],
+          %w[53y 60y 66 70 76 82  90p 100 112 126 142 160 180 200],
+          %w[46y 55y 60y 65 70 76  82p  90 100 112 126 142],
+          %w[39y 48y 55y 60 65 70   76   82  90 100],
+          %w[32y 41y 48y 55 60 65   70   76  82],
+          %w[25y 34y 41y 48 55 60   65   70],
+        ].freeze
+
+        PHASES = [
+          {
+            name: '2',
+            train_limit: 4,
+            tiles: [:yellow],
+            operating_rounds: 1,
+          },
+          {
+            name: '3',
+            on: '3',
+            train_limit: 4,
+            tiles: %i[yellow green],
+            operating_rounds: 2,
+            status: ['can_buy_companies'],
+          },
+          {
+            name: '5',
+            on: '5',
+            train_limit: 2,
+            tiles: %i[yellow green brown],
+            operating_rounds: 3,
+            events: [{ 'type' =&gt; 'close_companies' }],
+          },
+        ].freeze
+
+        TRAINS = [
+          { name: '2', distance: 2, price: 80,  rusts_on: '4', num: 6 },
+          { name: '3', distance: 3, price: 180, rusts_on: '6', num: 5 },
+          { name: '4', distance: 4, price: 300, rusts_on: 'D', num: 4 },
+          {
+            name: '5',
+            distance: 5,
+            price: 450,
+            num: 3,
+            events: [{ 'type' =&gt; 'close_companies' }],
+          },
+          {
+            name: 'D',
+            distance: 999,
+            price: 1_100,
+            num: 20,
+            available_on: '6',
+            discount: { '4' =&gt; 300, '5' =&gt; 300, '6' =&gt; 300 },
+          },
+        ].freeze
+
+        def operating_round(round_num)
+          Round::Operating.new(self, [
+            Engine::Step::Bankrupt,
+            Engine::Step::Exchange,
+            Engine::Step::SpecialTrack,
+            Engine::Step::SpecialToken,
+            Engine::Step::BuyCompany,
+            Engine::Step::HomeToken,
+            Engine::Step::Track,
+            Engine::Step::Token,
+            Engine::Step::Route,
+            Engine::Step::Dividend,
+            Engine::Step::DiscardTrain,
+            Engine::Step::BuyTrain,
+            [Engine::Step::BuyCompany, { blocks: true }],
+          ], round_num: round_num)
+        end
+
+        def stock_round
+          Round::Stock.new(self, [
+            Engine::Step::DiscardTrain,
+            Engine::Step::Exchange,
+            Engine::Step::SpecialTrack,
+            Engine::Step::BuySellParShares,
+          ])
+        end
+      end
+    end
+  end
+end</code></pre>
+<p>The two Round factory methods define which Steps are active in each round. Omitting either method falls back to the <code>Game::Base</code> default. Override only when you need a Step that the default does not include.</p>
+<h2 id="step-5--add-logos">Step 5 — Add Logos</h2>
+<p>Each corporation needs an SVG logo at <code>public/logos/&amp;lt;title&amp;gt;/&amp;lt;sym&amp;gt;.svg</code>. For the example above, create <code>public/logos/8888/KBR.svg</code>. Without it the UI shows a placeholder; the game still runs.</p>
+<h2 id="step-6--first-run">Step 6 — First Run</h2>
+<p>Start the Docker stack and open <code>http://localhost:9292/</code>. Create a new game and select "8888". If the title does not appear, confirm the module name matches <code>Engine::Game::G8888</code> exactly and contains a <code>Meta</code> submodule.</p>
+<p>If the game fails to load, check the container log or open a console:</p>
+<pre><code class="language-bash">docker compose logs rack -f</code></pre>
+<pre><code class="language-bash">docker compose exec rack irb</code></pre>
+<pre><code class="language-ruby">require_relative 'lib/engine'
+g = Engine::Game::G8888::Game.new(%w[Alice Bob Charlie])
+g.current_round   # =&gt; should return a Round::Auction or Round::Stock instance</code></pre>
+<h2 id="which-layer-does-my-rule-belong-to">Which Layer Does My Rule Belong To?</h2>
+<p>Before writing code, find the least-invasive layer that handles your rule. Work top-down:</p>
+<pre><code>Does a constant cover it?
+  YES → add/change a value in game.rb, entities.rb, or map.rb
+  NO  ↓
+Does an event hook cover it?
+  YES → override event_*! or operating_order in game.rb
+  NO  ↓
+Does an existing Step's behaviour differ only slightly?
+  YES → subclass the Step, override one method
+  NO  ↓
+Does an entirely new action type need to exist?
+  YES → write a new Step (and possibly a new Round)</code></pre>
+<p><strong>Layer examples:</strong></p>
+<table><thead><tr><th>Rule</th><th>Layer</th><th>What to change</th></tr></thead><tbody><tr><td>Different bank size</td><td>Constant</td><td><code>BANK_CASH</code> in game.rb</td></tr><tr><td>Companies close on 5-train</td><td>Constant</td><td><code>events: [{ 'type' =&gt; 'close_companies' }]</code> on the train</td></tr><tr><td>Custom log message when companies close</td><td>Event hook</td><td>override <code>event_close_companies!</code> in game.rb</td></tr><tr><td>Hex revenue bonus</td><td>Method override</td><td>override <code>revenue_for</code> in game.rb</td></tr><tr><td>Minor always half-pays</td><td>Step subclass</td><td>subclass <code>Step::Dividend</code>, override <code>actions</code> + <code>skip!</code></td></tr><tr><td>Entirely new auction mechanic</td><td>New Step + Round</td><td><code>step/bid.rb</code> + <code>round/auction.rb</code></td></tr></tbody></table>
+<p>When in doubt, search <code>lib/engine/game/</code> for a production title that already implements something similar. The <a href="common-patterns.html">Common Patterns</a> page has grep commands for this.</p>
+<h2 id="when-to-add-custom-steps">When to Add Custom Steps</h2>
+<p>The default Step set in <code>Round::Operating</code> and <code>Round::Stock</code> covers the mechanics of most 18xx titles. Add a custom Step only when:</p>
+<ul><li>A new action type must be introduced that no existing Step handles</li><li>The decision sequence for a corporation type differs from the default OR order</li><li>An existing Step's logic cannot be expressed through <code>tile_lays</code>, abilities, or hook overrides alone</li></ul>
+<p>Before writing a new Step, see the walkthrough in <a href="round-step-system.html">Rounds &amp; Steps</a> and look for a production title that already implements something similar.</p>
+<h2 id="reference-games">Reference Games</h2>
+<table><thead><tr><th>Mechanic</th><th>Reference title</th></tr></thead><tbody><tr><td>Waterfall auction</td><td>1822</td></tr><tr><td>Minor conversion to major</td><td>1867</td></tr><tr><td>Full capitalisation</td><td>1830</td></tr><tr><td>Incremental capitalisation</td><td>1846</td></tr><tr><td>Multiple track-lays per OR</td><td>1849</td></tr><tr><td>Loan system</td><td>1817</td></tr><tr><td>Receivership</td><td>1860</td></tr><tr><td>Nationalisation</td><td>18ZOO</td></tr><tr><td>Destination token</td><td>1889</td></tr><tr><td>Hex bonus revenue</td><td>18CO</td></tr></tbody></table>
+<h2 id="whats-next">What's Next</h2>
+<ul><li>CORPORATIONS and COMPANIES field reference: <a href="entities.html">Corporations & Companies</a></li><li>TRAINS, PHASES, MARKET reference: <a href="trains-phases.html">Trains, Phases & Market</a></li><li>Hex grid and tile string syntax: <a href="map.html">Map Configuration</a></li><li>Short code recipes for common rules: <a href="common-patterns.html">Common Patterns</a></li><li>Testing your title with fixtures: <a href="testing.html">Testing Your Game</a></li><li>Writing a custom Step with a worked example: <a href="round-step-system.html">Rounds & Steps</a></li><li>PR patterns and code style: <a href="coding-guidelines.html">Coding Guidelines</a></li></ul>
+<hr>
+<p><em>Version: 2026-05-08 — derived from <code>lib/engine/game/g_1830/</code>, <code>lib/engine/game/meta.rb</code>, <code>lib/engine/game/base.rb</code>.</em></p>
+</article>
+</main>
+</div>
+<script src="search.js"></script>
+<script src="ui.js"></script>
+</body>
+</html>

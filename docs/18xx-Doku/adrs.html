@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Architecture Decision Records — 18OE Dev Docs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Playfair+Display:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({ startOnLoad: true, theme: 'base', themeVariables: {
+  primaryColor: '#0d1f38', primaryTextColor: '#faf6ec',
+  primaryBorderColor: '#c9a843', lineColor: '#c9a843',
+  secondaryColor: '#1a3a6a', tertiaryColor: '#2a4a80',
+  actorBkg: '#0d1f38', actorTextColor: '#faf6ec',
+  actorBorder: '#c9a843', actorLineColor: '#c9a843',
+  activationBkgColor: '#2a4ab0', activationBorderColor: '#c9a843',
+  signalColor: '#c9a843', signalTextColor: '#2a1a0a',
+  labelBoxBkgColor: '#0d1f38', labelBoxBorderColor: '#c9a843', labelTextColor: '#faf6ec',
+  loopTextColor: '#2a1a0a',
+  edgeLabelBackground: '#f0ead8',
+  noteBkgColor: '#f0e8d4', noteTextColor: '#2a1a0a', noteBorderColor: '#c9a843',
+  titleColor: '#2a1a0a',
+  clusterBkg: '#1a3a6a', clusterBorder: '#c9a843', clusterTextColor: '#faf6ec',
+  fillType0: '#0d1f38', fillType1: '#1a3a6a', fillType2: '#2a4a80',
+  fillType3: '#1a3a6a', fillType4: '#0d1f38', fillType5: '#2a4a80',
+  fillType6: '#1a3a6a', fillType7: '#0d1f38'
+} });</script>
+</head>
+<body>
+<header id="site-header">
+  <a href="index.html">18OE</a> &mdash; Developer Documentation
+</header>
+<div id="layout">
+<nav id="sidebar" aria-label="Navigation">
+<input id="nav-search" type="search" placeholder="Search…" aria-label="Search documentation" autocomplete="off">
+<div id="search-results" style="display:none">
+<p id="search-no-results" style="display:none">No results found.</p>
+<ul id="search-results-list"></ul>
+</div>
+<div class="track"><h3>18OE Status</h3><ul>
+<li><a href="rules-summary.html">Game Rules Summary</a></li>
+<li><a href="18oe-map-status.html">Map Implementation Status</a></li>
+<li><a href="status.html">Implementation Tracker</a></li>
+<li><a href="rulebook-coverage.html">Rulebook Coverage</a></li>
+<li><a href="alpha-gaps.html">Open for Alpha</a></li>
+</ul></div>
+<div class="track"><h3>Getting Involved</h3><ul>
+<li><a href="first-contribution.html">Your First Contribution</a></li>
+</ul></div>
+<div class="track"><h3>Building a New Game</h3><ul>
+<li><a href="engine-concepts.html">Understanding the Engine</a></li>
+<li><a href="getting-started.html">Development Setup</a></li>
+<li><a href="game-implementation.html">Game Structure</a></li>
+<li><a href="map.html">Map Configuration</a></li>
+<li><a href="entities.html">Corporations & Companies</a></li>
+<li><a href="trains-phases.html">Trains, Phases & Market</a></li>
+<li><a href="round-step-system.html">Rounds & Steps</a></li>
+<li><a href="auction-round.html">Auction Round</a></li>
+<li><a href="revenue-routing.html">Revenue & Routing</a></li>
+<li><a href="abilities.html">Abilities</a></li>
+<li><a href="tiles.html">Tile Reference</a></li>
+<li><a href="common-patterns.html">Common Patterns</a></li>
+<li><a href="testing.html">Testing Your Game</a></li>
+<li><a href="title-checklist.html">Title Checklist</a></li>
+<li><a href="coding-guidelines.html">Coding Guidelines</a></li>
+</ul></div>
+<div class="track"><h3>Reference</h3><ul>
+<li><a href="game-engine.html">Game Engine Reference</a></li>
+<li><a href="adrs.html" aria-current="page"><strong>Architecture Decision Records</strong></a></li>
+</ul></div>
+<div class="track"><h3>Platform & Testing Setup</h3><ul>
+<li><a href="architecture.html">Architecture Overview</a></li>
+<li><a href="konfiguration-betrieb.html">Configuration & Operations</a></li>
+<li><a href="systemgrenzen.html">System Boundaries</a></li>
+</ul></div>
+<div class="track"><h3>Working with Claude</h3><ul>
+<li><a href="codevelop.html">Co-developing with Claude</a></li>
+</ul></div>
+</nav>
+<main>
+<article>
+<h1 id="architecture-decision-records">Architecture Decision Records</h1>
+<p>This page documents the key architectural decisions that shaped 18xx.games. Each ADR explains the context, the decision taken, and its consequences.</p>
+<hr>
+<h2 id="adr-001--shared-rubyopal-engine">ADR-001 — Shared Ruby/Opal Engine</h2>
+<p><strong>Status:</strong> Accepted</p>
+<p><strong>Context:</strong> The game engine must run both server-side (for authoritative state) and client-side (for immediate UI feedback). Maintaining two implementations in different languages is error-prone.</p>
+<p><strong>Decision:</strong> The engine is written in Ruby and transpiled to JavaScript by <a href="https://opalrb.com/">Opal</a> [<code>Gemfile:9</code>]. The identical codebase runs in both environments. Each game title is compiled to its own JS bundle [<code>api.rb:70</code>].</p>
+<p><strong>Consequences:</strong></p>
+<ul><li>Single source of truth for rules logic.</li><li>Client-side validation is always in sync with server-side validation.</li><li>The engine must avoid Ruby features that Opal does not support (native C extensions, filesystem I/O).</li><li>Build time increases with the number of game titles.</li></ul>
+<hr>
+<h2 id="adr-002--action-replay-instead-of-snapshots">ADR-002 — Action Replay Instead of Snapshots</h2>
+<p><strong>Status:</strong> Accepted</p>
+<p><strong>Context:</strong> Game state could be persisted either as a full snapshot after every move or as an append-only action log that is replayed on load.</p>
+<p><strong>Decision:</strong> Only Actions (JSON) are stored. The full game state is reconstructed by replaying all Actions on every load [<code>lib/engine/game/base.rb:819-837</code>].</p>
+<p><strong>Consequences:</strong></p>
+<ul><li>The <code>actions</code> table schema never needs to migrate when game objects change.</li><li>Any historical game state is reproducible by replaying a prefix of the action list.</li><li>Load time grows linearly with the number of actions; acceptable for 18xx game lengths.</li><li>A breaking engine change can invalidate old replays — the pinning mechanism mitigates this for running games [<code>lib/engine/game/base.rb:688-694</code>].</li></ul>
+<hr>
+<h2 id="adr-003--postgresql-advisory-locks-for-concurrency">ADR-003 — PostgreSQL Advisory Locks for Concurrency</h2>
+<p><strong>Status:</strong> Accepted</p>
+<p><strong>Context:</strong> Two simultaneous requests for the same game could both replay the action list, produce diverging states, and both attempt to insert action N+1.</p>
+<p><strong>Decision:</strong> The API acquires a PostgreSQL Advisory Lock keyed on the game ID before loading any actions [<code>routes/game.rb:56</code>]. This serialises requests per game at the database level.</p>
+<p><strong>Consequences:</strong></p>
+<ul><li>No additional distributed lock service is needed.</li><li>Lock acquisition is handled by the <code>sequel-pg_advisory_lock</code> gem [<code>Gemfile:17</code>].</li><li>Concurrent requests for the <em>same</em> game queue behind the lock; throughput is limited to one action per game per round-trip.</li></ul>
+<hr>
+<h2 id="adr-004--redis-messagebus-for-real-time-updates">ADR-004 — Redis MessageBus for Real-Time Updates</h2>
+<p><strong>Status:</strong> Accepted</p>
+<p><strong>Context:</strong> In live mode, all players need to see the board update after each action without polling.</p>
+<p><strong>Decision:</strong> After persisting each action, the API publishes the updated game state to Redis channel <code>/game/:id</code> using MessageBus [<code>lib/bus.rb:1</code>]. All browser clients receive the push via Server-Sent Events.</p>
+<p><strong>Consequences:</strong></p>
+<ul><li>Real-time updates without browser polling.</li><li>Redis is a required infrastructure component.</li><li>MessageBus backlog is capped (<code>max_backlog_size = 1</code>); only the latest state is relevant.</li></ul>
+<hr>
+<h2 id="adr-005--game-pinning-for-breaking-changes">ADR-005 — Game Pinning for Breaking Changes</h2>
+<p><strong>Status:</strong> Accepted</p>
+<p><strong>Context:</strong> Fixing a rule bug sometimes requires changing engine behaviour in a way that would make existing games non-replayable with the new code.</p>
+<p><strong>Decision:</strong> When a breaking change is deployed, running games are <em>pinned</em> to an older JavaScript bundle [<code>lib/engine/game/base.rb:688-694</code>]. Pinned games continue uninterrupted but cannot be debugged, and Beta-title pins expire after 7 days.</p>
+<p><strong>Consequences:</strong></p>
+<ul><li>Players are never stranded mid-game by a developer fix.</li><li>Old JS bundles must be retained until all pinned games finish.</li><li>The system complexity includes bundle versioning and pin expiry logic.</li></ul>
+<hr>
+<h2 id="adr-006--argon2-password-hashing">ADR-006 — Argon2 Password Hashing</h2>
+<p><strong>Status:</strong> Accepted</p>
+<p><strong>Context:</strong> Passwords must be stored securely.</p>
+<p><strong>Decision:</strong> Passwords are hashed with Argon2 via the <code>argon2</code> gem [<code>Gemfile:3</code>]. Plain-text passwords are never stored or logged.</p>
+<p><strong>Consequences:</strong></p>
+<ul><li>Strong resistance to brute-force attacks.</li><li>Argon2 parameters (memory, iterations) can be tuned in <code>routes/user.rb</code>.</li></ul>
+<hr>
+<h2 id="adr-007--ordered-step-list-for-action-dispatch">ADR-007 — Ordered Step List for Action Dispatch</h2>
+<p><strong>Status:</strong> Accepted</p>
+<p><strong>Context:</strong> 18xx game titles have deeply varying action sequences. A single large dispatch method in <code>Game::Base</code> would become unmaintainable as the number of titles grew. A flat map from action type to handler would not express priority or the concept of a Step blocking others from acting.</p>
+<p><strong>Decision:</strong> Each Round holds an ordered list of <code>Step</code> objects [<code>lib/engine/round/base.rb:22</code>]. Every Step declares, via the <code>ACTIONS</code> constant, which action type strings it can process. When the Round receives an action, it iterates the Step list in order, calls <code>blocking?</code> on each Step, and delegates to the first blocking Step whose <code>ACTIONS</code> includes the incoming type. If no Step claims the action, a <code>GameError</code> is raised [<code>lib/engine/round/base.rb:75-95</code>].</p>
+<p>Steps are composed per title by passing a custom array to the Round factory method (<code>new_operating_round</code>, <code>new_stock_round</code>). A title adds a mechanic by inserting a Step; it removes one by omitting it.</p>
+<p><strong>Consequences:</strong></p>
+<ul><li>Adding a new mechanic requires a new Step class and a single array entry — no changes to existing steps or the round.</li><li>The order of Steps expresses priority implicitly: earlier Steps shadow later ones for the same action type.</li><li>Steps contribute state to the Round via <code>round_state</code>, avoiding direct coupling between Step classes.</li><li>The UI derives which buttons to enable by taking the union of all active Steps' <code>ACTIONS</code> lists — engine model and UI are in sync without a separate mapping layer.</li><li>The <code>blocking?</code> vs <code>blocks?</code> distinction (whether a Step prevents others from acting vs whether it auto-skips for a given entity) adds complexity that requires care when writing new Steps.</li><li>Inter-Step dependencies must be expressed through shared Round state rather than direct calls, which is less obvious than a sequential algorithm.</li></ul>
+<hr>
+<h2 id="whats-next">What's next</h2>
+<ul><li>System topology: <a href="architecture.html">Architecture Overview</a></li><li>How actions flow: <a href="kernablauf.html">Core Flow</a></li><li>Round and Step design: <a href="round-step-system.html">Round/Step System</a></li></ul>
+<hr>
+<p><em>Version: 2026-05-08 — derived from <code>lib/engine/game/base.rb</code>, <code>routes/game.rb</code>, <code>lib/bus.rb</code>, <code>api.rb</code>, <code>Gemfile</code>, <code>lib/engine/round/base.rb</code>.</em></p>
+</article>
+</main>
+</div>
+<script src="search.js"></script>
+<script src="ui.js"></script>
+</body>
+</html>

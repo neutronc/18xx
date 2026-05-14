@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trains, Phases & Market — 18OE Dev Docs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Playfair+Display:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({ startOnLoad: true, theme: 'base', themeVariables: {
+  primaryColor: '#0d1f38', primaryTextColor: '#faf6ec',
+  primaryBorderColor: '#c9a843', lineColor: '#c9a843',
+  secondaryColor: '#1a3a6a', tertiaryColor: '#2a4a80',
+  actorBkg: '#0d1f38', actorTextColor: '#faf6ec',
+  actorBorder: '#c9a843', actorLineColor: '#c9a843',
+  activationBkgColor: '#2a4ab0', activationBorderColor: '#c9a843',
+  signalColor: '#c9a843', signalTextColor: '#2a1a0a',
+  labelBoxBkgColor: '#0d1f38', labelBoxBorderColor: '#c9a843', labelTextColor: '#faf6ec',
+  loopTextColor: '#2a1a0a',
+  edgeLabelBackground: '#f0ead8',
+  noteBkgColor: '#f0e8d4', noteTextColor: '#2a1a0a', noteBorderColor: '#c9a843',
+  titleColor: '#2a1a0a',
+  clusterBkg: '#1a3a6a', clusterBorder: '#c9a843', clusterTextColor: '#faf6ec',
+  fillType0: '#0d1f38', fillType1: '#1a3a6a', fillType2: '#2a4a80',
+  fillType3: '#1a3a6a', fillType4: '#0d1f38', fillType5: '#2a4a80',
+  fillType6: '#1a3a6a', fillType7: '#0d1f38'
+} });</script>
+</head>
+<body>
+<header id="site-header">
+  <a href="index.html">18OE</a> &mdash; Developer Documentation
+</header>
+<div id="layout">
+<nav id="sidebar" aria-label="Navigation">
+<input id="nav-search" type="search" placeholder="Search…" aria-label="Search documentation" autocomplete="off">
+<div id="search-results" style="display:none">
+<p id="search-no-results" style="display:none">No results found.</p>
+<ul id="search-results-list"></ul>
+</div>
+<div class="track"><h3>18OE Status</h3><ul>
+<li><a href="rules-summary.html">Game Rules Summary</a></li>
+<li><a href="18oe-map-status.html">Map Implementation Status</a></li>
+<li><a href="status.html">Implementation Tracker</a></li>
+<li><a href="rulebook-coverage.html">Rulebook Coverage</a></li>
+<li><a href="alpha-gaps.html">Open for Alpha</a></li>
+</ul></div>
+<div class="track"><h3>Getting Involved</h3><ul>
+<li><a href="first-contribution.html">Your First Contribution</a></li>
+</ul></div>
+<div class="track"><h3>Building a New Game</h3><ul>
+<li><a href="engine-concepts.html">Understanding the Engine</a></li>
+<li><a href="getting-started.html">Development Setup</a></li>
+<li><a href="game-implementation.html">Game Structure</a></li>
+<li><a href="map.html">Map Configuration</a></li>
+<li><a href="entities.html">Corporations & Companies</a></li>
+<li><a href="trains-phases.html" aria-current="page"><strong>Trains, Phases & Market</strong></a></li>
+<li><a href="round-step-system.html">Rounds & Steps</a></li>
+<li><a href="auction-round.html">Auction Round</a></li>
+<li><a href="revenue-routing.html">Revenue & Routing</a></li>
+<li><a href="abilities.html">Abilities</a></li>
+<li><a href="tiles.html">Tile Reference</a></li>
+<li><a href="common-patterns.html">Common Patterns</a></li>
+<li><a href="testing.html">Testing Your Game</a></li>
+<li><a href="title-checklist.html">Title Checklist</a></li>
+<li><a href="coding-guidelines.html">Coding Guidelines</a></li>
+</ul></div>
+<div class="track"><h3>Reference</h3><ul>
+<li><a href="game-engine.html">Game Engine Reference</a></li>
+<li><a href="adrs.html">Architecture Decision Records</a></li>
+</ul></div>
+<div class="track"><h3>Platform & Testing Setup</h3><ul>
+<li><a href="architecture.html">Architecture Overview</a></li>
+<li><a href="konfiguration-betrieb.html">Configuration & Operations</a></li>
+<li><a href="systemgrenzen.html">System Boundaries</a></li>
+</ul></div>
+<div class="track"><h3>Working with Claude</h3><ul>
+<li><a href="codevelop.html">Co-developing with Claude</a></li>
+</ul></div>
+</nav>
+<main>
+<article>
+<h1 id="trains-phases--market">Trains, Phases & Market</h1>
+<p>This page covers the three constants that drive a game's economic arc: <code>TRAINS</code>, <code>PHASES</code>, and <code>MARKET</code>. All three are declared in <code>game.rb</code>. Together they control how fast the game progresses, when older trains become worthless, and how the stock price grid is structured.</p>
+<p>For the entities that run on trains — corporations and companies — see <a href="entities.html">Corporations &amp; Companies</a>.</p>
+<hr>
+<h2 id="how-they-fit-together">How They Fit Together</h2>
+<pre><code>Train purchase  →  Phase advances  →  Track colours unlock / Old trains rust / OR count changes
+                                    →  Events fire (close_companies, etc.)</code></pre>
+<p>Every train purchase is checked against the <code>on:</code> field in <code>PHASES</code>. When the first copy of that train is bought, the phase advances and all consequences apply simultaneously.</p>
+<p>The stock market is independent of phases — it moves on share buys and sells throughout the game.</p>
+<hr>
+<h2 id="trains">TRAINS</h2>
+<p><code>TRAINS</code> is an array of hashes defining every train type in the game. The <code>Engine::Depot</code> reads it to populate the train supply [<code>lib/engine/depot.rb:7</code>].</p>
+<h3 id="required-fields">Required fields</h3>
+<table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>name</code></td><td>String</td><td>Train identifier shown in the UI (e.g. <code>'2'</code>, <code>'D'</code>)</td></tr><tr><td><code>distance</code></td><td>Integer or Array</td><td>Maximum cities/towns the train may count. Use an array for complex distance rules — see below.</td></tr><tr><td><code>price</code></td><td>Integer</td><td>Purchase price from the depot</td></tr></tbody></table>
+<h3 id="common-optional-fields">Common optional fields</h3>
+<table><thead><tr><th>Field</th><th>Type</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>num</code></td><td>Integer</td><td><code>∞</code></td><td>Copies in the supply</td></tr><tr><td><code>rusts_on</code></td><td>String</td><td>—</td><td>Train name whose first purchase causes this train to rust (removed from play)</td></tr><tr><td><code>obsolete_on</code></td><td>String</td><td>—</td><td>Train name whose first purchase makes this train obsolete (still usable, worth less on resale)</td></tr><tr><td><code>available_on</code></td><td>String</td><td>—</td><td>Train name that must be purchased before this train appears in the depot</td></tr><tr><td><code>events</code></td><td>Array\<Hash\></td><td><code>[]</code></td><td>Events fired when the first copy is bought</td></tr><tr><td><code>discount</code></td><td>Hash</td><td>—</td><td>Trade-in discounts; keys are train names, values are discount amounts (e.g. <code>{ '4' =&gt; 300 }</code>)</td></tr><tr><td><code>salvage</code></td><td>Integer</td><td>—</td><td>Amount the depot pays back when the train is discarded</td></tr><tr><td><code>variants</code></td><td>Array\<Hash\></td><td>—</td><td>Sub-types selectable at buy time; each variant can override <code>name:</code>, <code>price:</code>, <code>distance:</code>, <code>rusts_on:</code></td></tr><tr><td><code>unlimited</code></td><td>Boolean</td><td><code>false</code></td><td>Train never runs out</td></tr><tr><td><code>multiplier</code></td><td>Integer</td><td>—</td><td>Revenue multiplier (some titles double revenue for E-trains)</td></tr><tr><td><code>track_type</code></td><td>Symbol</td><td><code>:broad</code></td><td>Track gauge (<code>:broad</code>, <code>:narrow</code>, <code>:dual</code>)</td></tr></tbody></table>
+<h3 id="complex-distance-arrays">Complex distance arrays</h3>
+<p>When a train visits different node types with different counting rules, use an array of hashes:</p>
+<pre><code class="language-ruby">distance: [
+  { 'nodes' =&gt; %w[city offboard], 'pay' =&gt; 2, 'visit' =&gt; 2 },
+  { 'nodes' =&gt; ['town'],          'pay' =&gt; 99, 'visit' =&gt; 99 },
+]</code></pre>
+<p>Each element specifies which node types count toward <code>pay</code> (revenue stops) and <code>visit</code> (traversal limit). This pattern is used for titles where towns are free to pass through but cities are limited.</p>
+<h3 id="train-events">Train events</h3>
+<p>Events in <code>events:</code> are dispatched via <code>@game.send("event_#{type}!")</code> when the first copy is bought. Define a matching <code>event_*!</code> method in <code>game.rb</code> — or rely on a base class implementation.</p>
+<p>Common event types defined in <code>Game::Base</code>:</p>
+<table><thead><tr><th>Type</th><th>Effect</th></tr></thead><tbody><tr><td><code>close_companies</code></td><td>Closes all open private companies</td></tr><tr><td><code>remove_reservations</code></td><td>Removes unsold home reservations</td></tr><tr><td><code>remove_bonuses</code></td><td>Removes east-west / route bonus tokens</td></tr><tr><td><code>minors_cannot_start</code></td><td>Blocks minors from starting</td></tr><tr><td><code>majors_can_ipo</code></td><td>Opens major corporations for IPO</td></tr></tbody></table>
+<h3 id="rusts-vs-obsolete">Rusts vs Obsolete</h3>
+<ul><li><strong>rusts_on</strong> — train is removed from the game entirely when the named train is first purchased. Corporations that only held rusted trains must buy a replacement (emergency buy).</li><li><strong>obsolete_on</strong> — train stays in play but is worth less when sold to another corporation. A corporation can still run it.</li></ul>
+<h3 id="example">Example</h3>
+<pre><code class="language-ruby">TRAINS = [
+  { name: '2', distance: 2, price: 80,  rusts_on: '4', num: 6 },
+  { name: '3', distance: 3, price: 180, rusts_on: '6', num: 5 },
+  { name: '4', distance: 4, price: 300, rusts_on: 'D', num: 4 },
+  {
+    name: '5',
+    distance: 5,
+    price: 450,
+    num: 3,
+    events: [{ 'type' =&gt; 'close_companies' }],
+  },
+  {
+    name: 'D',
+    distance: 999,
+    price: 1_100,
+    num: 20,
+    available_on: '6',
+    discount: { '4' =&gt; 300, '5' =&gt; 300, '6' =&gt; 300 },
+  },
+].freeze</code></pre>
+<hr>
+<h2 id="phases">PHASES</h2>
+<p><code>PHASES</code> is an array of hashes defining game phases in order. The engine advances through phases as trains are purchased [<code>lib/engine/phase.rb:19</code>]. The first phase in the array is the starting phase; it has no <code>on:</code> field.</p>
+<h3 id="required-fields">Required fields</h3>
+<table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>name</code></td><td>String</td><td>Phase identifier shown in the UI (e.g. <code>'2'</code>, <code>'D'</code>)</td></tr><tr><td><code>train_limit</code></td><td>Integer or Hash</td><td>Maximum trains a corporation may own. Use a hash to differentiate entity types: <code>{ minor: 2, major: 4 }</code></td></tr><tr><td><code>tiles</code></td><td>Array\<Symbol\></td><td>Track colours that may be laid: <code>:yellow</code>, <code>:green</code>, <code>:brown</code>, <code>:gray</code></td></tr><tr><td><code>operating_rounds</code></td><td>Integer</td><td>Number of Operating Rounds between each Stock Round</td></tr></tbody></table>
+<h3 id="common-optional-fields">Common optional fields</h3>
+<table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>on</code></td><td>String</td><td>Train name whose first purchase triggers this phase (omit for the initial phase)</td></tr><tr><td><code>status</code></td><td>Array\<String\></td><td>Status flags that become active (shown in the UI; used by Steps to gate actions)</td></tr><tr><td><code>events</code></td><td>Array\<Hash\></td><td>Events fired when this phase starts (same <code>type:</code> vocabulary as train events)</td></tr></tbody></table>
+<h3 id="status-flags">Status flags</h3>
+<p>Status strings are arbitrary — they appear in the phase indicator in the UI. The base engine recognises several:</p>
+<table><thead><tr><th>String</th><th>Effect</th></tr></thead><tbody><tr><td><code>'can_buy_companies'</code></td><td>Corporations may buy companies from the bank</td></tr><tr><td><code>'can_buy_companies_from_other_players'</code></td><td>Players may trade companies between themselves</td></tr></tbody></table>
+<p>Custom status strings can be added freely. Check them in Steps with <code>@game.phase.status.include?('my_flag')</code>.</p>
+<h3 id="common-phase-patterns">Common phase patterns</h3>
+<p><strong>Standard 18xx escalation</strong> — one phase per train tier, each adding track colours and increasing OR count:</p>
+<pre><code class="language-ruby">PHASES = [
+  { name: '2', train_limit: 4, tiles: [:yellow],              operating_rounds: 1 },
+  { name: '3', on: '3', train_limit: 4, tiles: %i[yellow green],         operating_rounds: 2, status: ['can_buy_companies'] },
+  { name: '4', on: '4', train_limit: 3, tiles: %i[yellow green],         operating_rounds: 2, status: ['can_buy_companies'] },
+  { name: '5', on: '5', train_limit: 2, tiles: %i[yellow green brown],   operating_rounds: 3, events: [{ 'type' =&gt; 'close_companies' }] },
+  { name: '6', on: '6', train_limit: 2, tiles: %i[yellow green brown],   operating_rounds: 3 },
+  { name: 'D', on: 'D', train_limit: 2, tiles: %i[yellow green brown gray], operating_rounds: 3 },
+].freeze</code></pre>
+<p><strong>Reducing train limit</strong> — important for late-game engine pressure. Check production titles for the exact numbers that create interesting decisions.</p>
+<hr>
+<h2 id="market">MARKET</h2>
+<p><code>MARKET</code> is a two-dimensional array of strings representing the stock price grid [<code>lib/engine/stock_market.rb:7</code>]. Rows run top (high) to bottom (low); columns run left (low) to right (high).</p>
+<h3 id="cell-format">Cell format</h3>
+<p>Each cell is a price string optionally followed by suffix characters:</p>
+<table><thead><tr><th>Suffix</th><th>Meaning</th></tr></thead><tbody><tr><td><code>y</code></td><td>Yellow zone — corporation may be liquidated (title-specific)</td></tr><tr><td><code>p</code></td><td>Par value row — valid par prices are marked with <code>p</code></td></tr><tr><td><code>b</code></td><td>Ledge (brown zone) — corporation stays here; does not fall further</td></tr><tr><td><code>o</code></td><td>Orange — title-specific; often triggers an event</td></tr><tr><td><code>j</code></td><td>Black — corporation is closed or bankrupt</td></tr><tr><td>(none)</td><td>Normal cell</td></tr></tbody></table>
+<h3 id="par-prices">Par prices</h3>
+<p>A corporation's par price must land on a <code>p</code>-marked cell. The engine reads these automatically from the MARKET definition — no separate list needed.</p>
+<h3 id="example-1830-excerpt">Example (1830 excerpt)</h3>
+<pre><code class="language-ruby">MARKET = [
+  %w[60y 67 71 76 82 90 100p 112 126 142 160 180 200 225 250 275 300 325 350],
+  %w[53y 60y 66 70 76 82  90p 100 112 126 142 160 180 200 220 240 260 280 300],
+  %w[46y 55y 60y 65 70 76  82p  90 100 112 126 142 160 180 200 220 240 260 280],
+  %w[39y 48y 55y 60 65 70   76   82  90 100 112 126 142 160 180 200 220 240],
+  %w[32y 41y 48y 55 60 65   70   76  82  90 100 112 126 142 160 180],
+  %w[25y 34y 41y 48 55 60   65   70  76   82  90 100 112 126],
+  %w[18y 27y 34y 41 48 55   60   65   70   76  82  90 100],
+  %w[10y 20y 27y 34 41 48   55   60   65   70  76  82],
+].freeze</code></pre>
+<h3 id="market-movement-constants">Market movement constants</h3>
+<p>These constants in <code>game.rb</code> control how the stock marker moves:</p>
+<table><thead><tr><th>Constant</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>SELL_MOVEMENT</code></td><td>Symbol</td><td>Direction on sell: <code>:down_share</code> (one step per share sold), <code>:left_block</code> (one step per block), <code>:none</code></td></tr><tr><td><code>POOL_SHARE_DROP</code></td><td>Symbol</td><td>Where market-pool shares go when sold: <code>:bank</code>, <code>:left</code>, <code>:down</code></td></tr><tr><td><code>SELL_BUY_ORDER</code></td><td>Symbol</td><td><code>:sell_buy_sell</code> — sell, buy, sell again; <code>:sell_buy</code> — sell then buy only</td></tr><tr><td><code>SOLD_OUT_TOP_X_CREATES_WEDGE</code></td><td>Integer</td><td>If all shares sold out and price is in top N, creates a price wedge</td></tr></tbody></table>
+<hr>
+<h2 id="financial-constants">Financial Constants</h2>
+<p>These constants in <code>game.rb</code> control the economy.</p>
+<table><thead><tr><th>Constant</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>BANK_CASH</code></td><td>Integer</td><td>Total bank cash; game may end when this reaches zero</td></tr><tr><td><code>CERT_LIMIT</code></td><td>Hash</td><td>Player count → maximum certificates per player, e.g. <code>{ 3 =&gt; 20, 4 =&gt; 16 }</code></td></tr><tr><td><code>STARTING_CASH</code></td><td>Hash</td><td>Player count → starting cash per player</td></tr><tr><td><code>CAPITALIZATION</code></td><td>Symbol</td><td><code>:full</code> — corporation receives all IPO proceeds at float; <code>:incremental</code> — proceeds added as shares are sold</td></tr><tr><td><code>MUST_SELL_IN_BLOCKS</code></td><td>Boolean</td><td>If <code>true</code>, player must sell all shares of a corporation at once in the SR</td></tr><tr><td><code>CURRENCY_FORMAT_STR</code></td><td>String</td><td>Format string: <code>'$%s'</code> for dollars, <code>'£%s'</code> for pounds, <code>'M%s'</code> for marks</td></tr><tr><td><code>SELL_AFTER</code></td><td>Symbol</td><td>When players may first sell: <code>:after_sr_floated</code>, <code>:operate</code>, <code>:p_any_operate</code></td></tr><tr><td><code>MUST_BUY_TRAIN</code></td><td>Symbol</td><td>When corporations must buy a train: <code>:always</code>, <code>:route</code>, <code>false</code></td></tr><tr><td><code>EBUY_FROM_OTHERS</code></td><td>Boolean</td><td>Whether a corporation can emergency-buy trains from other corporations</td></tr><tr><td><code>GAME_END_CHECK</code></td><td>Hash</td><td>End conditions, e.g. <code>{ bank: :full_or, stock_market: :immediate }</code></td></tr></tbody></table>
+<h3 id="looking-up-reference-values">Looking up reference values</h3>
+<p>Before inventing your own numbers, check a production title that plays similarly:</p>
+<table><thead><tr><th>If your game is like…</th><th>Check</th></tr></thead><tbody><tr><td>Classic 18xx (1830-style)</td><td><code>lib/engine/game/g_1830/game.rb</code></td></tr><tr><td>Incremental capitalisation</td><td><code>lib/engine/game/g_1846/game.rb</code></td></tr><tr><td>Short, sharp (1889-style)</td><td><code>lib/engine/game/g_1889/game.rb</code></td></tr><tr><td>Large map with minors</td><td><code>lib/engine/game/g_1867/game.rb</code></td></tr></tbody></table>
+<hr>
+<h2 id="whats-next">What's Next</h2>
+<ul><li>Defining map hexes, tile supply, and location names: <a href="map.html">Map Configuration</a></li><li>How Steps use phase status to gate actions: <a href="round-step-system.html">Rounds & Steps</a></li><li>Ability types that interact with trains and phases: <a href="abilities.html">Abilities</a></li><li>Testing the economic arc: <a href="testing.html">Testing Your Game</a></li></ul>
+<hr>
+<p><em>Version: 2026-05-08 — derived from <code>lib/engine/depot.rb</code>, <code>lib/engine/phase.rb</code>, <code>lib/engine/stock_market.rb</code>, <code>lib/engine/train.rb</code>, <code>lib/engine/game/base.rb</code>, <code>lib/engine/game/g_1830/game.rb</code>.</em></p>
+</article>
+</main>
+</div>
+<script src="search.js"></script>
+<script src="ui.js"></script>
+</body>
+</html>

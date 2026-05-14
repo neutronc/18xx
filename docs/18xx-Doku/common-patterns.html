@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Common Implementation Patterns — 18OE Dev Docs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Playfair+Display:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({ startOnLoad: true, theme: 'base', themeVariables: {
+  primaryColor: '#0d1f38', primaryTextColor: '#faf6ec',
+  primaryBorderColor: '#c9a843', lineColor: '#c9a843',
+  secondaryColor: '#1a3a6a', tertiaryColor: '#2a4a80',
+  actorBkg: '#0d1f38', actorTextColor: '#faf6ec',
+  actorBorder: '#c9a843', actorLineColor: '#c9a843',
+  activationBkgColor: '#2a4ab0', activationBorderColor: '#c9a843',
+  signalColor: '#c9a843', signalTextColor: '#2a1a0a',
+  labelBoxBkgColor: '#0d1f38', labelBoxBorderColor: '#c9a843', labelTextColor: '#faf6ec',
+  loopTextColor: '#2a1a0a',
+  edgeLabelBackground: '#f0ead8',
+  noteBkgColor: '#f0e8d4', noteTextColor: '#2a1a0a', noteBorderColor: '#c9a843',
+  titleColor: '#2a1a0a',
+  clusterBkg: '#1a3a6a', clusterBorder: '#c9a843', clusterTextColor: '#faf6ec',
+  fillType0: '#0d1f38', fillType1: '#1a3a6a', fillType2: '#2a4a80',
+  fillType3: '#1a3a6a', fillType4: '#0d1f38', fillType5: '#2a4a80',
+  fillType6: '#1a3a6a', fillType7: '#0d1f38'
+} });</script>
+</head>
+<body>
+<header id="site-header">
+  <a href="index.html">18OE</a> &mdash; Developer Documentation
+</header>
+<div id="layout">
+<nav id="sidebar" aria-label="Navigation">
+<input id="nav-search" type="search" placeholder="Search…" aria-label="Search documentation" autocomplete="off">
+<div id="search-results" style="display:none">
+<p id="search-no-results" style="display:none">No results found.</p>
+<ul id="search-results-list"></ul>
+</div>
+<div class="track"><h3>18OE Status</h3><ul>
+<li><a href="rules-summary.html">Game Rules Summary</a></li>
+<li><a href="18oe-map-status.html">Map Implementation Status</a></li>
+<li><a href="status.html">Implementation Tracker</a></li>
+<li><a href="rulebook-coverage.html">Rulebook Coverage</a></li>
+<li><a href="alpha-gaps.html">Open for Alpha</a></li>
+</ul></div>
+<div class="track"><h3>Getting Involved</h3><ul>
+<li><a href="first-contribution.html">Your First Contribution</a></li>
+</ul></div>
+<div class="track"><h3>Building a New Game</h3><ul>
+<li><a href="engine-concepts.html">Understanding the Engine</a></li>
+<li><a href="getting-started.html">Development Setup</a></li>
+<li><a href="game-implementation.html">Game Structure</a></li>
+<li><a href="map.html">Map Configuration</a></li>
+<li><a href="entities.html">Corporations & Companies</a></li>
+<li><a href="trains-phases.html">Trains, Phases & Market</a></li>
+<li><a href="round-step-system.html">Rounds & Steps</a></li>
+<li><a href="auction-round.html">Auction Round</a></li>
+<li><a href="revenue-routing.html">Revenue & Routing</a></li>
+<li><a href="abilities.html">Abilities</a></li>
+<li><a href="tiles.html">Tile Reference</a></li>
+<li><a href="common-patterns.html" aria-current="page"><strong>Common Patterns</strong></a></li>
+<li><a href="testing.html">Testing Your Game</a></li>
+<li><a href="title-checklist.html">Title Checklist</a></li>
+<li><a href="coding-guidelines.html">Coding Guidelines</a></li>
+</ul></div>
+<div class="track"><h3>Reference</h3><ul>
+<li><a href="game-engine.html">Game Engine Reference</a></li>
+<li><a href="adrs.html">Architecture Decision Records</a></li>
+</ul></div>
+<div class="track"><h3>Platform & Testing Setup</h3><ul>
+<li><a href="architecture.html">Architecture Overview</a></li>
+<li><a href="konfiguration-betrieb.html">Configuration & Operations</a></li>
+<li><a href="systemgrenzen.html">System Boundaries</a></li>
+</ul></div>
+<div class="track"><h3>Working with Claude</h3><ul>
+<li><a href="codevelop.html">Co-developing with Claude</a></li>
+</ul></div>
+</nav>
+<main>
+<article>
+<h1 id="common-implementation-patterns">Common Implementation Patterns</h1>
+<p>Short recipes for the most frequently needed game mechanics. Each pattern names the hook to override, shows a minimal implementation, and points to a production title that uses it.</p>
+<hr>
+<h2 id="revenue-patterns">Revenue Patterns</h2>
+<h3 id="hex-revenue-bonus">Hex revenue bonus</h3>
+<p>A route that visits a specific hex earns extra revenue.</p>
+<pre><code class="language-ruby"># In game.rb
+BONUSES = { 'F8' =&gt; 20, 'D4' =&gt; 30 }.freeze
+
+def revenue_for(route, stops)
+  super + stops.sum { |s| BONUSES.fetch(s.hex.id, 0) }
+end</code></pre>
+<p>Reference: <code>lib/engine/game/g_18co/game.rb</code></p>
+<hr>
+<h3 id="east-west-route-bonus">East-west route bonus</h3>
+<p>A corporation earns a bonus when its route set collectively spans east and west edges.</p>
+<pre><code class="language-ruby">EAST_HEXES = %w[A3 A5 A7].freeze
+WEST_HEXES = %w[M3 M5 M7].freeze
+
+def routes_revenue(routes)
+  base = routes.sum(&amp;:revenue)
+  all_stops = routes.flat_map(&amp;:stops).map { |s| s.hex.id }
+  bonus = (all_stops &amp; EAST_HEXES).any? &amp;&amp; (all_stops &amp; WEST_HEXES).any? ? 80 : 0
+  base + bonus
+end</code></pre>
+<p>Reference: <code>lib/engine/game/g_1830/game.rb</code></p>
+<hr>
+<h3 id="revenue-multiplier-for-a-special-train">Revenue multiplier for a special train</h3>
+<p>Double the revenue of E-trains or other high-tier trains.</p>
+<pre><code class="language-ruby">def revenue_for(route, stops)
+  base = super
+  route.train.name == 'E' ? base * 2 : base
+end</code></pre>
+<hr>
+<h2 id="route-validation-patterns">Route Validation Patterns</h2>
+<h3 id="mandatory-home-city-inclusion">Mandatory home-city inclusion</h3>
+<p>Every route must pass through the corporation's home city.</p>
+<pre><code class="language-ruby">def check_other(route)
+  home = route.corporation.coordinates
+  return if route.stops.any? { |s| s.hex.id == home }
+  raise GameError, "#{route.corporation.name} must include its home city"
+end</code></pre>
+<p>Reference: <code>lib/engine/game/g_18chesapeake/game.rb</code></p>
+<hr>
+<h3 id="route-must-reach-an-off-map-hex">Route must reach an off-map hex</h3>
+<pre><code class="language-ruby">REQUIRED_EXIT = %w[A1 A3].freeze   # at least one route must end here
+
+def check_route_combination(routes)
+  exits = routes.flat_map(&amp;:stops).select { |s| s.hex.offboard? }.map { |s| s.hex.id }
+  return if (exits &amp; REQUIRED_EXIT).any?
+  raise GameError, 'At least one route must reach an off-map space'
+end</code></pre>
+<hr>
+<h3 id="limit-on-routes-sharing-the-same-city">Limit on routes sharing the same city</h3>
+<p>Standard 18xx rules prohibit two of the same corporation's routes from counting the same city twice.</p>
+<pre><code class="language-ruby">def check_route_combination(routes)
+  # Base engine already checks path overlap; add city-level check:
+  city_stops = routes.flat_map { |r| r.stops.select(&amp;:city?) }
+  dupes = city_stops.group_by(&amp;:itself).select { |_, v| v.size &gt; 1 }.keys
+  raise GameError, "Route shares city #{dupes.first.hex.id}" if dupes.any?
+end</code></pre>
+<hr>
+<h2 id="dividend-patterns">Dividend Patterns</h2>
+<h3 id="half-pay-dividend-type">Half-pay dividend type</h3>
+<p>Add a "half" option alongside payout and withhold.</p>
+<pre><code class="language-ruby"># In step/dividend.rb (or a title-specific subclass)
+DIVIDEND_TYPES = %i[payout half withhold].freeze
+
+def dividend_types
+  DIVIDEND_TYPES
+end
+
+def half(entity, revenue)
+  per_share = (revenue / 2 / entity.total_shares).floor
+  { corporation: revenue - (per_share * entity.total_shares), per_share: per_share }
+end</code></pre>
+<p>Then register your step in <code>operating_round</code>:</p>
+<pre><code class="language-ruby">require_relative 'step/dividend'
+
+def operating_round(round_num)
+  Round::Operating.new(self, [
+    # ... other steps ...
+    G8888::Step::Dividend,
+    # ...
+  ], round_num: round_num)
+end</code></pre>
+<p>Reference: <code>lib/engine/game/g_1822/step/dividend.rb</code></p>
+<hr>
+<h3 id="stock-price-holds-on-half-pay">Stock price holds on half-pay</h3>
+<pre><code class="language-ruby"># In the custom Dividend step
+def share_price_change(entity, revenue)
+  case @dividends_paid
+  when :payout  then { share_direction: :right, share_times: 1 }
+  when :half    then {}   # no movement
+  when :withhold then { share_direction: :left, share_times: 1 }
+  end
+end</code></pre>
+<hr>
+<h2 id="tile-lay-patterns">Tile Lay Patterns</h2>
+<h3 id="extra-free-tile-lay-via-company-ability">Extra free tile lay via company ability</h3>
+<p>Give a private company the ability to lay one free tile on a specific hex. No custom Step needed — the <code>tile_lay</code> ability and <code>Step::SpecialTrack</code> handle it automatically.</p>
+<pre><code class="language-ruby"># In entities.rb COMPANIES
+{
+  name:    'Bavarian Central Railway',
+  sym:     'BCR',
+  value:   80,
+  revenue: 15,
+  abilities: [
+    { type: 'blocks_hexes', owner_type: 'player', hexes: ['D8'] },
+    {
+      type:       'tile_lay',
+      owner_type: 'corporation',
+      hexes:      ['D8'],
+      tiles:      %w[3 4 58],
+      when:       'owning_corp_or_turn',
+      count:      1,
+    },
+  ],
+  color: nil,
+}</code></pre>
+<p>The owning corporation gets one free tile lay on D8 per OR. <code>Step::SpecialTrack</code> must be in your <code>operating_round</code> step list (it is in the default list).</p>
+<hr>
+<h3 id="tile_lays-slot-mechanics"><code>tile_lays</code> slot mechanics</h3>
+<p><code>tile_lays(entity)</code> returns an <strong>ordered array of lay-slot hashes</strong>. Each slot is one available lay action, consumed in sequence as <code>@round.num_laid_track</code> is incremented.</p>
+<pre><code class="language-ruby"># Slot hash keys:
+{ lay: true,                    # true / false / :not_if_upgraded
+  upgrade: true,                # true / false / :not_if_upgraded
+  cost: 0,                      # extra cost for yellow lays
+  upgrade_cost: 0,              # extra cost for upgrades (defaults to :cost)
+  cannot_reuse_same_hex: false  # prevents laying on same hex twice
+}</code></pre>
+<p><code>ability.use!</code> on a <code>tile_lay</code> ability routes through <code>lay_tile_action</code> when <code>consume_tile_lay: true</code> (consumes a slot) or through <code>lay_tile</code> directly when omitted (extra on top of the normal budget).</p>
+<hr>
+<h3 id="corporation-gets-two-tile-lays-per-or">Corporation gets two tile lays per OR</h3>
+<pre><code class="language-ruby"># In game.rb
+TILE_LAYS = [
+  { lay: true, upgrade: true },
+  { lay: :not_if_upgraded, upgrade: false, cost: 20 },
+].freeze</code></pre>
+<p>The second element is the second lay: <code>lay: :not_if_upgraded</code> means the second action may only lay a new tile (not upgrade an existing one). <code>cost: 20</code> charges $20 for the second lay.</p>
+<p>Reference: <code>lib/engine/game/g_1849/game.rb</code></p>
+<hr>
+<h2 id="token-patterns">Token Patterns</h2>
+<h3 id="free-token-placement-via-teleport-ability">Free token placement via teleport ability</h3>
+<p>A private company grants the owning corporation a free token placement anywhere on the board, bypassing connectivity.</p>
+<pre><code class="language-ruby"># In entities.rb COMPANIES
+{
+  name: 'Steamboat Company',
+  sym:  'SBC',
+  value: 30,
+  revenue: 5,
+  abilities: [
+    {
+      type:       'teleport',
+      owner_type: 'corporation',
+      tiles:      %w[57 14 15],
+      hexes:      [],          # empty = any hex
+    },
+  ],
+  color: nil,
+}</code></pre>
+<p><code>Step::SpecialToken</code> must be in your <code>operating_round</code> step list.</p>
+<hr>
+<h3 id="corporation-starts-with-two-home-tokens">Corporation starts with two home tokens</h3>
+<pre><code class="language-ruby"># In entities.rb CORPORATIONS
+{
+  sym:         'PRR',
+  coordinates: 'H12',
+  second_city: 'F14',   # second home token placed here at game start
+  # ...
+}</code></pre>
+<hr>
+<h2 id="phase--event-patterns">Phase & Event Patterns</h2>
+<h3 id="custom-event-method">Custom event method</h3>
+<p>When a train fires an event, the engine calls <code>game.send("event_#{type}!")</code>. Define the method in <code>game.rb</code>:</p>
+<pre><code class="language-ruby"># Fired when the first 5-train is purchased
+def event_close_companies!
+  @log &lt;&lt; '-- Event: Private companies close --'
+  super
+end</code></pre>
+<p>Call <code>super</code> to run the base class logic (closing companies, etc.) before or after your additions.</p>
+<hr>
+<h3 id="phase-gated-action-in-a-step">Phase-gated action in a Step</h3>
+<p>Check the current phase status inside a Step's <code>actions</code> method to enable or disable options:</p>
+<pre><code class="language-ruby">def actions(entity)
+  return [] unless @game.phase.status.include?('can_buy_companies')
+  super
+end</code></pre>
+<hr>
+<h2 id="operating-order-patterns">Operating Order Patterns</h2>
+<h3 id="custom-operating-order">Custom operating order</h3>
+<p>Override <code>operating_order</code> in <code>game.rb</code>:</p>
+<pre><code class="language-ruby"># Corporations with destination tokens operate before others
+def operating_order
+  without_dest, with_dest = super.partition { |c| !destination_reached?(c) }
+  without_dest + with_dest
+end</code></pre>
+<p>Reference: <code>lib/engine/game/g_1889/game.rb</code></p>
+<hr>
+<h3 id="minors-operate-before-majors">Minors operate before majors</h3>
+<p>The default <code>operating_order</code> already does this. To reverse it:</p>
+<pre><code class="language-ruby">def operating_order
+  floated_majors = corporations.select { |c| c.type == :major &amp;&amp; c.floated? }
+  floated_minors = minors.select(&amp;:floated?)
+  (floated_majors + floated_minors).sort_by { |c| [c.share_price.price, c.share_price.corporations.index(c)] }.reverse
+end</code></pre>
+<hr>
+<h2 id="finding-more-examples">Finding More Examples</h2>
+<p>The fastest way to find a production example of any pattern:</p>
+<pre><code class="language-bash"># Find titles that override revenue_for:
+grep -rl "def revenue_for" lib/engine/game/
+
+# Find titles that define a half-pay step:
+grep -rl "half" lib/engine/game/*/step/
+
+# Find all titles that use a specific ability type:
+grep -rl "type: 'teleport'" lib/engine/game/</code></pre>
+<hr>
+<h2 id="whats-next">What's Next</h2>
+<ul><li>Revenue hook reference: <a href="revenue-routing.html">Revenue & Routing</a></li><li>Ability field reference: <a href="abilities.html">Abilities</a></li><li>Writing a custom Step from scratch: <a href="round-step-system.html">Rounds & Steps</a></li><li>Verifying patterns with fixtures: <a href="testing.html">Testing Your Game</a></li></ul>
+<hr>
+<p><em>Version: 2026-05-08 — derived from production game titles in <code>lib/engine/game/</code>, <code>lib/engine/step/</code>, <code>lib/engine/game/base.rb</code>.</em></p>
+</article>
+</main>
+</div>
+<script src="search.js"></script>
+<script src="ui.js"></script>
+</body>
+</html>

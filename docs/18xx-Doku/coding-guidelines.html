@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Coding Guidelines — 18OE Dev Docs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Playfair+Display:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({ startOnLoad: true, theme: 'base', themeVariables: {
+  primaryColor: '#0d1f38', primaryTextColor: '#faf6ec',
+  primaryBorderColor: '#c9a843', lineColor: '#c9a843',
+  secondaryColor: '#1a3a6a', tertiaryColor: '#2a4a80',
+  actorBkg: '#0d1f38', actorTextColor: '#faf6ec',
+  actorBorder: '#c9a843', actorLineColor: '#c9a843',
+  activationBkgColor: '#2a4ab0', activationBorderColor: '#c9a843',
+  signalColor: '#c9a843', signalTextColor: '#2a1a0a',
+  labelBoxBkgColor: '#0d1f38', labelBoxBorderColor: '#c9a843', labelTextColor: '#faf6ec',
+  loopTextColor: '#2a1a0a',
+  edgeLabelBackground: '#f0ead8',
+  noteBkgColor: '#f0e8d4', noteTextColor: '#2a1a0a', noteBorderColor: '#c9a843',
+  titleColor: '#2a1a0a',
+  clusterBkg: '#1a3a6a', clusterBorder: '#c9a843', clusterTextColor: '#faf6ec',
+  fillType0: '#0d1f38', fillType1: '#1a3a6a', fillType2: '#2a4a80',
+  fillType3: '#1a3a6a', fillType4: '#0d1f38', fillType5: '#2a4a80',
+  fillType6: '#1a3a6a', fillType7: '#0d1f38'
+} });</script>
+</head>
+<body>
+<header id="site-header">
+  <a href="index.html">18OE</a> &mdash; Developer Documentation
+</header>
+<div id="layout">
+<nav id="sidebar" aria-label="Navigation">
+<input id="nav-search" type="search" placeholder="Search…" aria-label="Search documentation" autocomplete="off">
+<div id="search-results" style="display:none">
+<p id="search-no-results" style="display:none">No results found.</p>
+<ul id="search-results-list"></ul>
+</div>
+<div class="track"><h3>18OE Status</h3><ul>
+<li><a href="rules-summary.html">Game Rules Summary</a></li>
+<li><a href="18oe-map-status.html">Map Implementation Status</a></li>
+<li><a href="status.html">Implementation Tracker</a></li>
+<li><a href="rulebook-coverage.html">Rulebook Coverage</a></li>
+<li><a href="alpha-gaps.html">Open for Alpha</a></li>
+</ul></div>
+<div class="track"><h3>Getting Involved</h3><ul>
+<li><a href="first-contribution.html">Your First Contribution</a></li>
+</ul></div>
+<div class="track"><h3>Building a New Game</h3><ul>
+<li><a href="engine-concepts.html">Understanding the Engine</a></li>
+<li><a href="getting-started.html">Development Setup</a></li>
+<li><a href="game-implementation.html">Game Structure</a></li>
+<li><a href="map.html">Map Configuration</a></li>
+<li><a href="entities.html">Corporations & Companies</a></li>
+<li><a href="trains-phases.html">Trains, Phases & Market</a></li>
+<li><a href="round-step-system.html">Rounds & Steps</a></li>
+<li><a href="auction-round.html">Auction Round</a></li>
+<li><a href="revenue-routing.html">Revenue & Routing</a></li>
+<li><a href="abilities.html">Abilities</a></li>
+<li><a href="tiles.html">Tile Reference</a></li>
+<li><a href="common-patterns.html">Common Patterns</a></li>
+<li><a href="testing.html">Testing Your Game</a></li>
+<li><a href="title-checklist.html">Title Checklist</a></li>
+<li><a href="coding-guidelines.html" aria-current="page"><strong>Coding Guidelines</strong></a></li>
+</ul></div>
+<div class="track"><h3>Reference</h3><ul>
+<li><a href="game-engine.html">Game Engine Reference</a></li>
+<li><a href="adrs.html">Architecture Decision Records</a></li>
+</ul></div>
+<div class="track"><h3>Platform & Testing Setup</h3><ul>
+<li><a href="architecture.html">Architecture Overview</a></li>
+<li><a href="konfiguration-betrieb.html">Configuration & Operations</a></li>
+<li><a href="systemgrenzen.html">System Boundaries</a></li>
+</ul></div>
+<div class="track"><h3>Working with Claude</h3><ul>
+<li><a href="codevelop.html">Co-developing with Claude</a></li>
+</ul></div>
+</nav>
+<main>
+<article>
+<h1 id="coding-guidelines">Coding Guidelines</h1>
+<p>Patterns distilled from pull-request feedback on the 18xx engine. Read these before making any code changes. Each guideline includes the rationale and a concrete example.</p>
+<hr>
+<h2 id="reference-games--study-before-implementing-a-mechanic">Reference Games — Study Before Implementing a Mechanic</h2>
+<p>Find a production game that does something similar before writing new code. These are well-established reference implementations.</p>
+<table><thead><tr><th>Mechanic</th><th>Reference game / file</th></tr></thead><tbody><tr><td>Minor/major conversion, waterfall auction</td><td><code>g_1822/game.rb</code></td></tr><tr><td>Merger round, regional → national</td><td><code>g_1867/game.rb</code></td></tr><tr><td>Coal exchange, coalitions, receivership</td><td><code>g_1837/game.rb</code></td></tr><tr><td>Phase/event system, <code>event_</code> methods</td><td><code>g_18_royal_gorge/game.rb</code></td></tr><tr><td>Complex events, multi-company types</td><td><code>g_1868_wy/game.rb</code></td></tr><tr><td>Company mergers and conversion</td><td><code>g_1841/game.rb</code></td></tr><tr><td>Merger round mechanics</td><td><code>g_18_mag/game.rb</code></td></tr><tr><td>Receivership, insolvency</td><td><code>g_1860/game.rb</code></td></tr><tr><td>Train obligation, forced purchase</td><td><code>g_1862_ea/game.rb</code></td></tr><tr><td>National railway with special revenue</td><td><code>g_1873/game.rb</code></td></tr><tr><td>Clean minimal baseline</td><td><code>g_18_ny/game.rb</code>, <code>g_1837/game.rb</code></td></tr><tr><td>National companies (state-owned mid-game)</td><td><code>g_1844/game.rb</code>, <code>g_1854/game.rb</code></td></tr><tr><td>Mergers with stock conversion</td><td><code>g_1828/game.rb</code>, <code>g_1841/game.rb</code></td></tr><tr><td>Combining trains (level ≤4 OE-style)</td><td><code>g_1862/game.rb</code></td></tr><tr><td>Ferries / port tokens</td><td><code>g_18_mex/game.rb</code>, <code>g_18_scan/game.rb</code></td></tr><tr><td>Sea zones / province crossing</td><td><code>g_18_oe/game.rb</code></td></tr></tbody></table>
+<table><thead><tr><th>Feature</th><th>File</th></tr></thead><tbody><tr><td>Waterfall auction</td><td><code>g_1822/step/waterfall_auction.rb</code></td></tr><tr><td>Minor/major conversion</td><td><code>g_1822/game.rb</code> (conversion section)</td></tr><tr><td>Merger round</td><td><code>g_1841/game.rb</code>, <code>g_18_mag/game.rb</code></td></tr><tr><td>National revenue</td><td><code>g_1873/game.rb</code></td></tr><tr><td>Forced train purchase</td><td><code>g_1860/game.rb</code>, <code>g_1862_ea/game.rb</code></td></tr><tr><td>Custom event flow</td><td><code>g_18_royal_gorge/game.rb</code></td></tr><tr><td>Phase status patterns</td><td><code>g_18_eu/game.rb</code></td></tr><tr><td>Minors as Corporation (no par), auto-dividend</td><td><code>g_1837/game.rb</code> L675, <code>g_1837/step/minor_half_pay.rb</code></td></tr><tr><td>Assign/hex tokens (ferry, port)</td><td><code>lib/engine/step/assign.rb</code>, <code>g_18_mex/step/</code></td></tr></tbody></table>
+<hr>
+<h2 id="1-extract-helpers-when-a-method-has-distinct-phases">1. Extract helpers when a method has distinct phases</h2>
+<p>When a public method contains multiple <code>if</code>/<code>return</code> blocks that each represent a distinct state, pull each block into its own named private helper. The top-level method becomes a clean dispatch.</p>
+<p><strong>Bad:</strong></p>
+<pre><code class="language-ruby">def actions(entity)
+  if @converting
+    actions = []
+    ipo_bundle = @converting.ipo_shares.first&amp;.to_bundle
+    actions &lt;&lt; 'buy_shares' if ipo_bundle &amp;&amp; can_buy?(entity, ipo_bundle)
+    actions &lt;&lt; 'pass'
+    return actions
+  end
+  # ... more phases inline ...
+end</code></pre>
+<p><strong>Good:</strong></p>
+<pre><code class="language-ruby">def actions(entity)
+  return converting_actions(entity) if @converting
+  return converted_actions(entity) if @converted
+  # normal actions ...
+end
+
+private
+
+def converting_actions(entity)
+  actions = []
+  ipo_bundle = @converting.ipo_shares.first&amp;.to_bundle
+  actions &lt;&lt; 'buy_shares' if ipo_bundle &amp;&amp; can_buy?(entity, ipo_bundle)
+  actions &lt;&lt; 'pass'
+  actions
+end</code></pre>
+<p>Aim for 5–20 lines per method; guard clauses at the top; early return on rejection.</p>
+<hr>
+<h2 id="2-no-magic-numbers--use-named-constants">2. No magic numbers — use named constants</h2>
+<p>Replace bare literals with named constants in <code>game.rb</code>. Reference them in step files via <code>@game.class::CONSTANT</code>.</p>
+<p><strong>Bad:</strong></p>
+<pre><code class="language-ruby">6.times do |index|
+  share = Share.new(corporation, ..., index: 4 + index)
+end</code></pre>
+<p><strong>Good:</strong></p>
+<pre><code class="language-ruby"># In game.rb:
+CONVERSION_NEW_SHARES = 6
+
+# In step file:
+@game.class::CONVERSION_NEW_SHARES.times do |index|
+  share = Share.new(corporation, ..., index: 4 + index)
+end</code></pre>
+<p>Use <code>Set</code> for membership checks. Use descriptive names: <code>ROYAL_GORGE_HEXES_TO_TILES</code>, not <code>SPECIAL_HEXES</code>. Group constants near thematically related ones.</p>
+<hr>
+<h2 id="3-no-duplicated-expressions--extract-shared-private-helpers">3. No duplicated expressions — extract shared private helpers</h2>
+<p>If the same expression appears in two or more methods, extract it to a private helper.</p>
+<p><strong>Bad:</strong></p>
+<pre><code class="language-ruby">def help
+  zones = @game.minor_available_regions.map { |zone, count| "#{zone}(#{count})" }.join(', ')
+  "Available zones: #{zones}."
+end
+
+def float_minor(action)
+  zones = @game.minor_available_regions.map { |zone, count| "#{zone}(#{count})" }.join(', ')
+  @log &lt;&lt; "Available zones: #{zones}"
+end</code></pre>
+<p><strong>Good:</strong></p>
+<pre><code class="language-ruby">def help
+  "Available zones: #{zones_display}."
+end
+
+def float_minor(action)
+  @log &lt;&lt; "Available zones: #{zones_display}"
+end
+
+private
+
+def zones_display
+  @game.minor_available_regions.map { |zone, count| "#{zone}(#{count})" }.join(', ')
+end</code></pre>
+<hr>
+<h2 id="4-compound-guard-conditions--multi-line-for-separate-rule-clauses">4. Compound guard conditions — multi-line for separate rule clauses</h2>
+<p>Multiple single-condition <code>return false</code> guards are clearer than one compound boolean when each guard encodes a distinct rule clause.</p>
+<pre><code class="language-ruby"># Clearer — each condition is independently debuggable:
+if @converting
+  return false if bundle.corporation != @converting
+  return false unless bundle.corporation.president?(entity)
+  return false if bought_corporation == bundle.corporation
+end
+
+# Shorter but harder to scan:
+return false if @converting &amp;&amp; (bundle.corporation != @converting ||
+                                !bundle.corporation.president?(entity) ||
+                                bought_corporation == bundle.corporation)</code></pre>
+<p>Use the one-liner only when the conditions form a single logical unit.</p>
+<hr>
+<h2 id="5-phase-conditions--use-status-strings-never-phase-name-integers">5. Phase conditions — use status strings, never phase name integers</h2>
+<p><strong>Bad:</strong></p>
+<pre><code class="language-ruby">return false if @phase.name.to_i &gt;= 4</code></pre>
+<p>Phase names are not guaranteed to be integers; variant games can rename them. <code>.to_i</code> silently returns 0 for non-numeric names. Phase comparisons are also invisible to the game info page.</p>
+<p><strong>Good:</strong></p>
+<pre><code class="language-ruby"># In PHASES (game.rb):
+{ name: '4', ..., status: ['can_buy_trains_from_others'] }
+
+# In game.rb:
+def can_buy_train_from_others?
+  @phase.status.include?('can_buy_trains_from_others')
+end
+
+def must_buy_train?(entity)
+  return false unless entity.trains.empty?
+  return false unless @phase.status.include?('train_obligation')
+  entity.floated?
+end</code></pre>
+<p>Note: <code>entity.corporation?</code> is a class check (is this object a Corporation instance?), not a type check. In OR methods, the entity is always a corporation — players and the bank never reach them. The meaningful discriminator is <code>entity.type</code> (<code>:minor</code>, <code>:major</code>, <code>:national</code>, etc.).</p>
+<p>For one-shot state changes, use train events:</p>
+<pre><code class="language-ruby"># In TRAINS (game.rb):
+{ name: '5', ..., events: [{ 'type' =&gt; 'consolidation_triggered' }] }
+
+# In game.rb:
+def event_consolidation_triggered!
+  @consolidation_triggered = true
+  @log &lt;&lt; '-- Event: Consolidation phase triggered --'
+end</code></pre>
+<p>Reference: <code>g_18_eu/game.rb</code> <code>can_par?</code>, <code>g_18_royal_gorge/game.rb</code> event methods.</p>
+<hr>
+<h2 id="6-array-emptiness--empty-not-any-without-a-block">6. Array emptiness — <code>.empty?</code> not <code>.any?</code> without a block</h2>
+<p><strong>Bad:</strong></p>
+<pre><code class="language-ruby">return false if entity.trains.any?   # always truthy — guard never fires</code></pre>
+<p><strong>Good:</strong></p>
+<pre><code class="language-ruby">return false unless entity.trains.empty?
+entity.trains.any? { |t| t.distance &gt; 2 }  # predicate with block — fine</code></pre>
+<p>Reserve <code>.any?</code> / <code>.none?</code> / <code>.all?</code> for block predicates only.</p>
+<hr>
+<h2 id="7-class-references-in-steps--gameclass-not-the-literal-class-name">7. Class references in steps — <code>@game.class::</code> not the literal class name</h2>
+<p><strong>Bad:</strong></p>
+<pre><code class="language-ruby">G18OE::Game::CITY_NATIONAL_ZONE[hex.name.to_s]</code></pre>
+<p>This locks the step to the concrete class; variant subclasses that override the constant are silently ignored.</p>
+<p><strong>Good:</strong></p>
+<pre><code class="language-ruby">@game.class::CITY_NATIONAL_ZONE[hex.coordinates]</code></pre>
+<p>Also applies to constants referenced from <code>game.rb</code> itself — use <code>self.class::CONSTANT</code> so subclass overrides take effect.</p>
+<hr>
+<h2 id="8-hex-keys--coordinates-for-data-name-for-display">8. Hex keys — <code>coordinates</code> for data, <code>name</code> for display</h2>
+<pre><code class="language-ruby"># Data lookups:
+@game.class::CITY_NATIONAL_ZONE[hex.coordinates]
+
+# Log strings and UI display only:
+@log &lt;&lt; "Token placed at #{hex.name}"</code></pre>
+<hr>
+<h2 id="9-value-deletion--deletevalue-not-delete_atindex">9. Value deletion — <code>.delete(value)</code> not <code>.delete_at(index)</code></h2>
+<p><strong>Bad:</strong></p>
+<pre><code class="language-ruby">idx = @game.minor_available_regions.index(region)
+@game.minor_available_regions.delete_at(idx) if idx</code></pre>
+<p><strong>Good:</strong></p>
+<pre><code class="language-ruby">@game.minor_available_regions.delete(region)</code></pre>
+<p><code>.delete(value)</code> removes by identity and returns <code>nil</code> if not found — safe. <code>.delete_at(index)</code> is for positional removal only.</p>
+<hr>
+<h2 id="10-no-in-repo-feature-flags">10. No in-repo feature flags</h2>
+<p><strong>Bad:</strong></p>
+<pre><code class="language-ruby">NATIONAL_REGION_HEXES_COMPLETE = false
+return true unless self.class::NATIONAL_REGION_HEXES_COMPLETE</code></pre>
+<p>Flag constants accumulate and become dead code. Reviewers cannot tell which flags are active or permanent.</p>
+<p><strong>Good:</strong> Remove the constant when the feature is complete. During development, use a plain TODO comment:</p>
+<pre><code class="language-ruby"># TODO: restrict to home zone once all NATIONAL_REGION_HEXES lists are filled</code></pre>
+<p>For player-selectable behaviour, use <code>optional_rules</code> instead.</p>
+<hr>
+<h2 id="11-round-inheritance--inherit-from-the-closest-engine-round-class">11. Round inheritance — inherit from the closest engine round class</h2>
+<p><strong>Bad:</strong></p>
+<pre><code class="language-ruby">class Consolidation &lt; Engine::Round::Base</code></pre>
+<p>Inheriting from <code>Base</code> forces re-implementation of stock round behaviour.</p>
+<p><strong>Good:</strong></p>
+<pre><code class="language-ruby">class Consolidation &lt; Engine::Round::Stock
+  # override only what differs: select_entities, finished?, finish_round
+end</code></pre>
+<p>Stock-like rounds → <code>Engine::Round::Stock</code>. Merger-like rounds → <code>Engine::Round::Merger</code>.</p>
+<p>Reference: <code>g_18_eu</code> FinalExchange, <code>g_1867</code> Merger, <code>g_18_mag</code> merger round.</p>
+<hr>
+<h2 id="12-next_round--use-a-case-statement-not-ifreturn-chains">12. <code>next_round!</code> — use a case statement, not if/return chains</h2>
+<p><strong>Bad:</strong></p>
+<pre><code class="language-ruby">def next_round!
+  if @round.is_a?(Round::Operating) &amp;&amp; @consolidation_triggered &amp;&amp; !@consolidation_done
+    @round = new_consolidation_round
+    return
+  end
+  super
+end</code></pre>
+<p><strong>Good:</strong></p>
+<pre><code class="language-ruby">def next_round!
+  @round =
+    case @round
+    when Round::Stock
+      @operating_rounds = @phase.operating_rounds
+      reorder_players
+      new_operating_round
+    when Round::Operating
+      if @round.round_num &lt; @operating_rounds
+        or_round_finished
+        new_operating_round(@round.round_num + 1)
+      elsif @consolidation_triggered &amp;&amp; !@consolidation_done
+        @turn += 1
+        or_round_finished
+        or_set_finished
+        new_consolidation_round
+      else
+        @turn += 1
+        or_round_finished
+        or_set_finished
+        new_stock_round
+      end
+    when Round::G18OE::Consolidation
+      @consolidation_done = true
+      new_stock_round
+    when init_round.class
+      init_round_finished
+      reorder_players
+      new_stock_round
+    end
+end</code></pre>
+<p>Rules: assign <code>@round</code> once at the top via <code>case @round</code>; no <code>return</code> statements; no <code>super</code>; each <code>when</code> branch returns the new round object.</p>
+<p>Reference: <code>g_18_mag/game.rb</code>, <code>g_1841/game.rb</code>, <code>g_1867/game.rb</code>.</p>
+<hr>
+<h2 id="13-event-architecture">13. Event architecture</h2>
+<p>Each game event has a dedicated <code>event_foo!</code> method. Event methods log their own messages and delegate complex logic to private helpers.</p>
+<pre><code class="language-ruby">def event_green_phase!
+  @log &lt;&lt; '-- Event: Green Phase --'
+  setup_green_phase_companies
+  @companies.each { |c| close_company(c) if c.sym =~ /^P/ }
+end
+
+private
+
+def setup_green_phase_companies
+  # focused helper
+end</code></pre>
+<ul><li>Guard clauses at the top: <code>return unless condition</code></li><li>Log with <code>@log &lt;&lt; "-- Event: #{description} --"</code></li><li>Use <code>round_state</code> in step files to declare and initialise step-level state.</li></ul>
+<p>Reference: <code>g_18_royal_gorge/game.rb</code> lines 327–379.</p>
+<hr>
+<h2 id="14-disable-actions-via-actions-never-via-raise-in-process_">14. Disable actions via <code>actions()</code>, never via <code>raise</code> in <code>process_*</code></h2>
+<p>If a player shouldn't be able to take an action, don't offer it in <code>actions()</code>. Don't offer it and then raise a <code>GameError</code> inside <code>process_*</code>.</p>
+<p><strong>Bad:</strong></p>
+<pre><code class="language-ruby">def converted_actions(entity)
+  actions = []
+  actions &lt;&lt; 'pass'   # always offered
+  actions
+end
+
+def pass!
+  raise GameError, "Must become president" unless @converted.president?(current_entity)
+end</code></pre>
+<p><strong>Good:</strong></p>
+<pre><code class="language-ruby">def converted_actions(entity)
+  actions = []
+  actions &lt;&lt; 'pass' if @converted.president?(entity)   # only when allowed
+  actions
+end
+
+def pass!
+  if @converted
+    @round.current_actions.clear
+    @converted = nil
+  end
+  super
+end</code></pre>
+<h3 id="step-file-structure">Step file structure</h3>
+<ul><li>One concern per step file (<code>bankrupt.rb</code>, <code>coal_exchange.rb</code> — not one giant file).</li><li>Inherit from the closest base step; override only what differs.</li><li>Declare step-level state in <code>round_state</code>, not in instance variables set outside <code>setup</code>.</li></ul>
+<hr>
+<h2 id="15-commenting-style">15. Commenting style</h2>
+<p>Write no comment if the method name explains the intent. Write a short comment only when the rule being encoded is non-obvious to someone reading without the rulebook.</p>
+<p>Never write multi-line comment blocks or docstrings. Use short explanatory comments only for non-obvious domain logic.</p>
+<hr>
+<h2 id="16-commit-hygiene">16. Commit hygiene</h2>
+<ul><li>One logical change per commit.</li><li>Do not mix feature work, file deletions, and merge commits.</li><li>Do not push accidental deletions.</li><li>Prefer multiple small focused PRs over one large PR.</li><li>PRs that build on each other must be merged in order; document this in the PR description.</li></ul>
+<hr>
+<h2 id="17-keep-logic-in-the-game-class--expose-simple-predicates-to-steps">17. Keep logic in the game class — expose simple predicates to steps</h2>
+<p>Steps should call simple named methods on <code>@game</code>. The preconditions and implementation details belong in <code>game.rb</code>.</p>
+<p><strong>Bad:</strong></p>
+<pre><code class="language-ruby"># step encodes multi-part condition:
+def buyable_trains(entity)
+  return [] if !@game.major_phase? || !@game.first_or_done
+end</code></pre>
+<p><strong>Good:</strong></p>
+<pre><code class="language-ruby"># game.rb exposes a single named predicate:
+def non_starter_trains_available?
+  major_phase? &amp;&amp; first_or_done
+end
+
+# step:
+def buyable_trains(entity)
+  return [] unless @game.non_starter_trains_available?
+end</code></pre>
+<p>If a predicate has a phase precondition, encode the phase check inside the predicate, not at every call site:</p>
+<pre><code class="language-ruby"># game.rb — predicate encodes its own precondition:
+def fulfilled_train_obligation?(entity)
+  !phase.status.include?('train_obligation') || @fulfilled_train_obligation.include?(entity.id)
+end</code></pre>
+<hr>
+<h2 id="18-method-naming-conventions---for-mutation--for-boolean-predicates">18. Method naming conventions — <code>!</code> for mutation, <code>?</code> for boolean predicates</h2>
+<pre><code class="language-ruby">def fulfill_train_obligation!(entity)   # mutates state
+  @fulfilled_train_obligation.add(entity.id)
+end
+
+def fulfilled_train_obligation?(entity) # boolean query
+  !phase.status.include?('train_obligation') || @fulfilled_train_obligation.include?(entity.id)
+end</code></pre>
+<hr>
+<h2 id="19-understand-what-base-step-methods-gate-before-overriding">19. Understand what base step methods gate before overriding</h2>
+<p>Some base step methods do more than their name implies. Before overriding, read the base implementation and every call site.</p>
+<p><strong>Example — <code>can_entity_buy_train?</code>:</strong></p>
+<p>This method gates the entire <code>actions</code> method, including the emergency-buy sell-shares path for the president. If it returns <code>false</code> for a player, the president can never be asked to sell shares to fund an emergency purchase.</p>
+<pre><code class="language-ruby"># base Engine::Step::BuyTrain#actions:
+def actions(entity)
+  return [] unless can_entity_buy_train?(entity)            # gates everything
+  return ['sell_shares'] if entity == current_entity&amp;.owner # president e-buy path
+  # ...
+end</code></pre>
+<p>Only return <code>true</code> for players from <code>can_entity_buy_train?</code> when the rules allow the president to sell shares to fund a train purchase.</p>
+<p>Before writing any override, verify what the base class already returns for every entity type in the game. If the base already returns the same value for all types your game uses, the override is dead code — delete it.</p>
+<hr>
+<h2 id="20-auto-process-steps-with-a-single-valid-choice--actions--skip">20. Auto-process steps with a single valid choice — <code>actions</code> + <code>skip!</code></h2>
+<p>When an entity type has only one valid option for a step (e.g., minors always half-pay), do not present the choice to the player.</p>
+<p><strong>Bad:</strong></p>
+<pre><code class="language-ruby">def dividend_types
+  case current_entity.type
+  when :minor then [:half]
+  # ...
+  end
+end</code></pre>
+<p><strong>Good:</strong></p>
+<pre><code class="language-ruby">def actions(entity)
+  return [] if %i[minor national].include?(entity.type)
+  super
+end
+
+def skip!
+  case current_entity.type
+  when :minor
+    kind = total_revenue.zero? ? 'withhold' : 'half'
+  when :national
+    kind = total_revenue.zero? ? 'withhold' : 'payout'
+  else
+    return super
+  end
+  process_dividend(Action::Dividend.new(current_entity, kind: kind))
+end</code></pre>
+<p><code>dividend_types</code> must include every kind <code>process_dividend</code> may be called with, including <code>:withhold</code> as a fallback for the zero-revenue case:</p>
+<pre><code class="language-ruby">def dividend_types
+  case current_entity.type
+  when :minor   then %i[half withhold]
+  when :national then %i[payout withhold]
+  else %i[withhold half payout]
+  end
+end</code></pre>
+<p>Reference: <code>g_1837/step/minor_half_pay.rb</code> <code>skip!</code> pattern.</p>
+<hr>
+<h2 id="21-buyable_trains--trust-the-depot-never-filter-by-price">21. <code>buyable_trains</code> — trust the depot; never filter by price</h2>
+<p><strong>Bad:</strong></p>
+<pre><code class="language-ruby">def buyable_trains(entity)
+  trains = super
+  depot_trains = trains.select(&amp;:from_depot?)
+  unless depot_trains.empty?
+    min_price = depot_trains.map(&amp;:price).min
+    trains = trains.reject { |t| t.from_depot? &amp;&amp; t.price &gt; min_price }
+  end
+  trains
+end</code></pre>
+<p><code>Depot#available_upcoming_trains</code> already returns only the current level. The custom block is dead weight. Also wrong: filtering out trains the entity cannot afford. The UI handles affordability — unaffordable trains appear greyed-out. <code>buyable_trains</code> controls which trains are <em>eligible</em>, not which are <em>payable</em>.</p>
+<p><strong>Good:</strong></p>
+<pre><code class="language-ruby">def buyable_trains(entity)
+  super  # or add game-specific eligibility rules only
+end</code></pre>
+<p>Only filter by game eligibility rules (e.g., minors cannot buy trains at all). Leave price and depot-level gating to the depot and the UI.</p>
+<hr>
+<h2 id="22-round-select_entities--broad-list-step-blocks-handles-skipping">22. Round <code>select_entities</code> — broad list; step <code>blocks?</code> handles skipping</h2>
+<p><strong>Bad:</strong></p>
+<pre><code class="language-ruby">def select_entities
+  @game.players.select do |p|
+    p.shares.map(&amp;:corporation).any? { |c| %i[minor regional].include?(c.type) }
+  end
+end</code></pre>
+<p>A player whose last minor is merged mid-round is still in <code>@entities</code> from the initial selection but can no longer act.</p>
+<p><strong>Good:</strong></p>
+<pre><code class="language-ruby">def select_entities
+  @game.players  # all non-bankrupt players
+end</code></pre>
+<p>The step's <code>blocks?</code> returns <code>false</code> when the player has nothing to do; the round auto-skips them. <code>select_entities</code> determines who <em>participates</em>; <code>blocks?</code> determines whether their turn is <em>active</em> right now.</p>
+<hr>
+<h2 id="23-dividend_types--no-parameter-no--operator">23. <code>dividend_types</code> — no parameter, no <code>&amp;</code> operator</h2>
+<p><code>dividend_types</code> is defined in the base step as <code>def dividend_types</code> (no argument).</p>
+<p><strong>Bad:</strong></p>
+<pre><code class="language-ruby">def dividend_types
+  case current_entity&amp;.type   # &amp; is unnecessary</code></pre>
+<p><strong>Good:</strong></p>
+<pre><code class="language-ruby">def dividend_types
+  case current_entity.type</code></pre>
+<p>If <code>current_entity</code> is <code>nil</code> when <code>dividend_types</code> is called, something has gone wrong upstream. Use <code>&amp;amp;.</code> only where <code>nil</code> is a legitimate value — not to suppress real bugs.</p>
+<hr>
+<h2 id="24-delete-empty-override-files">24. Delete empty override files</h2>
+<p>If a step or round file inherits from its parent but adds no methods of its own, delete it. Empty override files accumulate silently and suggest the subclass has its own behaviour when it doesn't.</p>
+<p><strong>Bad:</strong></p>
+<pre><code class="language-ruby"># lib/engine/game/g_1880_romania/round/stock.rb
+module Engine
+  module Game
+    module G1880Romania
+      module Round
+        class Stock &lt; G1880::Round::Stock
+        end
+      end
+    end
+  end
+end</code></pre>
+<p><strong>Good:</strong> Delete the file. Point the game's <code>GAME_ROUNDS</code> or <code>new_stock_round</code> directly at the parent class.</p>
+<p>The same applies to <code>buy_sell_par_shares.rb</code>, <code>company_pending_par.rb</code>, or any other step file that does nothing beyond <code>&amp;lt; ParentStep</code>.</p>
+<hr>
+<h2 id="25-only-define-constants-that-differ-from-the-engine-default">25. Only define constants that differ from the engine default</h2>
+<p>Don't copy default constant values from the base class into your game file. Only define constants you are actually overriding. Reviewers cannot tell at a glance whether a constant is intentional or copied noise.</p>
+<p><strong>Bad (copied defaults — noise):</strong></p>
+<pre><code class="language-ruby">BANKRUPTCY_ALLOWED = false    # already false in Game::Base
+MUST_BUY_TRAIN = :route       # already :route
+MAX_LOANS = 0                 # already 0</code></pre>
+<p><strong>Good (only overrides):</strong></p>
+<pre><code class="language-ruby">MAX_TOKENS = 3                # overrides default of 4
+SELL_AFTER = :operate         # overrides default of :first_turn</code></pre>
+<p>Check <code>lib/engine/game/base.rb</code> for the real default before adding a constant.</p>
+<hr>
+<h2 id="26-ruby-collection-idioms--first-include-arraynew-with-a-block">26. Ruby collection idioms — first, include?, Array.new with a block</h2>
+<p>Three patterns reviewers flag consistently:</p>
+<p><strong><code>Array#first</code> over <code>[0]</code>:</strong></p>
+<pre><code class="language-ruby">row.first == company   # preferred
+row[0] == company      # avoid</code></pre>
+<p><strong><code>include?</code> over <code>index</code> for membership:</strong></p>
+<pre><code class="language-ruby">row.include?(company)  # preferred — returns bool, intent is clear
+row.index(company)     # avoid for membership — returns index or nil</code></pre>
+<p><strong><code>Array.new(n) { [] }</code> for 2D arrays:</strong></p>
+<pre><code class="language-ruby"># Bad — all 4 elements share the same Array object:
+@tiers = Array.new(4, [])
+
+# Good — each element is a distinct Array:
+@tiers = Array.new(4) { [] }</code></pre>
+<p>The second form is required whenever you mutate the inner arrays independently.</p>
+<hr>
+<h2 id="27-minor-companies--use-minors-not-corporations">27. Minor companies — use <code>MINORS</code>, not <code>CORPORATIONS</code></h2>
+<p>Minor companies that have no share price belong in the <code>MINORS</code> constant (entities array), not <code>CORPORATIONS</code>. <code>Corporation</code> objects carry a market position; <code>Minor</code> objects do not. Using the wrong type causes share-price-related logic to fire where it shouldn't.</p>
+<pre><code class="language-ruby"># Correct for entities without a share price:
+MINORS = [
+  { sym: 'M1', name: 'Minor 1', type: :minor, ... },
+].freeze
+
+# Wrong — only use CORPORATIONS for entities with share prices:
+CORPORATIONS = [
+  { sym: 'M1', ... },   # minor company placed here by mistake
+].freeze</code></pre>
+<p>For minors accessible by ID: <code>@game.minor_by_id('M1')</code> (not <code>@game.corporation_by_id</code>).</p>
+<hr>
+<h2 id="28-no-debug-logging-or-dead-code-in-prs">28. No debug logging or dead code in PRs</h2>
+<p>Remove all debug artefacts before opening a PR:</p>
+<ul><li><code>LOGGER.debug { ... }</code> blocks added during development</li><li><code>puts</code>, <code>p</code>, <code>pp</code> statements</li><li>Commented-out code blocks</li><li>Methods that exist but are never called from within the game</li></ul>
+<p>If a method might be needed later, leave a TODO in <code>MD/todo.md</code> and delete it now. Reviewers treat dead code as a signal that the PR wasn't reviewed before submission.</p>
+<hr>
+<h2 id="29-named-entity-accessors-over-hardcoded-symbol-lookups">29. Named entity accessors over hardcoded symbol lookups</h2>
+<p>When game logic repeatedly references a specific entity by its symbol string, add a named accessor to <code>game.rb</code>. This removes the coupling to the symbol string and makes variant subclasses easy to override.</p>
+<p><strong>Bad:</strong></p>
+<pre><code class="language-ruby"># scattered through steps and game.rb:
+company = @game.companies.find { |c| c.sym == 'BCR' }
+return if company.nil?</code></pre>
+<p><strong>Good:</strong></p>
+<pre><code class="language-ruby"># game.rb:
+def bcr_company
+  @bcr_company ||= companies.find { |c| c.sym == 'BCR' }
+end
+
+# steps call @game.bcr_company — one lookup, one place to override</code></pre>
+<p>The same pattern applies to corporations, privates, and minors. Cache with <code>||=</code> if the object is stable; skip the cache if it can be closed or transferred.</p>
+<hr>
+<h2 id="30-data-driven-flags-over-name-string-matching-in-variant-filtering">30. Data-driven flags over name-string matching in variant filtering</h2>
+<p>When limiting which train variants are purchasable, put a flag in the variant definition rather than matching by name string. Name-string matching breaks silently when train names change.</p>
+<p><strong>Bad:</strong></p>
+<pre><code class="language-ruby">def buyable_train_variants(train, entity)
+  variants = super
+  variants.select { |v| v[:name] == train.name }  # fragile name match
+end</code></pre>
+<p><strong>Good:</strong></p>
+<pre><code class="language-ruby"># In TRAINS definition (game.rb):
+variants: {
+  '4n'   =&gt; { name: '4n', ... },
+  '4n-1' =&gt; { name: '4n-1', ..., event_downgrade_variant: true },
+}
+
+# In step:
+def buyable_train_variants(train, entity)
+  variants = super
+  return variants unless variants.any? { |v| v[:event_downgrade_variant] }
+  variants.select { |v| v == train.variant }
+end</code></pre>
+<p>The flag makes the intent visible in the data and is safe to rename.</p>
+<hr>
+<h2 id="31-arrayintersect-over-a--bempty">31. <code>Array.intersect?</code> over <code>(a &amp; b).empty?</code></h2>
+<p><code>(a &amp;amp; b)</code> builds an intermediate array before testing emptiness. <code>Array#intersect?</code> avoids the allocation.</p>
+<p><strong>Bad:</strong></p>
+<pre><code class="language-ruby">return false if (actions &amp; %w[buy_train scrap_train]).empty?</code></pre>
+<p><strong>Good:</strong></p>
+<pre><code class="language-ruby">return false unless actions.intersect?(%w[buy_train scrap_train])</code></pre>
+<p>Available since Ruby 3.1 (the engine's minimum). Use it anywhere you would have written <code>(a &amp;amp; b).any?</code> or <code>!(a &amp;amp; b).empty?</code>.</p>
+<hr>
+<h2 id="32-no-redundant-return-at-end-of-method">32. No redundant <code>return</code> at end of method</h2>
+<p>Ruby returns the last expression automatically. An explicit <code>return</code> as the final statement is noise — reviewers flag it consistently.</p>
+<p><strong>Bad:</strong></p>
+<pre><code class="language-ruby">def zones_display
+  result = @game.minor_available_regions.map { |z, c| "#{z}(#{c})" }.join(', ')
+  return result
+end</code></pre>
+<p><strong>Good:</strong></p>
+<pre><code class="language-ruby">def zones_display
+  @game.minor_available_regions.map { |z, c| "#{z}(#{c})" }.join(', ')
+end</code></pre>
+<p><code>return</code> is correct and expected for early-exit guard clauses. The anti-pattern is only at the tail.</p>
+<hr>
+<h2 id="33-call-super-instead-of-duplicating-base-class-code">33. Call <code>super</code> instead of duplicating base class code</h2>
+<p>Do not copy-paste methods from base step or game classes. Call <code>super</code> and override only the delta. Duplicated code drifts silently when the base is updated.</p>
+<p><strong>Bad:</strong></p>
+<pre><code class="language-ruby">def payout_shares
+  # 12 lines that are identical to Engine::Step::Dividend#payout_shares
+  per_share = revenue / total_shares
+  entity.player_shares.each { |s| ... }
+end</code></pre>
+<p><strong>Good:</strong></p>
+<pre><code class="language-ruby">def payout_shares
+  super
+  do_extra_step
+end</code></pre>
+<p>Also applies to step files that repeat checks the base step already performs (<code>can_exchange?</code> calling <code>can_exchange?</code>, duplicate <code>require_relative</code> that the parent already loads, etc.).</p>
+<hr>
+<h2 id="34-choices-must-be-a-hash-not-an-array">34. <code>choices</code> must be a hash, not an array</h2>
+<p>When a step exposes choices to the player, always use a hash. Array choices store the button label as the key in the saved game JSON — future label changes silently break all in-progress games.</p>
+<p><strong>Bad:</strong></p>
+<pre><code class="language-ruby">def choices
+  %w[Left Right Stay]
+end</code></pre>
+<p><strong>Good:</strong></p>
+<pre><code class="language-ruby">def choices
+  { 'left' =&gt; 'Move Left', 'right' =&gt; 'Move Right', 'stay' =&gt; 'Stay' }
+end</code></pre>
+<p>The hash key is what gets stored. The value is display-only and can be changed freely.</p>
+<hr>
+<h2 id="35-use-def-help-for-player-guidance--not-log">35. Use <code>def help</code> for player guidance — not <code>@log</code></h2>
+<p><code>@log</code> is permanent game history. Transient guidance ("available zones: …", "select one of…") belongs in the step's <code>help</code> method. It appears below the log in the UI and disappears when the step ends.</p>
+<p><strong>Bad:</strong></p>
+<pre><code class="language-ruby">def float_minor(action)
+  @log &lt;&lt; "Available zones: #{zones_display}. Select one."
+end</code></pre>
+<p><strong>Good:</strong></p>
+<pre><code class="language-ruby">def help
+  "Available zones: #{zones_display}."
+end</code></pre>
+<p>Log only actions that actually happened: <em>"Minor A placed token in UK zone."</em> Guide the player through <code>help</code>.</p>
+<hr>
+<h2 id="36-per-round-state-belongs-in-round_state-not-game-instance-variables">36. Per-round state belongs in <code>round_state</code>, not game instance variables</h2>
+<p>State that is only meaningful within the current round — players who have acted, shares bought this SR, companies parred — must be declared in the step's <code>round_state</code> method. It resets automatically when the round changes.</p>
+<p><strong>Bad:</strong></p>
+<pre><code class="language-ruby">def setup
+  @parred_this_sr = []   # survives across rounds
+end</code></pre>
+<p><strong>Good:</strong></p>
+<pre><code class="language-ruby">def round_state
+  super.merge({ parred_this_sr: [] })
+end
+
+# accessed from any step in the same round as:
+@round.parred_this_sr</code></pre>
+<p>Game-class instance variables (<code>@game.foo</code>) persist for the whole game. Use <code>round_state</code> for anything that should be fresh each round.</p>
+<hr>
+<h2 id="37-graph-invalidation--graphclear-not-nil-also-implement-clear_graph_for_entity">37. Graph invalidation — <code>Graph#clear</code>, not <code>nil</code>; also implement <code>clear_graph_for_entity</code></h2>
+<p>Never assign <code>nil</code> to a custom graph to force recalculation. Call <code>@custom_graph.clear</code> instead — <code>nil</code> will cause <code>NoMethodError</code> at the next access.</p>
+<p>When overriding <code>clear_graph_for_corporation</code>, also override <code>clear_graph_for_entity</code> with the same body. The engine calls both depending on context; missing one leaves the graph stale.</p>
+<p><strong>Bad:</strong></p>
+<pre><code class="language-ruby">def clear_graph_for_corporation(corporation)
+  @narrow_gauge_graph = nil
+end</code></pre>
+<p><strong>Good:</strong></p>
+<pre><code class="language-ruby">def clear_graph_for_corporation(corporation)
+  @narrow_gauge_graph.clear
+end
+
+def clear_graph_for_entity(entity)
+  @narrow_gauge_graph.clear
+end</code></pre>
+<hr>
+<h2 id="38-routehexes-not-routestops-for-non-station-hex-checks">38. <code>route.hexes</code> not <code>route.stops</code> for non-station hex checks</h2>
+<p><code>route.stops</code> contains only revenue centers (cities, towns, off-boards). Plain track hexes in the middle of a route appear only in <code>route.hexes</code>. Bonus detection based on passing through a specific hex must use <code>route.hexes</code>.</p>
+<p><strong>Bad:</strong></p>
+<pre><code class="language-ruby"># misses the hex if the bonus marker moves to a plain track tile:
+route.stops.any? { |s| s.hex.coordinates == @bonus_hex }</code></pre>
+<p><strong>Good:</strong></p>
+<pre><code class="language-ruby">route.hexes.any? { |hex| hex.coordinates == @bonus_hex }</code></pre>
+<p>Use <code>route.stops</code> only when you need the revenue-center objects themselves (e.g., to read slot count or revenue value).</p>
+<hr>
+<h2 id="39-subclass-variants--dup-before-mutating-shared-constants-deep_freeze-in-base">39. Subclass variants — <code>.dup</code> before mutating shared constants; <code>.deep_freeze</code> in base</h2>
+<p>When a subgame overrides an array or hash constant inherited from a parent game, calling <code>super</code> returns the <em>same object</em> held in the parent constant. Mutating it without <code>.dup</code> silently corrupts the parent game's data — a hard-to-reproduce bug that only appears when both games are loaded in the same process.</p>
+<p><strong>Bad:</strong></p>
+<pre><code class="language-ruby"># g_18_rhineland/map.rb — modifies the parent class's TILES array in-place:
+def self.tiles
+  super &lt;&lt; { ... }
+end</code></pre>
+<p><strong>Good:</strong></p>
+<pre><code class="language-ruby">def self.tiles
+  super.dup &lt;&lt; { ... }
+end</code></pre>
+<p>For nested structures (hash of arrays), deep-dup both layers:</p>
+<pre><code class="language-ruby">map = self.class::HEXES.to_h { |k, v| [k, v.to_h { |k2, v2| [k2.dup, v2] }] }</code></pre>
+<p><strong>Base class:</strong> freeze constants with <code>.deep_freeze</code> instead of <code>.freeze</code> so any inadvertent mutation raises immediately rather than silently corrupting state:</p>
+<pre><code class="language-ruby">TILES = [...].deep_freeze</code></pre>
+<hr>
+<h2 id="40-boolean-keyword-arguments-for-optional-flags">40. Boolean keyword arguments for optional flags</h2>
+<p>When a method has an optional boolean that affects behaviour, use a keyword argument with a default rather than a positional parameter. It reads clearly at call sites and is easy to override selectively in subclasses.</p>
+<p><strong>Bad:</strong></p>
+<pre><code class="language-ruby">def set_par(corporation, share_price, true)  # true — what does this mean?</code></pre>
+<p><strong>Good:</strong></p>
+<pre><code class="language-ruby">def set_par(corporation, share_price, place_token: true)
+  place_token!(corporation, share_price) if place_token
+  # ...
+end
+
+# subgame that needs to skip token placement:
+@stock_market.set_par(corporation, price, place_token: false)</code></pre>
+<p>The flag name doubles as documentation; the default keeps all existing callers working without changes.</p>
+<hr>
+<h2 id="41-mark-partial-rule-implementations-with-an-explicit-todo-comment">41. Mark partial rule implementations with an explicit TODO comment</h2>
+<p>When a rule is deliberately left incomplete — the engine is mid-development, a corner case is deferred, or a variant interaction isn't handled yet — add a plain TODO comment in the code. Silent partial implementations cause reviewers and future contributors to assume the rule is fully modelled.</p>
+<pre><code class="language-ruby">def home_token_locations(corporation)
+  # TODO: FEC corner case — if all slots in the city are full, FEC may use a
+  # 'cheater' token. Not yet implemented; see §3.2 of the 18Cuba rulebook.
+  return MINOR_VALID_CITIES if corporation.type == :minor
+  super
+end</code></pre>
+<p>The comment must name the specific case that's missing, not just say "TODO". A reviewer reading the code should understand exactly what is unfinished without opening the rulebook.</p>
+<hr>
+<h2 id="42-attr_accessor--only-for-state-that-external-code-touches">42. <code>attr_accessor</code> — only for state that external code touches</h2>
+<p>Use <code>attr_accessor</code> only when another class (a step, a round, a view) needs to read or write the value. If a variable is only ever set and read within <code>game.rb</code> itself, use <code>@var</code> directly. An unnecessary accessor implies a public API that isn't there and makes it harder to tell what is genuinely shared state.</p>
+<p><strong>Bad:</strong></p>
+<pre><code class="language-ruby">attr_accessor :consolidation_triggered, :consolidation_done, :first_or_done
+# first_or_done is only read inside non_starter_trains_available? in game.rb itself</code></pre>
+<p><strong>Good:</strong></p>
+<pre><code class="language-ruby">attr_accessor :consolidation_triggered, :consolidation_done
+# @first_or_done accessed directly via @first_or_done in non_starter_trains_available?</code></pre>
+<p>Grep every accessor name for external usages before adding it to <code>attr_accessor</code>.</p>
+<hr>
+<h2 id="43-18oe-entity-identity--entityminor-is-not-entitytype--minor">43. 18OE entity identity — <code>entity.minor?</code> is not <code>entity.type == :minor</code></h2>
+<p><code>Engine::Minor#minor?</code> returns <code>true</code>. <code>Engine::Corporation#minor?</code> inherits from <code>Entity</code> and returns <code>false</code>.</p>
+<p>18OE "minors" are <code>Engine::Corporation</code> instances with <code>type: :minor</code>, not <code>Engine::Minor</code> instances. So <code>entity.minor?</code> is always <code>false</code> for them.</p>
+<table><thead><tr><th>Check</th><th>18OE minor (Corporation, type: :minor)</th></tr></thead><tbody><tr><td><code>entity.minor?</code></td><td><code>false</code> — it is a Corporation, not a Minor</td></tr><tr><td><code>entity.corporation?</code></td><td><code>true</code></td></tr><tr><td><code>entity.type == :minor</code></td><td><code>true</code> — use this to discriminate by game type</td></tr></tbody></table>
+<p>Consequence: the base step <code>can_entity_buy_train?</code> (<code>!entity.minor?</code>) already returns <code>true</code> for 18OE minors. An override that simply returns <code>entity.corporation?</code> adds nothing — drop it.</p>
+<hr>
+<h2 id="44-type-casting-for-dsl-values--normalize-at-construction-keep-it-consistent">44. Type casting for DSL values — normalize at construction, keep it consistent</h2>
+<p><strong>The existing convention:</strong> The tile DSL parser (<code>tile.rb:76</code>) splits on <code>:</code> and produces plain String values. Game ability definitions also use strings (<code>partition_type: 'water'</code>). These flow into object constructors as strings.</p>
+<p><strong>Normalize to Symbol/Float at construction — not at every use site.</strong> The view compares partition types against symbol literals (<code>:province</code>, <code>:divider</code>, etc.) and does float arithmetic with <code>length</code>. Without normalization at construction, these comparisons silently fail and the map does not render.</p>
+<pre><code class="language-ruby"># partition.rb — normalize once here
+@type = type&amp;.to_sym     # nil stays nil; 'province' → :province
+@length = length&amp;.to_f   # nil stays nil; '0.5' → 0.5</code></pre>
+<p><strong>Normalize at the data source, not defensively in the class.</strong> <code>partition.type</code> is now a Symbol. Any ability that compares against it must also use a Symbol — but the right place to ensure that is in the entity definition, not in the ability class:</p>
+<pre><code class="language-ruby"># entities.rb — correct: declare as symbol literal
+{ type: 'blocks_partition', partition_type: :water }
+
+# entities.rb — wrong: string will silently fail the blocks? comparison
+{ type: 'blocks_partition', partition_type: 'water' }</code></pre>
+<p>Adding <code>&amp;amp;.to_sym</code> inside <code>BlocksPartition#setup</code> papers over a bug in the entity definition and belongs in a separate fix PR, not in the ability class itself. Fix the root cause (the string literal in entities.rb), not the symptom.</p>
+<p><strong><code>&amp;amp;.</code> is correct when <code>nil</code> is legitimate</strong> — the DSL omits <code>type</code> for untyped partitions, so <code>nil&amp;amp;.to_sym</code> → <code>nil</code> is the right result.</p>
+<p><strong>Do not remove these casts based on Opal assumptions.</strong> The upstream maintainer suggested removing <code>to_sym</code> on the grounds that Opal (Ruby→JS) makes string/symbol comparison transparent. We removed them. The map stopped loading. We restored them. The conversions are load-bearing regardless of Opal's behaviour — always verify in the browser before removing defensive normalization.</p>
+<p><strong>What the cascade looks like when you skip normalization:</strong></p>
+<pre><code class="language-ruby"># partition.rb stores a string:
+@type = type   # "province"
+
+# view skip condition — with string type, '!= :province' may not behave
+# as expected depending on Opal version and context:
+next if partition.type != :divider &amp;&amp; partition.type != :province &amp;&amp; ...
+
+# province partitions silently stop rendering → map does not load</code></pre>
+<hr>
+<h2 id="whats-next">What's next</h2>
+<ul><li>Implementation layer taxonomy: <a href="game-engine.html">Game Engine</a></li><li>Round and Step patterns: <a href="round-step-system.html">Round/Step System</a></li><li>Ability implementation: <a href="abilities.html">Ability Types Reference</a></li></ul>
+<hr>
+<p><em>Version: 2026-05-14 — §44 revised: blocks_partition root cause is entity definition (symbol literal), not ability class; to_sym/to_f in partition.rb are load-bearing.</em></p>
+</article>
+</main>
+</div>
+<script src="search.js"></script>
+<script src="ui.js"></script>
+</body>
+</html>

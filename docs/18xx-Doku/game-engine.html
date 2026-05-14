@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Game Engine Reference — 18OE Dev Docs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Playfair+Display:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({ startOnLoad: true, theme: 'base', themeVariables: {
+  primaryColor: '#0d1f38', primaryTextColor: '#faf6ec',
+  primaryBorderColor: '#c9a843', lineColor: '#c9a843',
+  secondaryColor: '#1a3a6a', tertiaryColor: '#2a4a80',
+  actorBkg: '#0d1f38', actorTextColor: '#faf6ec',
+  actorBorder: '#c9a843', actorLineColor: '#c9a843',
+  activationBkgColor: '#2a4ab0', activationBorderColor: '#c9a843',
+  signalColor: '#c9a843', signalTextColor: '#2a1a0a',
+  labelBoxBkgColor: '#0d1f38', labelBoxBorderColor: '#c9a843', labelTextColor: '#faf6ec',
+  loopTextColor: '#2a1a0a',
+  edgeLabelBackground: '#f0ead8',
+  noteBkgColor: '#f0e8d4', noteTextColor: '#2a1a0a', noteBorderColor: '#c9a843',
+  titleColor: '#2a1a0a',
+  clusterBkg: '#1a3a6a', clusterBorder: '#c9a843', clusterTextColor: '#faf6ec',
+  fillType0: '#0d1f38', fillType1: '#1a3a6a', fillType2: '#2a4a80',
+  fillType3: '#1a3a6a', fillType4: '#0d1f38', fillType5: '#2a4a80',
+  fillType6: '#1a3a6a', fillType7: '#0d1f38'
+} });</script>
+</head>
+<body>
+<header id="site-header">
+  <a href="index.html">18OE</a> &mdash; Developer Documentation
+</header>
+<div id="layout">
+<nav id="sidebar" aria-label="Navigation">
+<input id="nav-search" type="search" placeholder="Search…" aria-label="Search documentation" autocomplete="off">
+<div id="search-results" style="display:none">
+<p id="search-no-results" style="display:none">No results found.</p>
+<ul id="search-results-list"></ul>
+</div>
+<div class="track"><h3>18OE Status</h3><ul>
+<li><a href="rules-summary.html">Game Rules Summary</a></li>
+<li><a href="18oe-map-status.html">Map Implementation Status</a></li>
+<li><a href="status.html">Implementation Tracker</a></li>
+<li><a href="rulebook-coverage.html">Rulebook Coverage</a></li>
+<li><a href="alpha-gaps.html">Open for Alpha</a></li>
+</ul></div>
+<div class="track"><h3>Getting Involved</h3><ul>
+<li><a href="first-contribution.html">Your First Contribution</a></li>
+</ul></div>
+<div class="track"><h3>Building a New Game</h3><ul>
+<li><a href="engine-concepts.html">Understanding the Engine</a></li>
+<li><a href="getting-started.html">Development Setup</a></li>
+<li><a href="game-implementation.html">Game Structure</a></li>
+<li><a href="map.html">Map Configuration</a></li>
+<li><a href="entities.html">Corporations & Companies</a></li>
+<li><a href="trains-phases.html">Trains, Phases & Market</a></li>
+<li><a href="round-step-system.html">Rounds & Steps</a></li>
+<li><a href="auction-round.html">Auction Round</a></li>
+<li><a href="revenue-routing.html">Revenue & Routing</a></li>
+<li><a href="abilities.html">Abilities</a></li>
+<li><a href="tiles.html">Tile Reference</a></li>
+<li><a href="common-patterns.html">Common Patterns</a></li>
+<li><a href="testing.html">Testing Your Game</a></li>
+<li><a href="title-checklist.html">Title Checklist</a></li>
+<li><a href="coding-guidelines.html">Coding Guidelines</a></li>
+</ul></div>
+<div class="track"><h3>Reference</h3><ul>
+<li><a href="game-engine.html" aria-current="page"><strong>Game Engine Reference</strong></a></li>
+<li><a href="adrs.html">Architecture Decision Records</a></li>
+</ul></div>
+<div class="track"><h3>Platform & Testing Setup</h3><ul>
+<li><a href="architecture.html">Architecture Overview</a></li>
+<li><a href="konfiguration-betrieb.html">Configuration & Operations</a></li>
+<li><a href="systemgrenzen.html">System Boundaries</a></li>
+</ul></div>
+<div class="track"><h3>Working with Claude</h3><ul>
+<li><a href="codevelop.html">Co-developing with Claude</a></li>
+</ul></div>
+</nav>
+<main>
+<article>
+<h1 id="game-engine-reference">Game Engine Reference</h1>
+<p>The 18xx engine is a collection of plain Ruby classes under <code>lib/engine/</code>. The same code runs server-side in MRI Ruby and client-side as JavaScript compiled by Opal. This page lists the major classes and their responsibilities.</p>
+<h2 id="core-classes">Core Classes</h2>
+<h3 id="enginegamebase-libenginegamebaserb91"><code>Engine::Game::Base</code> [<code>lib/engine/game/base.rb:91</code>]</h3>
+<p>The root game object. Holds every other engine object and drives the game flow. Key responsibilities:</p>
+<table><thead><tr><th>Method / constant</th><th>Purpose</th></tr></thead><tbody><tr><td><code>initialize</code> (<code>:566</code>)</td><td>Builds all objects; replays saved Actions on startup</td></tr><tr><td><code>initialize_actions</code> (<code>:819</code>)</td><td>Loads persisted Actions and applies them in order</td></tr><tr><td><code>process_action</code> (<code>:838</code>)</td><td>Entry point for a new player move; delegates to the active Round</td></tr><tr><td><code>next_round!</code> (<code>:2921</code>)</td><td>Transitions to the next Round after the current one finishes</td></tr><tr><td><code>game_end_check</code> (<code>:2970</code>)</td><td>Tests all end conditions after every Action</td></tr><tr><td><code>new_stock_round</code> (<code>:3177</code>)</td><td>Factory method for a new Stock Round</td></tr><tr><td><code>new_operating_round</code> (<code>:3192</code>)</td><td>Factory method for a new Operating Round</td></tr></tbody></table>
+<p>Every game title overrides constants in this class: <code>TRAINS</code>, <code>CORPORATIONS</code>, <code>PHASES</code>, <code>HEXES</code>, <code>COMPANIES</code>, <code>PLAYER_RANGE</code>, and many others.</p>
+<h3 id="engineroundbase-libengineroundbaserb12"><code>Engine::Round::Base</code> [<code>lib/engine/round/base.rb:12</code>]</h3>
+<p>Container for a turn segment. Holds an ordered list of Steps and the Entity queue.</p>
+<table><thead><tr><th>Method</th><th>Purpose</th></tr></thead><tbody><tr><td><code>initialize</code> (<code>:22</code>)</td><td>Builds Steps; merges <code>DEFAULT_STEPS</code> with title-specific steps</td></tr><tr><td><code>process_action</code> (<code>:75</code>)</td><td>Finds the first active, blocking Step that handles the action and calls it</td></tr><tr><td><code>active_step</code> (<code>:136</code>)</td><td>Returns the first blocking, non-finished Step</td></tr></tbody></table>
+<p>Concrete subclasses: <code>Round::Stock</code>, <code>Round::Operating</code>, <code>Round::Auction</code>.</p>
+<h3 id="enginestepbase-libenginestepbaserb8"><code>Engine::Step::Base</code> [<code>lib/engine/step/base.rb:8</code>]</h3>
+<p>Atomic decision unit. Each Step declares which action types it handles and processes them.</p>
+<table><thead><tr><th>Method</th><th>Purpose</th></tr></thead><tbody><tr><td><code>actions(_entity)</code> (<code>:31</code>)</td><td>Returns the list of action-type strings this Step allows</td></tr><tr><td><code>blocking?</code> (<code>:84</code>)</td><td>Returns true if this Step prevents lower-priority Steps from acting</td></tr><tr><td><code>process_*</code></td><td>Handler called by the Round — e.g. <code>process_buy_shares</code>, <code>process_lay_tile</code></td></tr></tbody></table>
+<h3 id="enginephase-libenginephaserb6"><code>Engine::Phase</code> [<code>lib/engine/phase.rb:6</code>]</h3>
+<p>Tracks the current game phase. Advances when a train of the triggering type is purchased [<code>lib/engine/phase.rb:19</code>]. Controls which track types are legal, the number of Operating Rounds per set, and which trains rust.</p>
+<h3 id="enginebank-libenginebankrb8"><code>Engine::Bank</code> [<code>lib/engine/bank.rb:8</code>]</h3>
+<p>Central cash reserve. <code>broken?</code> (<code>:38</code>) returns true when cash drops to zero or below; this may trigger the <code>bank</code> end condition depending on the title.</p>
+<h3 id="enginedepot-libenginedepotrb7"><code>Engine::Depot</code> [<code>lib/engine/depot.rb:7</code>]</h3>
+<p>Supply of available trains. <code>available</code> (<code>:114</code>) returns trains purchasable by a given Corporation. Handles train export and reclaiming.</p>
+<h3 id="enginestockmarket-libenginestock_marketrb7"><code>Engine::StockMarket</code> [<code>lib/engine/stock_market.rb:7</code>]</h3>
+<p>Two-dimensional price grid. Movement methods (<code>move_right</code>, <code>move_up</code>, <code>move_down</code>, <code>move_left</code>, diagonal variants) adjust a Corporation's price marker. Special cells (top row, right ledge) can trigger game-end or Corporation closure.</p>
+<h3 id="enginegraph-libenginegraphrb6"><code>Engine::Graph</code> [<code>lib/engine/graph.rb:6</code>]</h3>
+<p>Computes the routing graph from the current tile layout. <code>connected_hexes</code> (<code>:98</code>) and <code>connected_nodes</code> (<code>:103</code>) return the set of Hexes/nodes reachable from a Corporation's tokens. Used by route-validation Steps.</p>
+<h3 id="engineactionbase-libengineactionbaserb1"><code>Engine::Action::Base</code> [<code>lib/engine/action/base.rb:1</code>]</h3>
+<p>Base class for all persisted moves. Every concrete action (e.g. <code>Action::BuyShares</code>, <code>Action::LayTile</code>) stores an entity reference, an action type string, and type-specific parameters as JSON.</p>
+<h2 id="key-supporting-classes">Key Supporting Classes</h2>
+<table><thead><tr><th>Class</th><th>File</th><th>Role</th></tr></thead><tbody><tr><td><code>Player</code></td><td><code>lib/engine/player.rb:1</code></td><td>Cash, certificates, name</td></tr><tr><td><code>Corporation</code></td><td><code>lib/engine/corporation.rb:1</code></td><td>Shares, tokens, trains, cash, president</td></tr><tr><td><code>Company</code></td><td><code>lib/engine/company.rb:1</code></td><td>Private company; grants special abilities</td></tr><tr><td><code>Minor</code></td><td><code>lib/engine/minor.rb:1</code></td><td>Subsidiary; owns shares, runs routes</td></tr><tr><td><code>SharePrice</code></td><td><code>lib/engine/share_price.rb:1</code></td><td>A cell on the StockMarket; holds par and current price</td></tr><tr><td><code>Hex</code></td><td><code>lib/engine/hex.rb:1</code></td><td>One hexagon on the map; holds a Tile</td></tr><tr><td><code>Tile</code></td><td><code>lib/engine/tile.rb:1</code></td><td>Track layout, cities, towns</td></tr><tr><td><code>Token</code></td><td><code>lib/engine/token.rb:1</code></td><td>Corporation presence on a city</td></tr><tr><td><code>Train</code></td><td><code>lib/engine/train.rb:1</code></td><td>Reach (distance), phase trigger</td></tr></tbody></table>
+<h2 id="title-registration">Title Registration</h2>
+<p><code>lib/engine.rb:17-24</code> builds <code>GAME_META_BY_TITLE</code>, a hash that maps title strings (e.g. <code>"1830"</code>) to <code>Meta</code> modules. The API and frontend use this map to instantiate the correct game class.</p>
+<hr>
+<h2 id="implementation-layer-taxonomy">Implementation Layer Taxonomy</h2>
+<p>When adding mechanics to a game title, use this four-layer model to identify where the code lives and how much effort is required.</p>
+<h3 id="layer-1--pure-configuration-constants-only">Layer 1 — Pure Configuration (constants only)</h3>
+<p>No custom Ruby methods — only values in <code>TRAINS</code>, <code>PHASES</code>, <code>COMPANIES</code>, <code>CORPORATIONS</code>, or scalar game constants. <code>g_1830</code> is the gold standard; 95% of its mechanics live in constants.</p>
+<p><strong><code>TRAINS</code> entries capture:</strong></p>
+<table><thead><tr><th>Field</th><th>Purpose</th></tr></thead><tbody><tr><td><code>name:</code>, <code>distance:</code>, <code>price:</code>, <code>count:</code></td><td>Train identity and roster</td></tr><tr><td><code>rusts_on:</code>, <code>obsolete_on:</code></td><td>Rust/obsolete triggers</td></tr><tr><td><code>available_on:</code></td><td>Gate — train only appears after another is bought</td></tr><tr><td><code>discount:</code></td><td>Hash of discounts, e.g. <code>{'2' =&gt; 30}</code></td></tr><tr><td><code>variants:</code></td><td>Sub-types selectable at buy time; each can have own <code>rusts_on:</code> and <code>multiplier:</code></td></tr><tr><td><code>events:</code></td><td>Phase-transition events dispatched to <code>event_xxx!</code></td></tr><tr><td><code>distance:</code> (array)</td><td>Multi-node specs: <code>[{'nodes'=&gt;[...], 'pay'=&gt;N, 'visit'=&gt;N}]</code></td></tr></tbody></table>
+<p><strong><code>PHASES</code> entries capture:</strong> train limit (scalar or <code>{minor: N, major: N}</code> hash), available tile colours, operating rounds per phase, status flag strings, and phase-trigger <code>events:</code>.</p>
+<p><strong>Key scalar game constants:</strong></p>
+<table><thead><tr><th>Constant</th><th>Controls</th></tr></thead><tbody><tr><td><code>CAPITALIZATION</code></td><td><code>:full</code>, <code>:incremental</code>, <code>:none</code></td></tr><tr><td><code>SELL_BUY_ORDER</code>, <code>SELL_AFTER</code>, <code>SELL_MOVEMENT</code>, <code>POOL_SHARE_DROP</code></td><td>Share sale mechanics</td></tr><tr><td><code>MUST_BUY_TRAIN</code>, <code>EBUY_FROM_OTHERS</code>, <code>EBUY_PRES_SWAP</code></td><td>Emergency buy rules</td></tr><tr><td><code>HOME_TOKEN_TIMING</code></td><td>When home tokens are placed</td></tr><tr><td><code>TILE_RESERVATION_BLOCKS_OTHERS</code>, <code>TRACK_RESTRICTION</code></td><td>Tile lay restrictions</td></tr><tr><td><code>BANK_CASH</code>, <code>STARTING_CASH</code>, <code>CERT_LIMIT</code></td><td>Financial limits</td></tr><tr><td><code>GAME_END_CHECK</code></td><td>Hash of reason → timing pairs</td></tr><tr><td><code>TILE_LAYS</code></td><td>Default lay-slot array for each entity type</td></tr><tr><td><code>STATUS_TEXT</code>, <code>EVENTS_TEXT</code>, <code>MARKET_TEXT</code></td><td>UI text for phases and events</td></tr></tbody></table>
+<h3 id="layer-2--hook-overrides-named-gamebase-method-overrides">Layer 2 — Hook Overrides (named <code>Game::Base</code> method overrides)</h3>
+<p>Require Ruby code but follow a clear template: override a named method, replace its return value or behaviour.</p>
+<table><thead><tr><th>Hook method</th><th>What it controls</th></tr></thead><tbody><tr><td><code>tile_lays(entity)</code></td><td>Lay budget per entity type and/or phase</td></tr><tr><td><code>revenue_for(route, stops)</code></td><td>Route revenue bonus additions</td></tr><tr><td><code>float_corporation(corp)</code></td><td>When/how a corporation receives IPO cash</td></tr><tr><td><code>must_buy_train?(entity)</code></td><td>Whether a corporation is forced to buy a train</td></tr><tr><td><code>upgrades_to?(from, to, ...)</code></td><td>Custom tile upgrade validation</td></tr><tr><td><code>check_distance(route, visits)</code></td><td>Route validity rules</td></tr><tr><td><code>check_other(route)</code></td><td>Extra route validity rules</td></tr><tr><td><code>operating_order</code></td><td>Order entities operate in an OR</td></tr><tr><td><code>next_round!</code></td><td>Inter-round sequencing (see Guideline 12)</td></tr><tr><td><code>event_xxx!</code></td><td>Named phase/train event handler</td></tr><tr><td><code>num_trains(train)</code></td><td>Override train count</td></tr><tr><td><code>buying_power(entity)</code></td><td>Available spending budget</td></tr><tr><td><code>can_par?(corp, parrer)</code></td><td>Whether a corporation can be parred</td></tr><tr><td><code>setup</code></td><td>One-time game initialisation</td></tr><tr><td><code>action_processed(action)</code></td><td>Post-action side effects</td></tr><tr><td><code>sold_out_increase?</code></td><td>Stock market UP movement on sold-out</td></tr></tbody></table>
+<h3 id="layer-3--custom-step-and-round-classes">Layer 3 — Custom Step and Round Classes</h3>
+<p>Require new Ruby files. Used when a mechanic changes which <em>actions</em> are available or the order in which entities take them.</p>
+<p><strong>Custom Step categories:</strong></p>
+<table><thead><tr><th>Category</th><th>18xx use case</th></tr></thead><tbody><tr><td>Waterfall auction</td><td>Initial private/minor allocation</td></tr><tr><td>Minor acquisition</td><td>OR step for a major to absorb a minor</td></tr><tr><td>Merger/conversion</td><td>Corporation merges and conversion</td></tr><tr><td>Emergency issue/buy</td><td>Emergency train purchase flow</td></tr><tr><td>Nationalisation (auto-step)</td><td>National corporation auto-operates</td></tr></tbody></table>
+<p><strong>Custom Round categories:</strong></p>
+<table><thead><tr><th>Category</th><th>Replaces</th></tr></thead><tbody><tr><td>Waterfall auction round</td><td>Initial auction round</td></tr><tr><td>Consolidation round</td><td>New round triggered at a phase boundary</td></tr><tr><td>Custom Stock round</td><td>Extended SR with special movement tracking</td></tr></tbody></table>
+<h3 id="layer-4--structural-divergence">Layer 4 — Structural Divergence</h3>
+<p>Mechanics that fundamentally rewire the engine. Rare; avoid unless no other approach is possible.</p>
+<hr>
+<h2 id="event-handler-library">Event Handler Library</h2>
+<p>Event method names are dispatched from <code>TRAINS</code> or <code>PHASES</code> <code>events:</code> arrays via <code>@game.send("event_#{type}!")</code>. They must exist in <code>game.rb</code> or <code>base.rb</code>.</p>
+<table><thead><tr><th>Event name</th><th>What it does</th></tr></thead><tbody><tr><td><code>close_companies</code></td><td>Closes all companies with no owner or qualifying criteria</td></tr><tr><td><code>remove_reservations</code></td><td>Removes all unsold home reservations</td></tr><tr><td><code>remove_bonuses</code></td><td>Removes east-west / bonus tokens</td></tr><tr><td><code>float_30</code> / <code>float_40</code> / <code>float_60</code></td><td>Changes float threshold during the game</td></tr><tr><td><code>green_minors_available</code></td><td>Allows minors to buy green trains</td></tr><tr><td><code>majors_can_ipo</code></td><td>Opens major corporations for IPO</td></tr><tr><td><code>minors_cannot_start</code></td><td>Blocks minors from starting</td></tr><tr><td><code>minors_nationalized</code></td><td>All remaining minors nationalise</td></tr><tr><td><code>trainless_nationalization</code></td><td>Trainless entities nationalise</td></tr><tr><td><code>nationalize_companies</code></td><td>Privates are absorbed into a national</td></tr><tr><td><code>phase_revenue</code></td><td>Changes private revenues by phase</td></tr><tr><td><code>full_capitalisation</code></td><td>Full capitalisation event</td></tr><tr><td><code>trigger_endgame</code></td><td>Signals game-end countdown</td></tr></tbody></table>
+<hr>
+<h2 id="tile_lays-mechanics"><code>tile_lays</code> Mechanics</h2>
+<p><code>tile_lays(entity)</code> [<code>lib/engine/step/tracker.rb</code>] returns an <strong>ordered array of lay-slot hashes</strong>. Each slot is one available lay action, consumed in sequence as <code>@round.num_laid_track</code> is incremented.</p>
+<pre><code class="language-ruby"># Lay-slot hash keys:
+{
+  lay: true,                    # true / false / :not_if_upgraded
+  upgrade: true,                # true / false / :not_if_upgraded
+  cost: 0,                      # extra cost for yellow lays
+  upgrade_cost: 0,              # extra cost for upgrades (defaults to :cost)
+  cannot_reuse_same_hex: false  # prevents laying on the same hex twice
+}</code></pre>
+<p>The <code>TILE_LAYS</code> constant defines the default slots for the base entity type. Override <code>tile_lays(entity)</code> in <code>game.rb</code> to return a different array based on entity type or current phase.</p>
+<hr>
+<h2 id="share-ownership-and-float">Share Ownership and Float</h2>
+<p><strong>Float condition:</strong> <code>float_percent</code> determines when <code>float_corporation!</code> is called. For most entities: when the combined sold shares reach the threshold, the treasury receives the capitalisation.</p>
+<p><strong>Stock market movement triggers:</strong></p>
+<table><thead><tr><th>Trigger</th><th>Direction</th></tr></thead><tbody><tr><td>Dividend ≥ share price</td><td>RIGHT (<code>share_direction: :right</code>)</td></tr><tr><td>Zero dividend</td><td>LEFT (<code>share_direction: :left</code>)</td></tr><tr><td>Each share sold</td><td>DOWN — handled by <code>sell_shares_and_change_price</code></td></tr><tr><td>Sold out at SR end</td><td>UP — triggered by <code>sold_out_increase?</code> + <code>finish_round</code> → <code>sold_out_stock_movement</code></td></tr></tbody></table>
+<p>Override <code>sold_out_increase?</code> in <code>game.rb</code> to restrict the UP movement to specific entity types (e.g., majors and nationals only).</p>
+<hr>
+<h2 id="national-revenue--virtual-tokens">National Revenue — Virtual Tokens</h2>
+<p>Nationals in some titles have virtual tokens in every city/town in their home zone. The engine mechanism:</p>
+<pre><code class="language-ruby"># Create a national-aware graph (no physical tokens needed):
+Graph.new(game, home_as_token: true, no_blocking: true)</code></pre>
+<p>This treats each home zone hex as if the national has a token there. Revenue calculation then:</p>
+<ol><li>Identifies all linked cities/towns in the zone via graph connectivity.</li><li>Counts linked stops at face value.</li><li>Fills remaining train capacity at flat rates for unlinked stops (game-specific).</li></ol>
+<p>Requires a <code>NATIONAL_REGION_HEXES</code> constant enumerating exactly which hexes belong to each national's zone.</p>
+<hr>
+<h2 id="whats-next">What's next</h2>
+<ul><li>How an action travels through the engine: <a href="kernablauf.html">Core Flow</a></li><li>Round and Step interaction in depth: <a href="round-step-system.html">Round/Step System</a></li><li>Ability types and <code>when:</code> vocabulary: <a href="abilities.html">Ability Types Reference</a></li><li>Tile DSL and development routes: <a href="tiles.html">Tile Reference</a></li><li>Coding patterns and guidelines: <a href="coding-guidelines.html">Coding Guidelines</a></li><li>System topology: <a href="architecture.html">Architecture Overview</a></li></ul>
+<hr>
+<p><em>Version: 2026-05-08 — derived from <code>lib/engine/game/base.rb</code>, <code>lib/engine/round/base.rb</code>, <code>lib/engine/step/base.rb</code>, <code>lib/engine/step/tracker.rb</code>, <code>lib/engine/phase.rb</code>, <code>lib/engine/bank.rb</code>, <code>lib/engine/depot.rb</code>, <code>lib/engine/stock_market.rb</code>, <code>lib/engine/graph.rb</code>.</em></p>
+</article>
+</main>
+</div>
+<script src="search.js"></script>
+<script src="ui.js"></script>
+</body>
+</html>

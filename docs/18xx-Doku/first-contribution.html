@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Your First Contribution — 18OE Dev Docs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Playfair+Display:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({ startOnLoad: true, theme: 'base', themeVariables: {
+  primaryColor: '#0d1f38', primaryTextColor: '#faf6ec',
+  primaryBorderColor: '#c9a843', lineColor: '#c9a843',
+  secondaryColor: '#1a3a6a', tertiaryColor: '#2a4a80',
+  actorBkg: '#0d1f38', actorTextColor: '#faf6ec',
+  actorBorder: '#c9a843', actorLineColor: '#c9a843',
+  activationBkgColor: '#2a4ab0', activationBorderColor: '#c9a843',
+  signalColor: '#c9a843', signalTextColor: '#2a1a0a',
+  labelBoxBkgColor: '#0d1f38', labelBoxBorderColor: '#c9a843', labelTextColor: '#faf6ec',
+  loopTextColor: '#2a1a0a',
+  edgeLabelBackground: '#f0ead8',
+  noteBkgColor: '#f0e8d4', noteTextColor: '#2a1a0a', noteBorderColor: '#c9a843',
+  titleColor: '#2a1a0a',
+  clusterBkg: '#1a3a6a', clusterBorder: '#c9a843', clusterTextColor: '#faf6ec',
+  fillType0: '#0d1f38', fillType1: '#1a3a6a', fillType2: '#2a4a80',
+  fillType3: '#1a3a6a', fillType4: '#0d1f38', fillType5: '#2a4a80',
+  fillType6: '#1a3a6a', fillType7: '#0d1f38'
+} });</script>
+</head>
+<body>
+<header id="site-header">
+  <a href="index.html">18OE</a> &mdash; Developer Documentation
+</header>
+<div id="layout">
+<nav id="sidebar" aria-label="Navigation">
+<input id="nav-search" type="search" placeholder="Search…" aria-label="Search documentation" autocomplete="off">
+<div id="search-results" style="display:none">
+<p id="search-no-results" style="display:none">No results found.</p>
+<ul id="search-results-list"></ul>
+</div>
+<div class="track"><h3>18OE Status</h3><ul>
+<li><a href="rules-summary.html">Game Rules Summary</a></li>
+<li><a href="18oe-map-status.html">Map Implementation Status</a></li>
+<li><a href="status.html">Implementation Tracker</a></li>
+<li><a href="rulebook-coverage.html">Rulebook Coverage</a></li>
+<li><a href="alpha-gaps.html">Open for Alpha</a></li>
+</ul></div>
+<div class="track"><h3>Getting Involved</h3><ul>
+<li><a href="first-contribution.html" aria-current="page"><strong>Your First Contribution</strong></a></li>
+</ul></div>
+<div class="track"><h3>Building a New Game</h3><ul>
+<li><a href="engine-concepts.html">Understanding the Engine</a></li>
+<li><a href="getting-started.html">Development Setup</a></li>
+<li><a href="game-implementation.html">Game Structure</a></li>
+<li><a href="map.html">Map Configuration</a></li>
+<li><a href="entities.html">Corporations & Companies</a></li>
+<li><a href="trains-phases.html">Trains, Phases & Market</a></li>
+<li><a href="round-step-system.html">Rounds & Steps</a></li>
+<li><a href="auction-round.html">Auction Round</a></li>
+<li><a href="revenue-routing.html">Revenue & Routing</a></li>
+<li><a href="abilities.html">Abilities</a></li>
+<li><a href="tiles.html">Tile Reference</a></li>
+<li><a href="common-patterns.html">Common Patterns</a></li>
+<li><a href="testing.html">Testing Your Game</a></li>
+<li><a href="title-checklist.html">Title Checklist</a></li>
+<li><a href="coding-guidelines.html">Coding Guidelines</a></li>
+</ul></div>
+<div class="track"><h3>Reference</h3><ul>
+<li><a href="game-engine.html">Game Engine Reference</a></li>
+<li><a href="adrs.html">Architecture Decision Records</a></li>
+</ul></div>
+<div class="track"><h3>Platform & Testing Setup</h3><ul>
+<li><a href="architecture.html">Architecture Overview</a></li>
+<li><a href="konfiguration-betrieb.html">Configuration & Operations</a></li>
+<li><a href="systemgrenzen.html">System Boundaries</a></li>
+</ul></div>
+<div class="track"><h3>Working with Claude</h3><ul>
+<li><a href="codevelop.html">Co-developing with Claude</a></li>
+</ul></div>
+</nav>
+<main>
+<article>
+<h1 id="your-first-contribution">Your First Contribution</h1>
+<p>One small change, one pull request, merged. This guide walks the whole loop end-to-end.</p>
+<p>No prior experience with this codebase is required. You need Docker running (see <a href="getting-started.html">Development Setup</a>) and a GitHub account.</p>
+<hr>
+<h2 id="what-makes-a-good-first-task">What makes a good first task</h2>
+<p>The safest first contributions are <strong>L1</strong> — changes to constants only. No new files, no logic, nothing that can cascade. The result is immediately visible in the browser, and if something breaks it breaks obviously.</p>
+<p>Good L1 tasks:</p>
+<ul><li>Add or correct a location name on the map</li><li>Fix a tile quantity (physical game has 6 of tile #57; the code says 4)</li><li>Correct a corporation colour, token layout, or starting cash value</li><li>Add a missing <code>GAME_RULES_URL</code> to a title's <code>meta.rb</code></li><li>Add a missing logo SVG</li></ul>
+<p>Pick <strong>one thing</strong>. A first PR should be small enough for a reviewer to confirm in two minutes.</p>
+<hr>
+<h2 id="find-something-to-fix">Find something to fix</h2>
+<p>Open any title at <code>http://localhost:9292/map/&amp;lt;TITLE&amp;gt;</code> and compare it against the physical game or published rules.</p>
+<p>Some reliable places to look:</p>
+<pre><code class="language-bash"># Titles missing a rules URL
+grep -rL 'GAME_RULES_URL' lib/engine/game/*/meta.rb
+
+# Location names left as empty strings
+grep -rn "=&gt; ''" lib/engine/game/*/map.rb | grep -i location
+
+# Tile counts that differ from a known manifest
+grep -n "'57'" lib/engine/game/g_1830/map.rb</code></pre>
+<p>You can also browse the <a href="status.html">Implementation Tracker</a> and filter for <strong>L1</strong> items — those are the lowest-risk changes on an active title.</p>
+<hr>
+<h2 id="worked-example--adding-a-missing-location-name">Worked example — adding a missing location name</h2>
+<p>We'll add a city name that shows blank on the map. The change lives in one line of the title's <code>map.rb</code>.</p>
+<p><strong>1. Find the hex coordinate</strong> from the browser map or the physical board. In this example, hex <code>K22</code> in game 1830 shows no name.</p>
+<p><strong>2. Check what is currently in the file:</strong></p>
+<pre><code class="language-bash">grep 'K22' lib/engine/game/g_1830/map.rb</code></pre>
+<p><strong>3. Open <code>lib/engine/game/g_1830/map.rb</code> and find <code>LOCATION_NAMES</code>:</strong></p>
+<pre><code class="language-ruby">LOCATION_NAMES = {
+  'A10' =&gt; 'Montreal',
+  'A20' =&gt; 'Burlington',
+  # ...
+  'K22' =&gt; '',          # blank — physical board says 'Providence'
+}.freeze</code></pre>
+<p><strong>4. Fill it in:</strong></p>
+<pre><code class="language-ruby">  'K22' =&gt; 'Providence',</code></pre>
+<p><strong>5. Check the result in the browser</strong> — <code>http://localhost:9292/map/1830</code> should now show the name on that hex. No restart needed; <code>lib/</code> changes are picked up automatically by the running container.</p>
+<hr>
+<h2 id="run-the-tests">Run the tests</h2>
+<pre><code class="language-bash"># Fast check: fixtures for your title only
+docker compose exec rack bundle exec rspec spec/lib/engine/game/fixtures_spec.rb -e "1830"
+
+# Before opening a PR: full suite
+docker compose exec rack bundle exec parallel_rspec spec/</code></pre>
+<p>L1 data changes very rarely break a fixture. If one does fail, the output tells you exactly which field changed — fix it or ask in <strong>#18xxgamesdev</strong> on Slack.</p>
+<hr>
+<h2 id="commit-and-push">Commit and push</h2>
+<pre><code class="language-bash"># Branch name: what changed, not the mechanic
+git checkout -b fix/1830-providence-location-name
+
+# Stage only your file
+git add lib/engine/game/g_1830/map.rb
+
+# Subject under 50 chars; say what was wrong
+git commit -m "fix(1830): add missing location name for Providence (K22)"
+
+git push -u origin fix/1830-providence-location-name</code></pre>
+<hr>
+<h2 id="open-the-pr">Open the PR</h2>
+<p>Go to <code>https://github.com/tobymao/18xx</code> — GitHub will offer a <strong>Compare &amp; pull request</strong> banner for your branch.</p>
+<p>A good description for an L1 fix is short:</p>
+<blockquote><p><strong>Problem:</strong> hex K22 showed no location name on the 1830 map.  <strong>Change:</strong> added <code>'K22' =&gt; 'Providence'</code> to <code>LOCATION_NAMES</code>.  <strong>Source:</strong> 1830 rulebook p. 4 / physical board.</p></blockquote>
+<p>Reviewers want three things: what was wrong, what you changed, where you confirmed it. That's all.</p>
+<hr>
+<h2 id="before-you-click-submit">Before you click Submit</h2>
+<ul><li>[ ] Map renders correctly at <code>http://localhost:9292/map/&lt;TITLE&gt;</code></li><li>[ ] No tile errors at <code>http://localhost:9292/tiles/&lt;TITLE&gt;/all</code></li><li>[ ] Fixtures pass for the affected title</li><li>[ ] Full suite still green</li><li>[ ] PR description cites the source (rulebook page, scan, or physical board)</li><li>[ ] Diff contains only the one change — no unrelated edits</li></ul>
+<hr>
+<h2 id="what-to-expect">What to expect</h2>
+<p><strong>Review turnaround</strong> is usually a few days for a clean L1 change. Maintainers are volunteers; if you haven't heard back after a week, leave a polite comment.</p>
+<p><strong>Common feedback</strong> on a first PR:</p>
+<ul><li><em>"Can you cite a source for this?"</em> — add a rulebook reference to your PR description.</li><li><em>"Fixtures need updating"</em> — re-record the affected fixture (see <a href="testing.html">Testing Your Game</a>).</li></ul>
+<p><strong>After it merges</strong>, your contribution is live on 18xx.games. Pull <code>master</code> and the name is there.</p>
+<hr>
+<h2 id="whats-next">What's next</h2>
+<table><thead><tr><th>You want to…</th><th>Read</th></tr></thead><tbody><tr><td>Tackle another L1 task</td><td><a href="status.html">Implementation Tracker</a> → filter L1</td></tr><tr><td>Understand how the pieces fit</td><td><a href="engine-concepts.html">Understanding the Engine</a></td></tr><tr><td>Implement a full new title</td><td><a href="getting-started.html">Development Setup</a> → <a href="title-checklist.html">Title Checklist</a></td></tr><tr><td>Ask a question</td><td>Slack <strong>#18xxgamesdev</strong></td></tr></tbody></table>
+<hr>
+<p><em>Version: 2026-05-08.</em></p>
+</article>
+</main>
+</div>
+<script src="search.js"></script>
+<script src="ui.js"></script>
+</body>
+</html>

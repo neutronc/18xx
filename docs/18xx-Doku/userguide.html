@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>User Guide — 18OE Dev Docs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Playfair+Display:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({ startOnLoad: true, theme: 'base', themeVariables: {
+  primaryColor: '#0d1f38', primaryTextColor: '#faf6ec',
+  primaryBorderColor: '#c9a843', lineColor: '#c9a843',
+  secondaryColor: '#1a3a6a', tertiaryColor: '#2a4a80',
+  actorBkg: '#0d1f38', actorTextColor: '#faf6ec',
+  actorBorder: '#c9a843', actorLineColor: '#c9a843',
+  activationBkgColor: '#2a4ab0', activationBorderColor: '#c9a843',
+  signalColor: '#c9a843', signalTextColor: '#2a1a0a',
+  labelBoxBkgColor: '#0d1f38', labelBoxBorderColor: '#c9a843', labelTextColor: '#faf6ec',
+  loopTextColor: '#2a1a0a',
+  edgeLabelBackground: '#f0ead8',
+  noteBkgColor: '#f0e8d4', noteTextColor: '#2a1a0a', noteBorderColor: '#c9a843',
+  titleColor: '#2a1a0a',
+  clusterBkg: '#1a3a6a', clusterBorder: '#c9a843', clusterTextColor: '#faf6ec',
+  fillType0: '#0d1f38', fillType1: '#1a3a6a', fillType2: '#2a4a80',
+  fillType3: '#1a3a6a', fillType4: '#0d1f38', fillType5: '#2a4a80',
+  fillType6: '#1a3a6a', fillType7: '#0d1f38'
+} });</script>
+</head>
+<body>
+<header id="site-header">
+  <a href="index.html">18OE</a> &mdash; Developer Documentation
+</header>
+<div id="layout">
+<nav id="sidebar" aria-label="Navigation">
+<input id="nav-search" type="search" placeholder="Search…" aria-label="Search documentation" autocomplete="off">
+<div id="search-results" style="display:none">
+<p id="search-no-results" style="display:none">No results found.</p>
+<ul id="search-results-list"></ul>
+</div>
+<div class="track"><h3>18OE Status</h3><ul>
+<li><a href="rules-summary.html">Game Rules Summary</a></li>
+<li><a href="18oe-map-status.html">Map Implementation Status</a></li>
+<li><a href="status.html">Implementation Tracker</a></li>
+<li><a href="rulebook-coverage.html">Rulebook Coverage</a></li>
+<li><a href="alpha-gaps.html">Open for Alpha</a></li>
+</ul></div>
+<div class="track"><h3>Getting Involved</h3><ul>
+<li><a href="first-contribution.html">Your First Contribution</a></li>
+</ul></div>
+<div class="track"><h3>Building a New Game</h3><ul>
+<li><a href="engine-concepts.html">Understanding the Engine</a></li>
+<li><a href="getting-started.html">Development Setup</a></li>
+<li><a href="game-implementation.html">Game Structure</a></li>
+<li><a href="map.html">Map Configuration</a></li>
+<li><a href="entities.html">Corporations & Companies</a></li>
+<li><a href="trains-phases.html">Trains, Phases & Market</a></li>
+<li><a href="round-step-system.html">Rounds & Steps</a></li>
+<li><a href="auction-round.html">Auction Round</a></li>
+<li><a href="revenue-routing.html">Revenue & Routing</a></li>
+<li><a href="abilities.html">Abilities</a></li>
+<li><a href="tiles.html">Tile Reference</a></li>
+<li><a href="common-patterns.html">Common Patterns</a></li>
+<li><a href="testing.html">Testing Your Game</a></li>
+<li><a href="title-checklist.html">Title Checklist</a></li>
+<li><a href="coding-guidelines.html">Coding Guidelines</a></li>
+</ul></div>
+<div class="track"><h3>Reference</h3><ul>
+<li><a href="game-engine.html">Game Engine Reference</a></li>
+<li><a href="adrs.html">Architecture Decision Records</a></li>
+</ul></div>
+<div class="track"><h3>Platform & Testing Setup</h3><ul>
+<li><a href="architecture.html">Architecture Overview</a></li>
+<li><a href="konfiguration-betrieb.html">Configuration & Operations</a></li>
+<li><a href="systemgrenzen.html">System Boundaries</a></li>
+</ul></div>
+<div class="track"><h3>Working with Claude</h3><ul>
+<li><a href="codevelop.html">Co-developing with Claude</a></li>
+</ul></div>
+</nav>
+<main>
+<article>
+<h1 id="user-guide">User Guide</h1>
+<p>18xx.games is a web platform for playing 18xx board games online. All game rules are implemented; you only need a browser and an account.</p>
+<h2 id="registration-and-account">Registration and Account</h2>
+<p>Create an account at <code>/signup</code> with a username, email, and password. Passwords are stored as Argon2 hashes — they are never held in plain text anywhere in the system. You can update your profile at any time under <code>/profile</code>.</p>
+<h2 id="finding-and-creating-games">Finding and Creating Games</h2>
+<p>The home page shows three lists: open games (looking for players), active games, and finished games. Click <em>New Game</em> to choose a title from the dropdown — the list shows all titles at Beta status or above. Titles in Prealpha or Alpha are labelled accordingly; Alpha games may be archived without notice if a rule fix breaks the active game state.</p>
+<h2 id="game-modes">Game Modes</h2>
+<p>18xx.games supports three modes. In <strong>async mode</strong> (the default) players take turns whenever they have time; you receive an email notification when it is your turn. In <strong>live mode</strong> all players are online simultaneously and the browser updates in real time via Server-Sent Events. In <strong>hotseat mode</strong> all players share the same browser without any server involvement; the game exists only in local browser storage.</p>
+<h2 id="taking-a-turn">Taking a Turn</h2>
+<p>The game window shows who is to act in the top-right area. The interface only allows legal actions — a greyed-out button or an unclickable tile means that action is not permitted at this moment. After every move a log entry appears and the next player is activated.</p>
+<h2 id="undo-and-redo">Undo and Redo</h2>
+<p>Undo is available as long as the following player has not yet responded. Clicking <em>Undo</em> sends an <code>undo</code> action to the server, which rolls the game back one step; the next move then builds on the prior state.</p>
+<h2 id="pinned-games">Pinned Games</h2>
+<p>When a developer introduces a breaking change, running games are <em>pinned</em> to an older JavaScript bundle. The game continues but displays a notice. Pinned games cannot be debugged and may be archived after a grace period.</p>
+<h2 id="whats-next">What's next</h2>
+<ul><li>Concrete step-by-step walkthroughs: <a href="anwendungsfaelle.html">Use Cases</a></li><li>Solving common problems: <a href="faq.html">FAQ</a></li><li>Look up game terms: <a href="glossary.html">Glossary</a></li></ul>
+<hr>
+<p><em>Version: 2026-05-08 — derived from <code>assets/app/app.rb</code>, <code>routes/game.rb</code>, <code>routes/user.rb</code>.</em></p>
+</article>
+</main>
+</div>
+<script src="search.js"></script>
+<script src="ui.js"></script>
+</body>
+</html>
