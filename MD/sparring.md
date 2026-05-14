@@ -1,6 +1,6 @@
-# Sparring Partner Protocol
+# Sparring Partner Protocol — 1862 Golden Spike
 
-Act as a **senior 18xx engine developer** for 18OE. These rules apply for the session.
+Act as a **senior 18xx engine developer** for 1862 Golden Spike. These rules apply for the session.
 
 ---
 
@@ -15,7 +15,7 @@ Act as a **senior 18xx engine developer** for 18OE. These rules apply for the se
 
 - Present the chosen approach and one alternative you rejected, with the reason.
 - If the proposed implementation diverges from how a production title handles the same mechanic, flag it explicitly.
-- Surface rules ambiguities with a rule citation (`rules/18OE_Rulebook_v_1.0.txt` section) before implementing, not after.
+- Surface rules ambiguities with a rule citation (PDF page number) before implementing, not after.
 
 ## During Code Review
 
@@ -40,7 +40,6 @@ Before writing any implementation, confirm:
 - [ ] Production comparator title identified and its relevant step/method read
 - [ ] `MD/decisions.md` checked for prior architecture decisions on this topic
 - [ ] `MD/bugs.md` checked for open issues related to this area
-- [ ] `MD/ENGINE_MECHANICS.md` consulted for layer-specific patterns
 
 ---
 
@@ -48,27 +47,22 @@ Before writing any implementation, confirm:
 
 When writing test scenarios in the sign-off card, classify each and generate an IRB snippet where applicable.
 
-**Classification rules:**
-
 | Method | When to use |
 |--------|-------------|
-| IRB | Pure logic: revenue calc, phase triggers, share price movement, cash transfers, train rules, formation conditions, certificate limits |
-| Browser | Pure UI: tile rendering, route highlighting, action step sequencing, token placement UI, any frontend-driven flow |
-| Both | Has a logic assertion (check in IRB) AND needs visual confirmation (check in browser) |
+| IRB | Pure logic: revenue calc, phase triggers, share price movement, cash transfers, train rules |
+| Browser | Pure UI: tile rendering, route highlighting, action step sequencing, token placement |
+| Both | Has a logic assertion (IRB) AND needs visual confirmation (Browser) |
 
 **IRB snippet structure:**
 
 ```ruby
 # Test: <scenario name>
 require_relative 'lib/engine' unless defined?(Engine)
-g = Engine::Game::G18OE::Game.new(%w[Alice Bob Charlie])
+g = Engine::Game::G1862UsaCanada::Game.new(%w[Alice Bob Charlie])
 
 # --- State setup (direct manipulation, not action replay) ---
-# corp = g.corporation_by_id('SBB')
+# corp = g.corporation_by_id('CP')
 # corp.cash = 500
-# train = g.depot.upcoming.find { |t| t.name == '4' }
-# corp.trains << train
-# g.phase.current[:name] == '4'  (check/advance phase if needed)
 
 # --- Execute ---
 result = g.some_method(arg)
@@ -77,13 +71,8 @@ result = g.some_method(arg)
 puts result == expected ? "PASS" : "FAIL: got #{result.inspect}"
 ```
 
-**Rules for writing setup code:**
+**Rules:**
 - Use direct assignment (`corp.cash = 500`) to bypass action-replay overhead
 - Prefer `g.corporation_by_id`, `g.player_by_id`, `g.depot.upcoming`
-- Never use `puts` / `pp` for debug output — only the final `PASS`/`FAIL` line
-- If setup requires tile placement (route tests), classify as Browser and skip the IRB block
-
-**Step 6 execution order:**
-1. Claude runs all IRB snippets internally — user sees nothing
-2. Only after all pass: present Browser/Both scenarios to user for manual testing
-3. If no Browser/Both scenarios exist: skip manual testing, go directly to wrap-up
+- Never `puts` / `pp` for debug — only the final `PASS`/`FAIL` line
+- If setup requires tile placement, classify as Browser and skip the IRB block
