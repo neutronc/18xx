@@ -336,7 +336,7 @@ def parse_kanban_items(md_path):
       - Item text contains the literal token '[BETA]'
     """
     text = md_path.read_text(encoding="utf-8")
-    STATUS_MAP = {'x': 'merged', '>': 'needs-pr', 't': 'testing', '~': 'partial', ' ': 'todo'}
+    STATUS_MAP = {'x': 'merged', '>': 'needs-pr', 't': 'testing', '~': 'partial', '/': 'started', ' ': 'todo'}
     sections = []
     current = None
     in_beta_h1 = False   # flipped by # Beta … H1 headers
@@ -356,7 +356,7 @@ def parse_kanban_items(md_path):
             continue
         if current is None:
             continue
-        m = re.match(r'^- \[([x>t~ ])\] (.*)', line)
+        m = re.match(r'^- \[([x>t~ /])\] (.*)', line)
         if not m:
             continue
         status_char = m.group(1)
@@ -436,7 +436,7 @@ COVERAGE_DATA = [
         ("Asterisked-zone cap (UK/PHS/FR)",  "done", "alpha"),
         ("Dynamic minor regions",            "done", "alpha"),
         ("Home token filtering",             "done", "alpha"),
-        ("20% terrain discount zones",       "done", "alpha"),
+        ("20% terrain discount zones",       "needs-pr", "alpha"),
     ]),
     ("Auction Phase", [
         ("Waterfall auction tiered rows",    "done", "alpha"),
@@ -453,23 +453,23 @@ COVERAGE_DATA = [
     ("Stock Market Grid", [
         ("8\u00d717 grid with prices",       "done",     "alpha"),
         ("Par colour bands",                  "done",     "alpha"),
-        ("LEFT (zero dividend)",              "done",     "alpha"),
-        ("No movement (below par)",           "done",     "alpha"),
-        ("RIGHT (at/above par)",              "done",     "alpha"),
+        ("LEFT (zero dividend)",              "needs-pr", "alpha"),
+        ("No movement (below par)",           "needs-pr", "alpha"),
+        ("RIGHT (at/above par)",              "needs-pr", "alpha"),
         ("Minors/regionals exempt",           "done",     "alpha"),
         ("UP end-of-SR (no OM shares)",       "done",     "alpha"),
-        ("Sold-out order (hi→lo price)", "done",     "alpha"),
+        ("Sold-out order (hi→lo price)", "needs-pr", "alpha"),
         ("Post-conversion sell window",       "done",     "alpha"),
         ("Reserved secondary shares",         "todo",     "alpha"),
-        (">60% president pool buy at 2×","done",     "alpha"),
+        (">60% president pool buy at 2×","needs-pr", "alpha"),
         ("+3 RIGHT on OE first run",          "todo",     "beta"),
         ("Voluntary regional removal",        "todo",     "alpha"),
-        ("§11.7 issuance DOWN movement", "done",     "alpha"),
+        ("§11.7 issuance DOWN movement", "needs-pr", "alpha"),
     ]),
     ("Train Data & Phases", [
         ("7-level roster",                "done", "alpha"),
         ("Rust triggers (L4/L6/L8)",      "done", "alpha"),
-        ("L8 unlock after 4th L7",        "done", "alpha"),
+        ("L8 unlock after 4th L7",        "needs-pr", "alpha"),
         ("8 named phases",                "done", "alpha"),
         ("Tile colour by phase",          "done", "alpha"),
         ("Status flags",                  "done", "alpha"),
@@ -615,12 +615,12 @@ COVERAGE_DATA = [
         ("Port authority transfer",      "todo", "beta"),
     ]),
     ("End Game", [
-        ("Bank break pre-L8 timing",     "done", "alpha"),
-        ("L8 purchase end trigger",      "done", "alpha"),
-        ("Remainder cash injection",     "done", "alpha"),
+        ("Bank break pre-L8 timing",     "needs-pr", "alpha"),
+        ("L8 purchase end trigger",      "needs-pr", "alpha"),
+        ("Remainder cash injection",     "needs-pr", "alpha"),
         ("Final two OR sequence",        "todo", "beta"),
         ("Second final OR (repeat rev.)","todo", "beta"),
-        ("Bankrupt trigger removed",     "done", "alpha"),
+        ("Bankrupt trigger removed",     "needs-pr", "alpha"),
         ("Win condition (scoring)",      "done", "alpha"),
     ]),
     ("Minor Abilities", [
@@ -632,7 +632,7 @@ COVERAGE_DATA = [
         ("F \u2013 White Peak",             "done",     "alpha"),
         ("G \u2013 Indigo Foundry",         "done",     "alpha"),
         ("H \u2013 Great Western Steamship","todo",     "beta"),
-        ("J \u2013 Grey Locomotive",        "partial",  "alpha"),
+        ("J \u2013 Grey Locomotive",        "needs-pr", "alpha"),
         ("K \u2013 Vermilion Seal",         "done",     "alpha"),
         ("L \u2013 Krasnaya Strela",        "partial",  "alpha"),
         ("M \u2013 CIWL Pullmans",          "todo",     "beta"),
@@ -641,7 +641,7 @@ COVERAGE_DATA = [
     ("Private Abilities", [
         ("Robert Stephenson (none)",   "done",    "alpha"),
         ("Ponts et Chauss\u00e9es (none)", "done", "alpha"),
-        ("Wien S\u00fcdbahn hof",     "partial", "alpha"),
+        ("Wien S\u00fcdbahn hof",     "partial", "beta"),
         ("Barclay, Bevan & Tritton",   "todo",    "alpha"),
         ("Star Harbor",                "partial", "beta"),
         ("Central Circle",             "partial", "alpha"),
@@ -817,6 +817,7 @@ def build_status_html():
     count_done    = len(done_sections)
     count_pr      = sum(1 for s in inwork_sections for it in s['items'] if it['status'] == 'needs-pr')
     count_partial = sum(1 for s in inwork_sections for it in s['items'] if it['status'] in ('partial', 'testing'))
+    count_started = sum(1 for s in todo_sections   for it in s['items'] if it['status'] == 'started')
     count_todo    = sum(1 for s in todo_sections   for it in s['items'] if it['status'] == 'todo')
     count_inwork  = count_pr + count_partial
     count_beta    = (sum(1 for s in inwork_sections for it in s['items'] if it.get('beta')) +
@@ -834,8 +835,12 @@ def build_status_html():
     w_partial = sum(_w(it) * 0.5 for s in inwork_sections for it in s['items']
                     if it['status'] in ('partial', 'testing'))
     w_partial_rem = w_partial                                                               # remaining half of partials
-    w_todo    = sum(_w(it) for s in todo_sections for it in s['items'] if it['status'] == 'todo') + w_partial_rem
-    w_total   = w_done + w_pr + w_partial + w_todo or 1.0
+    # started items (todo.md [/]) count as 30% done (wiring exists, completion pending)
+    w_started = sum(_w(it) * 0.3 for s in todo_sections for it in s['items'] if it['status'] == 'started')
+    w_started_rem = sum(_w(it) * 0.7 for s in todo_sections for it in s['items'] if it['status'] == 'started')
+    w_todo    = (sum(_w(it) for s in todo_sections for it in s['items'] if it['status'] == 'todo')
+                 + w_partial_rem + w_started_rem)
+    w_total   = w_done + w_pr + w_partial + w_started + w_todo or 1.0
 
     # Alpha-scoped weighted sums
     w_done_a    = w_done  # all done items count for alpha (they were alpha when done)
@@ -843,17 +848,22 @@ def build_status_html():
                       if it['status'] == 'needs-pr' and _is_alpha(it))
     w_partial_a = sum(_w(it) * 0.5 for s in inwork_sections for it in s['items']
                       if it['status'] in ('partial', 'testing') and _is_alpha(it))
+    w_started_a = sum(_w(it) * 0.3 for s in todo_sections for it in s['items']
+                      if it['status'] == 'started' and _is_alpha(it))
+    w_started_rem_a = sum(_w(it) * 0.7 for s in todo_sections for it in s['items']
+                          if it['status'] == 'started' and _is_alpha(it))
     w_todo_a    = (sum(_w(it) for s in todo_sections for it in s['items']
                        if it['status'] == 'todo' and _is_alpha(it))
                    + sum(_w(it) * 0.5 for s in inwork_sections for it in s['items']
-                         if it['status'] in ('partial', 'testing') and _is_alpha(it)))
-    w_total_a   = w_done_a + w_pr_a + w_partial_a + w_todo_a or 1.0
+                         if it['status'] in ('partial', 'testing') and _is_alpha(it))
+                   + w_started_rem_a)
+    w_total_a   = w_done_a + w_pr_a + w_partial_a + w_started_a + w_todo_a or 1.0
 
     alpha_done_pct = round((w_done_a + w_pr_a) / w_total_a * 100)
     alpha_remaining_n = (sum(1 for s in inwork_sections for it in s['items']
                               if it['status'] in ('partial', 'testing') and _is_alpha(it)) +
                          sum(1 for s in todo_sections for it in s['items']
-                              if it['status'] == 'todo' and _is_alpha(it)))
+                              if it['status'] in ('todo', 'started') and _is_alpha(it)))
 
     p = []
     p.append('<h1>18OE — Implementation Tracker</h1>')
@@ -866,10 +876,10 @@ def build_status_html():
 
     bar_html = build_shared_bar(
         rows=[
-            {'label': 'Overall', 'done': w_done, 'pr': w_pr, 'partial': w_partial,
+            {'label': 'Overall', 'done': w_done, 'pr': w_pr, 'partial': w_partial + w_started,
              'todo': w_todo, 'total': w_total,
-             'right': f'{count_done + count_pr}&thinsp;/&thinsp;{count_done + count_pr + count_partial + count_todo} items'},
-            {'label': 'Alpha', 'done': w_done_a, 'pr': w_pr_a, 'partial': w_partial_a,
+             'right': f'{count_done + count_pr}&thinsp;/&thinsp;{count_done + count_pr + count_partial + count_started + count_todo} items'},
+            {'label': 'Alpha', 'done': w_done_a, 'pr': w_pr_a, 'partial': w_partial_a + w_started_a,
              'todo': w_todo_a, 'total': w_total_a,
              'right': (f'{alpha_done_pct}%'
                        f'<span class="bar-aside"> · {alpha_remaining_n} remaining'
@@ -877,10 +887,11 @@ def build_status_html():
                        + '</span>')},
         ],
         chips=[
-            {'cls': 'stat-done', 'label': 'Done &amp; merged', 'value': str(count_done)},
-            {'cls': 'stat-pr',   'label': 'Needs PR',          'value': str(count_pr)},
-            {'cls': 'stat-partial','label': 'Partial',         'value': str(count_partial)},
-            {'cls': 'stat-todo', 'label': 'To do',             'value': str(count_todo)},
+            {'cls': 'stat-done',    'label': 'Done &amp; merged', 'value': str(count_done)},
+            {'cls': 'stat-pr',      'label': 'Needs PR',          'value': str(count_pr)},
+            {'cls': 'stat-partial', 'label': 'Partial',           'value': str(count_partial)},
+            {'cls': 'stat-partial', 'label': 'Started',           'value': str(count_started)},
+            {'cls': 'stat-todo',    'label': 'To do',             'value': str(count_todo)},
         ] + ([{'cls': 'stat-beta', 'label': 'Beta deferred', 'value': str(count_beta)}] if count_beta else []),
     )
     p.append(bar_html)
@@ -964,11 +975,12 @@ def build_status_html():
 
     # --- To Do column ---
     p.append('<div class="sb-col">')
-    p.append(f'<div class="sb-col-header todo-col">To Do<span class="sb-col-count">{count_todo}</span></div>')
+    p.append(f'<div class="sb-col-header todo-col">To Do'
+             f'<span class="sb-col-count">{count_started + count_todo}</span></div>')
     # rules view (default)
     p.append('<div class="sb-col-body view-rules">')
     for sec in todo_sections:
-        items = [it for it in sec['items'] if it['status'] == 'todo']
+        items = [it for it in sec['items'] if it['status'] in ('started', 'todo')]
         if not items:
             continue
         p.append('<div class="sb-section">')
@@ -977,28 +989,41 @@ def build_status_html():
             layer = _html.escape(it['layer'])
             text  = apply_inline(it['text'])
             scope = 'beta' if it.get('beta') else 'alpha'
-            p.append(
-                f'<div class="sb-item sb-todo" data-layer="{layer}" data-scope="{scope}">'
-                f'<div class="sb-status-dot"></div>'
-                f'<span class="sb-item-text">{text}</span>'
-                f'<span class="layer-tag">{layer}</span>'
-                f'</div>'
-            )
+            if it['status'] == 'started':
+                p.append(
+                    f'<div class="sb-item sb-started" data-layer="{layer}" data-scope="{scope}">'
+                    f'<div class="sb-status-dot"></div>'
+                    f'<span class="sb-item-text">{text}</span>'
+                    f'<span class="layer-tag">{layer}</span>'
+                    f'<span class="started-badge">started</span>'
+                    f'</div>'
+                )
+            else:
+                p.append(
+                    f'<div class="sb-item sb-todo" data-layer="{layer}" data-scope="{scope}">'
+                    f'<div class="sb-status-dot"></div>'
+                    f'<span class="sb-item-text">{text}</span>'
+                    f'<span class="layer-tag">{layer}</span>'
+                    f'</div>'
+                )
         p.append('</div>')
     p.append('</div>')
     # layer view (hidden until toggled)
     p.append('<div class="sb-col-body view-layer" style="display:none">')
-    for layer_name, items in _layer_grouped_items(todo_sections, ('todo',)):
+    for layer_name, items in _layer_grouped_items(todo_sections, ('started', 'todo')):
         p.append('<div class="sb-section">')
         p.append(f'<div class="sb-section-title">{_html.escape(layer_name)}</div>')
         for it in items:
             layer = _html.escape(it['layer'])
             text  = apply_inline(it['text'])
             scope = 'beta' if it.get('beta') else 'alpha'
+            cls = 'sb-started' if it['status'] == 'started' else 'sb-todo'
+            badge = '<span class="started-badge">started</span>' if it['status'] == 'started' else ''
             p.append(
-                f'<div class="sb-item sb-todo" data-layer="{layer}" data-scope="{scope}">'
+                f'<div class="sb-item {cls}" data-layer="{layer}" data-scope="{scope}">'
                 f'<div class="sb-status-dot"></div>'
                 f'<span class="sb-item-text">{text}</span>'
+                f'{badge}'
                 f'</div>'
             )
         p.append('</div>')
@@ -1868,6 +1893,7 @@ article:has(.status-board) { max-width: 1400px; }
 }
 .sb-needs-pr .sb-status-dot { background: #2a4ab0; box-shadow: 0 0 0 2px rgba(42,74,176,0.15); }
 .sb-partial   .sb-status-dot { background: #b87800; box-shadow: 0 0 0 2px rgba(184,120,0,0.15); }
+.sb-started   .sb-status-dot { background: #7a5200; box-shadow: 0 0 0 2px rgba(122,82,0,0.12); }
 .sb-todo      .sb-status-dot { background: transparent; border: 1.5px solid rgba(13,31,56,0.28); }
 
 .sb-item-text { flex: 1; min-width: 0; color: #1a0f08; }
@@ -1881,6 +1907,20 @@ article:has(.status-board) { max-width: 1400px; }
   background: rgba(13,31,56,0.06);
   color: #5a4a32;
   border: 1px solid rgba(201,168,67,0.16);
+  white-space: nowrap;
+  margin-top: 0.15em;
+}
+.started-badge {
+  flex-shrink: 0;
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 0.5rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.1rem 0.4rem;
+  border-radius: 2px;
+  background: rgba(122,82,0,0.12);
+  color: #7a5200;
+  border: 1px solid rgba(122,82,0,0.25);
   white-space: nowrap;
   margin-top: 0.15em;
 }

@@ -641,6 +641,7 @@ article:has(.status-board) { max-width: 1400px; }
 }
 .sb-needs-pr .sb-status-dot { background: #2a4ab0; box-shadow: 0 0 0 2px rgba(42,74,176,0.15); }
 .sb-partial   .sb-status-dot { background: #b87800; box-shadow: 0 0 0 2px rgba(184,120,0,0.15); }
+.sb-started   .sb-status-dot { background: #7a5200; box-shadow: 0 0 0 2px rgba(122,82,0,0.12); }
 .sb-todo      .sb-status-dot { background: transparent; border: 1.5px solid rgba(13,31,56,0.28); }
 
 .sb-item-text { flex: 1; min-width: 0; color: #1a0f08; }
@@ -654,6 +655,20 @@ article:has(.status-board) { max-width: 1400px; }
   background: rgba(13,31,56,0.06);
   color: #5a4a32;
   border: 1px solid rgba(201,168,67,0.16);
+  white-space: nowrap;
+  margin-top: 0.15em;
+}
+.started-badge {
+  flex-shrink: 0;
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 0.5rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.1rem 0.4rem;
+  border-radius: 2px;
+  background: rgba(122,82,0,0.12);
+  color: #7a5200;
+  border: 1px solid rgba(122,82,0,0.25);
   white-space: nowrap;
   margin-top: 0.15em;
 }
