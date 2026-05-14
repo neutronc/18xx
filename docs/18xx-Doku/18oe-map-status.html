@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>18OE — Map Implementation Status — 18OE Dev Docs</title>
+<title>Map Implementation Status — 18OE Dev Docs</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Playfair+Display:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
@@ -81,12 +81,77 @@
 </nav>
 <main>
 <article>
-<h1 id="18oe--map-implementation-status">18OE — Map Implementation Status</h1>
+<h1>18OE — Map Implementation Status</h1>
+<p class="page-crosslink">For full rulebook picture → <a href="rulebook-coverage.html">Rulebook Coverage</a> · All open gaps → <a href="alpha-gaps.html">Open for Alpha</a></p>
+<p class="bar-note">Bar weighted by section effort (L1 data = 1×).</p>
+<div class="bar-rows">
+<div class="bar-row">
+<span class="bar-label-left">Map & Components</span>
+<div class="progress-track">
+<div class="pb-done"    style="width:66.7%"></div>
+<div class="pb-pr"      style="width:0.0%"></div>
+<div class="pb-partial" style="width:8.3%"></div>
+<div class="pb-todo"    style="width:25.0%"></div>
+</div>
+<span class="bar-label-right"><strong>67%</strong> · 20 / 33 items across map sections</span>
+</div>
+</div>
+<div class="status-summary" style="margin:0.5rem 0 1.2rem">
+<div class="stat-chip stat-done">Done <span>20</span></div>
+<div class="stat-chip stat-pr">Needs PR <span>0</span></div>
+<div class="stat-chip stat-partial">Partial <span>3</span></div>
+<div class="stat-chip stat-todo">To do <span>10</span></div>
+</div>
+<div class="coverage-map" style="margin-bottom:1.5rem">
+<div class="cov-chapter" data-chapter-scope="mixed">
+<div class="cov-chapter-title" id="cov-map--components">Map &amp; Components</div>
+<div class="cov-items">
+<div class="cov-item cov-done" data-scope="alpha" title="651-hex grid">651-hex grid</div>
+<div class="cov-item cov-done" data-scope="alpha" title="19 red off-board hexes">19 red off-board hexes</div>
+<div class="cov-item cov-done" data-scope="alpha" title="Terrain costs">Terrain costs</div>
+<div class="cov-item cov-done" data-scope="alpha" title="255 location names">255 location names</div>
+<div class="cov-item cov-done" data-scope="alpha" title="Station slot revenues">Station slot revenues</div>
+<div class="cov-item cov-done" data-scope="alpha" title="Pre-printed yellow tiles">Pre-printed yellow tiles</div>
+<div class="cov-item cov-done" data-scope="alpha" title="Pre-printed ferry paths">Pre-printed ferry paths</div>
+<div class="cov-item cov-done" data-scope="alpha" title="Sea zones (19)">Sea zones (19)</div>
+<div class="cov-item cov-partial" data-scope="beta" title="Ferry sea hexes (partial)">Ferry sea hexes (partial)</div>
+<div class="cov-item cov-partial" data-scope="alpha" title="Port icons">Port icons</div>
+<div class="cov-item cov-todo" data-scope="beta" title="Sea zone borders / ferry distances">Sea zone borders / ferry distances</div>
+<div class="cov-item cov-todo" data-scope="alpha" title="Logo SVGs">Logo SVGs</div>
+</div></div>
+<div class="cov-chapter" data-chapter-scope="mixed">
+<div class="cov-chapter-title" id="cov-track-laying">Track Laying</div>
+<div class="cov-items">
+<div class="cov-item cov-done" data-scope="alpha" title="OE1–OE3 yellow double-town">OE1–OE3 yellow double-town</div>
+<div class="cov-item cov-done" data-scope="alpha" title="OE4–OE8 yellow city">OE4–OE8 yellow city</div>
+<div class="cov-item cov-done" data-scope="alpha" title="OE12–OE18 green city">OE12–OE18 green city</div>
+<div class="cov-item cov-done" data-scope="alpha" title="OE23–OE33 brown city">OE23–OE33 brown city</div>
+<div class="cov-item cov-done" data-scope="alpha" title="OE34–OE44 gray city">OE34–OE44 gray city</div>
+<div class="cov-item cov-done" data-scope="alpha" title="Tile point budgets">Tile point budgets</div>
+<div class="cov-item cov-done" data-scope="alpha" title="Tile point costs">Tile point costs</div>
+<div class="cov-item cov-done" data-scope="alpha" title="TILE_UPGRADES_MUST_USE_MAX_EXITS">TILE_UPGRADES_MUST_USE_MAX_EXITS</div>
+<div class="cov-item cov-done" data-scope="alpha" title="Metropolis upgrade labels">Metropolis upgrade labels</div>
+<div class="cov-item cov-todo" data-scope="beta" title="Nationals pay no terrain">Nationals pay no terrain</div>
+<div class="cov-item cov-todo" data-scope="alpha" title="OE9–OE11 green double-town">OE9–OE11 green double-town</div>
+<div class="cov-item cov-todo" data-scope="alpha" title="OE20–OE22 brown double-town">OE20–OE22 brown double-town</div>
+<div class="cov-item cov-todo" data-scope="alpha" title="OE19 unknown tile">OE19 unknown tile</div>
+<div class="cov-item cov-todo" data-scope="alpha" title="Tile quantities verify">Tile quantities verify</div>
+<div class="cov-item cov-todo" data-scope="alpha" title="First-OR green tile exception">First-OR green tile exception</div>
+<div class="cov-item cov-todo" data-scope="beta" title="Patronage tile payout">Patronage tile payout</div>
+</div></div>
+<div class="cov-chapter" data-chapter-scope="mixed">
+<div class="cov-chapter-title" id="cov-token-placement">Token Placement</div>
+<div class="cov-items">
+<div class="cov-item cov-done" data-scope="alpha" title="Zone restriction">Zone restriction</div>
+<div class="cov-item cov-done" data-scope="alpha" title="Connectivity check">Connectivity check</div>
+<div class="cov-item cov-done" data-scope="alpha" title="Nationals skip token step">Nationals skip token step</div>
+<div class="cov-item cov-partial" data-scope="alpha" title="Lille White Cliffs position">Lille White Cliffs position</div>
+<div class="cov-item cov-todo" data-scope="beta" title="Cross-water token costs">Cross-water token costs</div>
+</div></div>
+</div>
+<hr>
 <p>Current state of <code>lib/engine/game/g_18_oe/map.rb</code>. Tracks what is implemented, what is verified against the physical map, and what is still outstanding.</p>
 <p>Map orientation: <code>LAYOUT = :pointy</code>, <code>AXES = { x: :number, y: :letter }</code> Coordinate system: rows A–Z then AA–AH (34 rows); columns 2–88.</p>
-<hr>
-<h2 id="overall-status">Overall Status</h2>
-<table><thead><tr><th>Area</th><th>Status</th></tr></thead><tbody><tr><td>Grid coverage</td><td>✓ 651 blue hexes</td></tr><tr><td>Regional home city coordinates</td><td>✓ All 24</td></tr><tr><td>National region hex lists</td><td>✓ All 8 (UK, SC, FR, PHS, AH, IT, SP, RU) — <code>NATIONAL_REGION_HEXES_COMPLETE = true</code></td></tr><tr><td>Location names</td><td>✓ All 255</td></tr><tr><td>Sea zones</td><td>✓ 19 named zones with hex lists; borders encoded as <code>type:province</code>; port stubs on 37 sea tiles</td></tr><tr><td>Custom tile codes</td><td>✓ OE1–OE8, OE12–OE18, OE23–OE44</td></tr><tr><td>Standard tile quantities</td><td>✓ Complete</td></tr><tr><td>Terrain costs</td><td>✓ UK, FR, SP, SC, Alps, IT, Adriatic, Carpathians, Balkans, Caucasus, river crossings</td></tr><tr><td>Station revenues</td><td>✓ All 255 named locations have correct starting revenue</td></tr><tr><td>Pre-printed yellows</td><td>✓ Liverpool J25, Manchester J27, Athinai AE72</td></tr><tr><td>Pre-printed whites (path edges)</td><td>~ Several cities missing path edges — see §3</td></tr><tr><td>Ferry paths / distances</td><td>? Outstanding</td></tr><tr><td>Double-town tile orientations</td><td>? OE9–11, OE20–22 outstanding</td></tr></tbody></table>
 <hr>
 <h2 id="grid-bounds">Grid Bounds</h2>
 <pre><code>A:  42-52, 66-74          B:  43-57, 63-81

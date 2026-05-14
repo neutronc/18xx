@@ -2698,6 +2698,120 @@ def build_alpha_gaps_html():
     print(f'  alpha-gaps.html  ({n_high} HIGH · {n_medium} MED · {n_low} LOW bugs · {n_todo} missing · {n_partial} partial)')
 
 
+def build_map_status_html():
+    """Generate 18oe-map-status.html: dynamic progress bar + coverage grid + static reference content."""
+    md_path = SRC_DIR / "18oe-map-status.md"
+    if not md_path.exists():
+        print("  18oe-map-status.html  (skipped — 18oe-map-status.md not found)")
+        return
+
+    MAP_COV_SECTIONS = {'Map & Components', 'Track Laying', 'Token Placement'}
+
+    # Weighted progress stats from Map & Components (primary bar)
+    done_w = pr_w = part_w = todo_w = 0.0
+    for section, items in COVERAGE_DATA:
+        if section != 'Map & Components':
+            continue
+        w = coverage_item_weight(section)
+        for _name, status, _scope in items:
+            if   status == 'done':     done_w += w
+            elif status == 'needs-pr': pr_w   += w
+            elif status == 'partial':  part_w += w * 0.5; todo_w += w * 0.5
+            elif status == 'todo':     todo_w += w
+    total_w = done_w + pr_w + part_w + todo_w or 1.0
+
+    # Raw counts across all map-relevant sections (for chips)
+    n = {'done': 0, 'needs-pr': 0, 'partial': 0, 'todo': 0}
+    for section, items in COVERAGE_DATA:
+        if section not in MAP_COV_SECTIONS:
+            continue
+        for _name, status, _scope in items:
+            if status in n:
+                n[status] += 1
+
+    pct = round((done_w + pr_w) / total_w * 100)
+
+    bar_html = build_shared_bar(
+        rows=[{
+            'label': 'Map & Components', 'done': done_w, 'pr': pr_w,
+            'partial': part_w, 'todo': todo_w, 'total': total_w,
+            'right': f'<strong>{pct}%</strong> · {n["done"] + n["needs-pr"]} / {sum(n.values())} items across map sections',
+        }],
+        chips=[
+            {'cls': 'stat-done',    'label': 'Done',     'value': str(n['done'])},
+            {'cls': 'stat-pr',      'label': 'Needs PR', 'value': str(n['needs-pr'])},
+            {'cls': 'stat-partial', 'label': 'Partial',  'value': str(n['partial'])},
+            {'cls': 'stat-todo',    'label': 'To do',    'value': str(n['todo'])},
+        ],
+    )
+
+    # Coverage grid for all map-relevant sections
+    cov_lines = ['<div class="coverage-map" style="margin-bottom:1.5rem">']
+    for section, items in COVERAGE_DATA:
+        if section not in MAP_COV_SECTIONS:
+            continue
+        anchor = re.sub(r'[^\w\s-]', '', section.lower()).strip().replace(' ', '-')
+        all_beta = all(scope == 'beta' for _, _, scope in items)
+        chapter_scope = 'beta' if all_beta else 'mixed'
+        cov_lines.append(f'<div class="cov-chapter" data-chapter-scope="{chapter_scope}">')
+        cov_lines.append(f'<div class="cov-chapter-title" id="cov-{anchor}">{_html.escape(section)}</div>')
+        cov_lines.append('<div class="cov-items">')
+        for label, status, scope in items:
+            cov_lines.append(
+                f'<div class="cov-item cov-{status}" data-scope="{scope}" title="{_html.escape(label)}">'
+                f'{_html.escape(label)}</div>'
+            )
+        cov_lines.append('</div></div>')
+    cov_lines.append('</div>')
+
+    # Convert static .md, stripping the "## Overall Status" section (replaced above)
+    raw = md_path.read_text(encoding='utf-8')
+    lines_in = raw.splitlines(keepends=True)
+    skip = False
+    cleaned_lines = []
+    for line in lines_in:
+        if re.match(r'^## Overall Status\s*$', line):
+            skip = True
+            continue
+        if skip and re.match(r'^## \w', line):
+            skip = False
+        if not skip:
+            cleaned_lines.append(line)
+    raw_cleaned = ''.join(cleaned_lines)
+
+    tokenised, mermaid_blocks = extract_mermaid(raw_cleaned)
+    body_html = convert_md(tokenised)
+    body_html = rewrite_md_links(body_html)
+    body_html = apply_confidence_markers(body_html)
+    body_html = restore_mermaid(body_html, mermaid_blocks)
+    # Drop the H1 (we emit it explicitly below)
+    body_html = re.sub(r'<h1[^>]*>.*?</h1>\n?', '', body_html, count=1, flags=re.DOTALL)
+
+    p = []
+    p.append('<h1>18OE — Map Implementation Status</h1>')
+    p.append('<p class="page-crosslink">For full rulebook picture → '
+             '<a href="rulebook-coverage.html">Rulebook Coverage</a> · '
+             'All open gaps → <a href="alpha-gaps.html">Open for Alpha</a></p>')
+    p.append('<p class="bar-note">Bar weighted by section effort (L1 data = 1×).</p>')
+    p.append(bar_html)
+    p.append('\n'.join(cov_lines))
+    p.append('<hr>')
+    p.append(body_html)
+
+    content = '\n'.join(p)
+    sidebar_html = build_sidebar('18oe-map-status.html')
+    full_html = HTML_TEMPLATE.format(
+        title='Map Implementation Status',
+        mermaid_cdn=MERMAID_CDN,
+        sidebar=sidebar_html,
+        content=content,
+    )
+    (OUT_DIR / '18oe-map-status.html').write_text(full_html, encoding='utf-8')
+    n_done = n['done'] + n['needs-pr']
+    n_total = sum(n.values())
+    print(f'  18oe-map-status.html  ({n_done}/{n_total} map items done or in review, {pct}%)')
+
+
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
@@ -2740,8 +2854,13 @@ def main():
     OUT_DIR.mkdir(exist_ok=True)
     (OUT_DIR / "style.css").write_text(CSS, encoding="utf-8")
 
+    # Files generated programmatically (not converted from .md directly)
+    PROGRAMMATIC_MD = {'18oe-map-status.md'}
+
     converted = []
     for md_file in sorted(SRC_DIR.glob("*.md")):
+        if md_file.name in PROGRAMMATIC_MD:
+            continue
         converted.append(convert_file(md_file, OUT_DIR))
 
     readme_src = OUT_DIR / "readme.html"
@@ -2767,6 +2886,7 @@ def main():
     build_status_html()
     build_coverage_html()
     build_alpha_gaps_html()
+    build_map_status_html()
     build_search_index(OUT_DIR)
 
     print(f"\nDone. {len(converted)} pages → {OUT_DIR}/index.html")
