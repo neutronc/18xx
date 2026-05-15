@@ -480,6 +480,14 @@ module Engine
           super
         end
 
+        # X_MTL_GR carries label=M and label=NY; the base engine only checks the last
+        # label on the tile, so we check any label when the tile has more than one.
+        def upgrades_to_correct_label?(from, to)
+          return to.labels.any? { |l| l == from.label } if to.labels.size > 1
+
+          super
+        end
+
         def tile_valid_for_phase?(tile, hex: nil, phase_color_cache: nil)
           return true if tile.name == 'X_TOR'
 
