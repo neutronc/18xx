@@ -118,6 +118,9 @@ module Engine
           '127' => 1,
           '128' => 1,
           '129' => 1,
+          # Special gray — Toronto (placed by TOR private)
+          'X_TOR' => { 'count' => 1, 'color' => 'gray',
+                       'code' => 'city=revenue:30;path=a:1,b:_0;path=a:3,b:_0;path=a:5,b:_0;label=T' },
         }.freeze
 
         MAP_HOMECITY_HEXES = %w[

@@ -23,16 +23,16 @@ module Engine
             value: 50,
             revenue: 10,
             desc: 'Blocks the Toronto hex while owned by a player. The owning corporation '\
-                  'may place the special Toronto gray tile on the Toronto hex as a stock '\
-                  'round action (free, no connection required). Closes when placed.',
+                  'may place the special Toronto gray tile on the Toronto hex at any time '\
+                  'when acting (free, no connection required). Closes when placed.',
             abilities: [
               { type: 'blocks_hexes', owner_type: 'player', hexes: ['E25'] },
               {
                 type: 'tile_lay',
                 owner_type: 'corporation',
                 hexes: ['E25'],
-                tiles: ['X_TORONTO_GRAY'], # FIXME: assign real tile ID in Sprint 11
-                when: 'stock_round',
+                tiles: ['X_TOR'],
+                when: 'any',
                 count: 1,
                 free: true,
                 closed_when_used_up: true,
@@ -163,7 +163,7 @@ module Engine
             max_ownership_percent: 100,
             tokens: [0, 40, 100, 100],
             coordinates: 'F28',
-            city: 0,
+            city: 1,
             color: '#d1232a',
             text_color: 'white',
           },
@@ -177,7 +177,7 @@ module Engine
             max_ownership_percent: 100,
             tokens: [0, 40, 100, 100],
             coordinates: 'F28',
-            city: 1,
+            city: 0,
             color: '#110a0c',
             text_color: 'white',
           },

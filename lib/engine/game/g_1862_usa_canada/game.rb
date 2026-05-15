@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+# Developed with Claude (Anthropic) AI assistance — claude.ai/code
 
 require_relative 'meta'
 require_relative 'entities'
@@ -123,6 +124,10 @@ module Engine
 
         # Companies are never required to buy a train to operate
         MUST_BUY_TRAIN = :never
+
+        # Place all home tokens at OR start so the graph is populated before any
+        # entity queries connected_hexes — avoids stale-cache bug on shared home hexes.
+        HOME_TOKEN_TIMING = :operating_round
 
         # 60% of par price paid into company on float; remainder drips in as shares sell
         CAPITALIZATION = :incremental
@@ -493,6 +498,24 @@ module Engine
         public
 
         # ---------------------------------------------------------------------------
+        # X_TOR is placed on a preprinted gray hex, bypassing normal color progression
+        # and phase gating. Both overrides are needed only for this one special tile.
+        def upgrades_to_correct_color?(from, to, selected_company: nil)
+          return true if to.name == 'X_TOR'
+
+          super
+        end
+
+        def tile_valid_for_phase?(tile, hex: nil, phase_color_cache: nil)
+          return true if tile.name == 'X_TOR'
+
+          super
+        end
+
+        def status_str(corporation)
+          "#{corporation.presidents_percent}% President's Share"
+        end
+
         # Tile lays
         # Phase 2:  1 lay or upgrade
         # Phase 3+: 2 yellow lays OR 1 upgrade  (:not_if_upgraded blocks 2nd lay after upgrade)
@@ -622,11 +645,10 @@ module Engine
             Engine::Step::Bankrupt,
             Engine::Step::Exchange,
             Engine::Step::SpecialTrack,
-            G1862UsaCanada::Step::Token,
             Engine::Step::BuyCompany,
             Engine::Step::HomeToken,
             Engine::Step::Track,
-            Engine::Step::Token,
+            G1862UsaCanada::Step::Token,
             Engine::Step::Route,
             G1862UsaCanada::Step::Dividend,
             Engine::Step::DiscardTrain,
