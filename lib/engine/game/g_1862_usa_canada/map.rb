@@ -121,7 +121,9 @@ module Engine
           # Special gray — Toronto (placed by TOR private)
           'X_TOR' => { 'count' => 1, 'color' => 'gray',
                        'code' => 'city=revenue:30;path=a:1,b:_0;path=a:3,b:_0;path=a:5,b:_0;label=T' },
-          # Montreal upgrades (label=M; preprint yellow has 1 exit at edge 2)
+          # Montreal upgrades (label=M; preprint is stored as white internally, exits to edge 2 only)
+          'X_MTL_Y'  => { 'count' => 1, 'color' => 'yellow',
+                          'code' => 'city=revenue:20;path=a:1,b:_0;path=a:2,b:_0;label=M' },
           'X_MTL_G'  => { 'count' => 1, 'color' => 'green',
                           'code' => 'city=revenue:40,slots:2;path=a:1,b:_0;path=a:2,b:_0;path=a:3,b:_0;label=M' },
           'X_MTL_B'  => { 'count' => 1, 'color' => 'brown',
