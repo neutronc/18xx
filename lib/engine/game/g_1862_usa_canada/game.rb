@@ -249,7 +249,6 @@ module Engine
             price: 200,
             rusts_on: '6',
             num: 6,
-            events: [{ 'type' => 'close_companies' }],
             variants: [
               { name: '3E', distance: [{ nodes: %w[city offboard town], pay: 3, visit: 999 }], price: 300 },
             ],
