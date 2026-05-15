@@ -1,8 +1,5 @@
 # frozen_string_literal: true
 
-# FIXME: All hex coordinates are approximations based on photo analysis.
-# Exact positions, mountain/river terrain, and pre-printed track directions
-# must be verified against the physical rulebook before release.
 module Engine
   module Game
     module G1862UsaCanada
@@ -94,50 +91,90 @@ module Engine
           '14' => 4,
           '15' => 4,
           '16' => 2,
-          '17' => 2,
-          '18' => 2,
           '19' => 2,
           '20' => 2,
-          '23' => 3,
-          '24' => 3,
+          '23' => 4,
+          '24' => 4,
           '25' => 2,
           '26' => 2,
           '27' => 2,
+          '28' => 2,
+          '29' => 2,
           # Brown
-          '39' => 2,
-          '40' => 2,
-          '41' => 2,
-          '42' => 2,
-          '43' => 2,
+          '39' => 1,
+          '40' => 1,
+          '41' => 1,
+          '42' => 1,
+          '43' => 1,
           '44' => 1,
-          '45' => 2,
-          '46' => 2,
-          '47' => 2,
-          '70' => 2,
+          '45' => 1,
+          '46' => 1,
+          '47' => 1,
+          '70' => 1,
+          '611'=> 7,
           # Gray (city upgrade tiles)
-          '127' => 1,
-          '128' => 1,
-          '129' => 1,
+          '895' => 3,
+          '899' => { 'count' => 1, 'color' => 'gray',
+                     'code' => 'city=revenue:80,slots:3;path=a:1,b:_0;path=a:2,b:_0;path=a:3,b:_0;path=a:4,b:_0;label=NO'},
+          # Special brown 5 edges only 10 revenue
+          'GS_204_B' => { 'count' =>2, 'color' => 'brown',
+                         'code' => 'town=revenue:10;path=a:0,b:_0;path=a:1,b:_0;path=a:2,b:_0;path=a:4,b:_0;path=a:5,b:_0;' }, 
           # Special gray — Toronto (placed by TOR private)
-          'X_TOR' => { 'count' => 1, 'color' => 'gray',
+          'GS_TOR' => { 'count' => 1, 'color' => 'gray',
                        'code' => 'city=revenue:30;path=a:1,b:_0;path=a:3,b:_0;path=a:5,b:_0;label=T' },
           # Montreal upgrades (label=M; preprint is stored as white internally, exits to edge 2 only)
-          'X_MTL_Y'  => { 'count' => 1, 'color' => 'yellow',
+          'GS_MTL_Y'  => { 'count' => 1, 'color' => 'yellow',
                           'code' => 'city=revenue:20;path=a:1,b:_0;path=a:2,b:_0;label=M' },
-          'X_MTL_G'  => { 'count' => 1, 'color' => 'green',
+          'GS_MTL_G'  => { 'count' => 1, 'color' => 'green',
                           'code' => 'city=revenue:40,slots:2;path=a:1,b:_0;path=a:2,b:_0;path=a:3,b:_0;label=M' },
-          'X_MTL_B'  => { 'count' => 1, 'color' => 'brown',
+          'GS_MTL_B'  => { 'count' => 1, 'color' => 'brown',
                           'code' => 'city=revenue:60,slots:3;path=a:1,b:_0;path=a:2,b:_0;path=a:3,b:_0;path=a:4,b:_0;label=M' },
           # New York upgrades (label=NY; preprint yellow has 2 cities, exits 0/4 and 1/3)
-          'X_NY_G'   => { 'count' => 1, 'color' => 'green',
+          'GS_NY_G'   => { 'count' => 1, 'color' => 'green',
                           'code' => 'city=revenue:40;city=revenue:40;' \
                                     'path=a:0,b:_0;path=a:4,b:_0;path=a:1,b:_1;path=a:3,b:_1;label=NY' },
-          'X_NY_B'   => { 'count' => 1, 'color' => 'brown',
+          'GS_NY_B'   => { 'count' => 1, 'color' => 'brown',
                           'code' => 'city=revenue:60,slots:3;' \
                                     'path=a:0,b:_0;path=a:1,b:_0;path=a:3,b:_0;path=a:4,b:_0;label=NY' },
           # Shared gray tile — only one exists; goes to Montreal (M) OR New York (NY), not both
-          'X_MTL_GR' => { 'count' => 1, 'color' => 'gray',
+          'GS_MTL_GR' => { 'count' => 1, 'color' => 'gray',
                           'code' => 'city=revenue:80,slots:3;path=a:1,b:_0;path=a:2,b:_0;path=a:3,b:_0;path=a:4,b:_0;path=a:5,b:_0;label=M;label=NY' },
+          # Salt Lake City upgrade yellow
+          'GS_SLC_Y'  => { 'count' =>1, 'color' => 'yellow',
+                          'code' => 'city=revenue:20;path=a:1,b:_0;path=a:3,b:_0;label=SLC' },
+          'GS_SLC_G'  => { 'count' =>1, 'color' => 'green',
+                          'code' => 'city=revenue:40,slots:2;path=a:1,b:_0;path=a:2,b:_0;path=a:3,b:_0;path=a:4,b:_0;path=a:5,b:_0;label=SLC' },
+          'GS_SLC_B'  => { 'count' =>1, 'color' => 'brown',
+                          'code' => 'city=revenue:60,slots:3;path=a:0,b:_0;path=a:1,b:_0;path=a:2,b:_0;path=a:3,b:_0;path=a:4,b:_0;path=a:5,b:_0;label=SLC' },                
+          'GS_V_Y'   => { 'count' => 1, 'color' => 'yellow',
+                          'code' => 'city=revenue:20;path=a:5,b:_0;path=a:3,b:_0;label=V' },   
+          'GS_P_Y'   => { 'count' => 1, 'color' => 'yellow',
+                          'code' => 'city=revenue:20;path=a:0,b:_0;path=a:3,b:_0;label=P' },
+          'GS_L_Y'   => { 'count' => 1, 'color' => 'yellow',
+                          'code' => 'city=revenue:20;path=a:5,b:_0;path=a:2,b:_0;label=L' },
+          'GS_P_G'    => { 'count' => 1, 'color' => 'green',
+                           'code' => 'city=revenue:40,slots:2;path=a:0,b:_0;path=a:3,b:_0;path=a:4,b:_0;label=P' },
+          'GS_V_G'    => { 'count' => 1, 'color' => 'green',
+                           'code' => 'city=revenue:40,slots:2;path=a:0,b:_0;path=a:3,b:_0;path=a:4,b:_0;path=a:5,b:_0;label=V' },
+          'GS_L_G'    => { 'count' => 1, 'color' => 'green',
+                           'code' => 'city=revenue:40,slots:2;path=a:5,b:_0;path=a:2,b:_0;path=a:4,b:_0;label=L' },
+          'GS_S_G'    => { 'count' => 1, 'color' => 'green',
+                           'code' => 'city=revenue:40;city=revenue:40;path=a:5,b:_0;path=a:2,b:_1;path=a:4,b:_1;label=S' },
+          'GS_VSPL_B' => { 'count' => 2, 'color' => 'brown',
+                           'code' => 'city=revenue:60,slots:3;path=a:2,b:_0;path=a:3,b:_0;path=a:4,b:_0;path=a:5,b:_0;label=V;label=S;label=P;label=L' },
+          'GS_VSPL_G' => { 'count' => 1, 'color' => 'gray',
+                           'code' => 'city=revenue:80,slots:3;path=a:2,b:_0;path=a:3,b:_0;path=a:4,b:_0;path=a:5,b:_0;label=V;label=S;label=P;label=L' },
+          'GS_C_G' => { 'count' => 1, 'color' => 'green',
+                     'code' => 'city=revenue:40,slots:2;path=a:1,b:_0;path=a:2,b:_0;path=a:3,b:_0;label=C'},
+          'GS_C_B' => { 'count' => 1, 'color' => 'brown',
+                     'code' => 'city=revenue:60,slots:3;path=a:1,b:_0;path=a:2,b:_0;path=a:3,b:_0;path=a:4,b:_0;label=C'},
+          'GS_NO_G' => { 'count' => 1, 'color' => 'green',
+                     'code' => 'city=revenue:40,slots:2;path=a:1,b:_0;path=a:2,b:_0;path=a:3,b:_0;label=NO'},
+          'GS_NO_B' => { 'count' => 1, 'color' => 'brown',
+                     'code' => 'city=revenue:60,slots:3;path=a:1,b:_0;path=a:2,b:_0;path=a:3,b:_0;path=a:4,b:_0;label=NO'},
+          'GS_C_GR' => { 'count' => 1, 'color' => 'gray',
+                            'code' => 'city=revenue:80,slots:3;path=a:0,b:_0;path=a:1,b:_0;path=a:2,b:_0;path=a:3,b:_0;path=a:4,b:_0;label=C'},                          
+
         }.freeze
 
         MAP_HOMECITY_HEXES = %w[
@@ -187,6 +224,8 @@ module Engine
             ['D28'] => 'city=revenue:10;path=a:2,b:_0;label=M', # Montreal (CP home)
             ['F14'] => 'city=revenue:10;path=a:1,b:_0',                       # Omaha (UP home)
             ['I5']  => 'city=revenue:0;label=L',              # Los Angeles
+            # SLC pre-printed white tile — transcontinental junction
+            ['G9']  => 'city=revenue:0;label=SLC',
 
           },
 
@@ -206,8 +245,7 @@ module Engine
           },
 
           yellow: {
-            # SLC pre-printed yellow tile — transcontinental junction
-            ['G9']  => 'city=revenue:20;path=a:1,b:_0;path=a:4,b:_0;label=SLC',
+
             # Chicago: single city, exits W (→F18) and SW (→G19)
             ['F20'] => 'city=revenue:20;path=a:1,b:_0;path=a:0,b:_0;label=C',
             # New Orleans: 120° CW from original (edges 5→1, 0→2)

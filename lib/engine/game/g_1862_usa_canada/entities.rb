@@ -31,7 +31,7 @@ module Engine
                 type: 'tile_lay',
                 owner_type: 'corporation',
                 hexes: ['E25'],
-                tiles: ['X_TOR'],
+                tiles: ['GS_TOR'],
                 when: 'any',
                 count: 1,
                 free: true,

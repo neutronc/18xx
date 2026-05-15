@@ -471,15 +471,15 @@ module Engine
         public
 
         # ---------------------------------------------------------------------------
-        # X_TOR is placed on a preprinted gray hex, bypassing normal color progression
+        # GS_TOR is placed on a preprinted gray hex, bypassing normal color progression
         # and phase gating. Both overrides are needed only for this one special tile.
         def upgrades_to_correct_color?(from, to, selected_company: nil)
-          return true if to.name == 'X_TOR'
+          return true if to.name == 'GS_TOR'
 
           super
         end
 
-        # X_MTL_GR carries label=M and label=NY; the base engine only checks the last
+        # GS_MTL_GR carries label=M and label=NY; the base engine only checks the last
         # label on the tile, so we check any label when the tile has more than one.
         def upgrades_to_correct_label?(from, to)
           return to.labels.any? { |l| l == from.label } if to.labels.size > 1
@@ -488,7 +488,7 @@ module Engine
         end
 
         def tile_valid_for_phase?(tile, hex: nil, phase_color_cache: nil)
-          return true if tile.name == 'X_TOR'
+          return true if tile.name == 'GS_TOR'
 
           super
         end
