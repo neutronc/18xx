@@ -128,6 +128,13 @@ module Engine
                           'code' => 'city=revenue:40,slots:2;path=a:1,b:_0;path=a:2,b:_0;path=a:3,b:_0;label=M' },
           'X_MTL_B'  => { 'count' => 1, 'color' => 'brown',
                           'code' => 'city=revenue:60,slots:3;path=a:1,b:_0;path=a:2,b:_0;path=a:3,b:_0;path=a:4,b:_0;label=M' },
+          # New York upgrades (label=NY; preprint yellow has 2 cities, exits 0/4 and 1/3)
+          'X_NY_G'   => { 'count' => 1, 'color' => 'green',
+                          'code' => 'city=revenue:40;city=revenue:40;' \
+                                    'path=a:0,b:_0;path=a:4,b:_0;path=a:1,b:_1;path=a:3,b:_1;label=NY' },
+          'X_NY_B'   => { 'count' => 1, 'color' => 'brown',
+                          'code' => 'city=revenue:60,slots:3;' \
+                                    'path=a:0,b:_0;path=a:1,b:_0;path=a:3,b:_0;path=a:4,b:_0;label=NY' },
           # Shared gray tile — only one exists; goes to Montreal (M) OR New York (NY), not both
           'X_MTL_GR' => { 'count' => 1, 'color' => 'gray',
                           'code' => 'city=revenue:80,slots:3;path=a:1,b:_0;path=a:2,b:_0;path=a:3,b:_0;path=a:4,b:_0;path=a:5,b:_0;label=M;label=NY' },
@@ -214,7 +221,7 @@ module Engine
           red: {
             # Labrador — far northeast off-board (20/40 by phase)
             ['A29'] =>
-              'offboard=revenue:yellow_20|brown_40;path=a:2,b:_0;path=a:3,b:_0',
+              'offboard=revenue:yellow_20|brown_40;path=a:0,b:_0;path=a:1,b:_0',
             # Mexico — two hexes south of map (0 yellow, 80 brown)
             ['K9']  =>
               'offboard=revenue:yellow_40|brown_80;path=a:2,b:_0;path=a:3,b:_0',
