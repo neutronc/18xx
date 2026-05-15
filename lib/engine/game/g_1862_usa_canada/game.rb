@@ -239,13 +239,9 @@ module Engine
             price: 100,
             rusts_on: '4',
             num: 7,
-          },
-          {
-            name: '2E',
-            distance: [{ nodes: %w[city offboard town], pay: 2, visit: 999 }],
-            price: 150,
-            rusts_on: '4',
-            num: 99,
+            variants: [
+              { name: '2E', distance: [{ nodes: %w[city offboard town], pay: 2, visit: 999 }], price: 150 },
+            ],
           },
           {
             name: '3',
@@ -254,14 +250,9 @@ module Engine
             rusts_on: '6',
             num: 6,
             events: [{ 'type' => 'close_companies' }],
-          },
-          {
-            name: '3E',
-            distance: [{ nodes: %w[city offboard town], pay: 3, visit: 999 }],
-            price: 300,
-            rusts_on: '6',
-            num: 99,
-            available_on: '3',
+            variants: [
+              { name: '3E', distance: [{ nodes: %w[city offboard town], pay: 3, visit: 999 }], price: 300 },
+            ],
           },
           {
             name: '4',
@@ -269,53 +260,36 @@ module Engine
             price: 300,
             rusts_on: '8',
             num: 5,
-          },
-          {
-            name: '4E',
-            distance: [{ nodes: %w[city offboard town], pay: 4, visit: 999 }],
-            price: 400,
-            rusts_on: '8',
-            num: 99,
-            available_on: '4',
+            variants: [
+              { name: '4E', distance: [{ nodes: %w[city offboard town], pay: 4, visit: 999 }], price: 400 },
+            ],
           },
           {
             name: '5',
             distance: 5,
             price: 550,
             num: 4,
-          },
-          {
-            name: '5E',
-            distance: [{ nodes: %w[city offboard town], pay: 5, visit: 999 }],
-            price: 700,
-            num: 99,
-            available_on: '5',
+            variants: [
+              { name: '5E', distance: [{ nodes: %w[city offboard town], pay: 5, visit: 999 }], price: 700 },
+            ],
           },
           {
             name: '6',
             distance: 6,
             price: 650,
             num: 3,
-          },
-          {
-            name: '6E',
-            distance: [{ nodes: %w[city offboard town], pay: 6, visit: 999 }],
-            price: 800,
-            num: 99,
-            available_on: '6',
+            variants: [
+              { name: '6E', distance: [{ nodes: %w[city offboard town], pay: 6, visit: 999 }], price: 800 },
+            ],
           },
           {
             name: '7',
             distance: 7,
             price: 750,
             num: 2,
-          },
-          {
-            name: '7E',
-            distance: [{ nodes: %w[city offboard town], pay: 7, visit: 999 }],
-            price: 900,
-            num: 99,
-            available_on: '7',
+            variants: [
+              { name: '7E', distance: [{ nodes: %w[city offboard town], pay: 7, visit: 999 }], price: 900 },
+            ],
           },
           {
             name: '8',
