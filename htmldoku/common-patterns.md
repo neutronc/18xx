@@ -328,6 +328,165 @@ end
 
 ---
 
+## Bond / Director Liability Patterns
+
+### Director personal bond (Schuldschein)
+
+A director takes on a personal debt (bond) tied to a corporation. The bond blocks the director from selling that corporation's shares and reduces their end-game score if unpaid.
+
+```ruby
+# In game.rb
+
+def setup
+  @corp_bonds = {}   # corp_id => Integer (outstanding amount)
+  @buyback_done = {} # corp_id => player entity (original director)
+end
+
+# Bond amount: 5 × market price, rounded up to nearest $100.
+def buyback_bond_amount(corporation)
+  (corporation.share_price.price * 5).ceil(-2)
+end
+
+def bond?(corporation)
+  (@corp_bonds[corporation.id] || 0).positive?
+end
+
+def bond_amount(corporation)
+  @corp_bonds[corporation.id] || 0
+end
+
+# Record the bond — safe to call only once per corporation (no-op thereafter).
+def record_bond!(corporation)
+  return if @buyback_done.key?(corporation.id)
+
+  amount = buyback_bond_amount(corporation)
+  director = corporation.owner
+  @corp_bonds[corporation.id]   = amount
+  @buyback_done[corporation.id] = director
+  @log << "#{corporation.name}: #{director.name} takes #{format_currency(amount)} bond"
+end
+
+# Full repayment only; no-op if corp cash is insufficient.
+def repay_bond!(corporation)
+  owed = bond_amount(corporation)
+  return unless owed.positive? && corporation.cash >= owed
+
+  corporation.spend(owed, @bank)
+  @corp_bonds[corporation.id] = 0
+end
+
+# Penalty cert: director who issued a bond loses 1 cert slot for the game.
+def num_certs(entity)
+  super + (@buyback_done || {}).values.count { |d| d == entity }
+end
+
+# Game-end: apply bond as personal score penalty.
+def end_game!(reason = nil)
+  @corp_bonds.each do |corp_id, amount|
+    next unless amount.positive?
+
+    director = @buyback_done[corp_id]
+    next unless director.respond_to?(:penalty)
+
+    director.penalty = (director.penalty || 0) + amount
+  end
+  super
+end
+```
+
+Block the director from selling while the bond is active in the stock-round step:
+
+```ruby
+# In step/buy_sell_par_shares.rb
+def can_sell?(entity, bundle)
+  return false if bundle && bundle.corporation.president?(entity) &&
+                  @game.bond?(bundle.corporation)
+
+  super
+end
+```
+
+`player.penalty` is already subtracted in `Player#value`, so no further score hook is needed.
+
+Reference: `lib/engine/game/g_1862_usa_canada/game.rb`, `step/buy_sell_par_shares.rb`
+
+---
+
+### Share halving — cert transformation on buyback
+
+When a corporation executes a buyback, halve all outstanding certs and create a non-reissuable 50% treasury cert. Update `forced_share_percent` and `price_multiplier` so proportional pricing stays correct.
+
+```ruby
+# In game.rb
+def halve_shares!(corporation)
+  # Guard: already halved if the 50% non-buyable cert exists.
+  return if corporation.shares_of(corporation).any? { |s| s.percent == 50 && !s.buyable }
+
+  all_shares = @_shares.values.select { |s| s.corporation == corporation }
+  corporation.share_holders.clear
+
+  next_idx    = all_shares.map(&:index).max + 1
+  split_certs = []
+
+  all_shares.each do |share|
+    if share.percent == 30
+      # 30% president → 10% cert + new 5% cert (same owner)
+      share.percent = 10
+      extra = Share.new(corporation, owner: share.owner, percent: 5, index: next_idx)
+      next_idx += 1
+      split_certs << extra
+    else
+      share.percent /= 2  # 20→10, 10→5
+    end
+    corporation.share_holders[share.owner] += share.percent
+  end
+
+  split_certs.each do |cert|
+    cert.owner.shares_by_corporation[corporation] << cert
+    corporation.share_holders[cert.owner] += cert.percent
+    @_shares[cert.id] = cert
+  end
+
+  # Proportional pricing: a 5% cert now costs market_price × 0.5.
+  corporation.forced_share_percent = 5
+  corporation.instance_variable_set(:@price_multiplier, 0.5)
+
+  # Non-reissuable 50% treasury cert.
+  treasury = Share.new(corporation, owner: corporation, percent: 50, index: next_idx)
+  treasury.buyable = false
+  treasury.counts_for_limit = false
+  corporation.share_holders[corporation] += 50
+  corporation.shares_by_corporation[corporation] << treasury
+  @_shares[treasury.id] = treasury
+
+  update_cache(:shares)
+end
+```
+
+Route the treasury cert's dividends back into the corporation by overriding `corporation_dividends` in the title's Dividend step:
+
+```ruby
+# In step/dividend.rb
+def corporation_dividends(entity, per_share)
+  # Non-buyable holdings (the 50% buyback cert) earn revenue back into the corp.
+  # Returns 0 for corporations that have never done a buyback.
+  treasury_units = entity.shares_of(entity)
+                         .reject(&:buyable)
+                         .sum { |s| s.num_shares(ceil: false) }
+  super + (treasury_units * per_share).ceil
+end
+```
+
+**Key invariants after halving:**
+- `share_holders` values still sum to 100
+- `total_shares` doubles (100 / 5 = 20)
+- Each 5% cert costs `market_price / 2`; the 10% president cert costs `market_price`
+- Treasury cert (10 share-units out of 20) earns `revenue / 2` back to corp each OR
+
+Reference: `lib/engine/game/g_1862_usa_canada/game.rb`, `step/dividend.rb`; see also `g_1873/game.rb` for the `share_holders.clear` + rebuild pattern.
+
+---
+
 ## Finding More Examples
 
 The fastest way to find a production example of any pattern:
@@ -353,4 +512,4 @@ grep -rl "type: 'teleport'" lib/engine/game/
 - Verifying patterns with fixtures: [Testing Your Game](testing.html)
 
 ---
-*Version: 2026-05-08 — derived from production game titles in `lib/engine/game/`, `lib/engine/step/`, `lib/engine/game/base.rb`.*
+*Version: 2026-05-17 — derived from production game titles in `lib/engine/game/`, `lib/engine/step/`, `lib/engine/game/base.rb`.*
