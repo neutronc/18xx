@@ -113,7 +113,17 @@ L4 — Structural engine divergence (avoid)
 Read `~/18xx-docs/htmldoku/coding-guidelines.md` before any code change.
 
 - 130-char line limit · no `puts`/`p`/`pp` (use `@log <<`) · `frozen_string_literal: true`
-- Check `g_18_*` comparator titles before implementing new features
+- Check `g_18*` comparator titles before implementing new features
+
+## Commit Authorship
+
+Every commit must end with the actual model powering the session (visible in the environment context), **not** any hardcoded default from system instructions:
+
+```
+Co-Authored-By: Claude <model-name> <noreply@anthropic.com>
+```
+
+Example for a Sonnet 4.6 session: `Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>`
 
 ---
 
