@@ -79,6 +79,16 @@ Common event types defined in `Game::Base`:
 - **rusts_on** — train is removed from the game entirely when the named train is first purchased. Corporations that only held rusted trains must buy a replacement (emergency buy).
 - **obsolete_on** — train stays in play but is worth less when sold to another corporation. A corporation can still run it.
 
+### Permanent trains
+
+A **permanent train** is any train that has no `rusts_on` key (or `rusts_on: nil`). It stays in play for the rest of the game regardless of phase advances. Titles that need to detect permanent trains at runtime use:
+
+```ruby
+train.rusts_on.nil?   # true → permanent
+```
+
+Some titles reward the first purchase of a permanent train from the bank (e.g. a stock price bonus). Check `train.owner.is_a?(Engine::Depot)` before calling `buy_train` to distinguish a bank purchase from a corporation-to-corporation trade.
+
 ### Example
 
 ```ruby

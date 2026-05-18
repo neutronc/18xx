@@ -110,6 +110,10 @@
 <table><thead><tr><th>Type</th><th>Effect</th></tr></thead><tbody><tr><td><code>close_companies</code></td><td>Closes all open private companies</td></tr><tr><td><code>remove_reservations</code></td><td>Removes unsold home reservations</td></tr><tr><td><code>remove_bonuses</code></td><td>Removes east-west / route bonus tokens</td></tr><tr><td><code>minors_cannot_start</code></td><td>Blocks minors from starting</td></tr><tr><td><code>majors_can_ipo</code></td><td>Opens major corporations for IPO</td></tr></tbody></table>
 <h3 id="rusts-vs-obsolete">Rusts vs Obsolete</h3>
 <ul><li><strong>rusts_on</strong> — train is removed from the game entirely when the named train is first purchased. Corporations that only held rusted trains must buy a replacement (emergency buy).</li><li><strong>obsolete_on</strong> — train stays in play but is worth less when sold to another corporation. A corporation can still run it.</li></ul>
+<h3 id="permanent-trains">Permanent trains</h3>
+<p>A <strong>permanent train</strong> is any train that has no <code>rusts_on</code> key (or <code>rusts_on: nil</code>). It stays in play for the rest of the game regardless of phase advances. Titles that need to detect permanent trains at runtime use:</p>
+<pre><code class="language-ruby">train.rusts_on.nil?   # true → permanent</code></pre>
+<p>Some titles reward the first purchase of a permanent train from the bank (e.g. a stock price bonus). Check <code>train.owner.is_a?(Engine::Depot)</code> before calling <code>buy_train</code> to distinguish a bank purchase from a corporation-to-corporation trade.</p>
 <h3 id="example">Example</h3>
 <pre><code class="language-ruby">TRAINS = [
   { name: '2', distance: 2, price: 80,  rusts_on: '4', num: 6 },
