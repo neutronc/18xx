@@ -146,6 +146,31 @@ Read CLAUDE.md (auto) + `MD/inwork.md`. Then present the in-work items grouped b
 
 Ask user to select one item before proceeding.
 
+### 1b — Check open PRs
+
+Check for open upstream PRs and surface any unresolved review comments:
+
+```bash
+gh pr list --repo tobymao/18xx --author @me --state open
+```
+
+For each open PR, pull inline comments:
+
+```bash
+gh api repos/tobymao/18xx/pulls/<N>/comments \
+  --jq '[.[] | {author: .user.login, path: .path, line: .original_line, body: .body}]'
+```
+
+For each comment, classify and recommend:
+
+| Label | Meaning |
+|-------|---------|
+| **Fix now** | Wrong behavior, wrong syntax, visual bug, or easy one-liner — address before any new feature work |
+| **Defer (agreed)** | Reviewer accepted a later-PR deferral — skip |
+| **Discuss** | Ambiguous; needs a rule decision or design choice — raise with user |
+
+Apply all **Fix now** items on the PR branch, then push and commit: `fix(1862gs): address PR review — <short description>`.
+
 ### 2 — Branch
 
 Each item in `MD/inwork.md` ends with a backtick-wrapped branch name. Three cases:

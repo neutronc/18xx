@@ -97,21 +97,14 @@
 </div>
 </div>
 <div class="gap-stats">
-<div class="gap-stat gap-stat-high">HIGH bugs <span>5</span></div>
-<div class="gap-stat gap-stat-med">MEDIUM bugs <span>3</span></div>
+<div class="gap-stat gap-stat-high">HIGH bugs <span>0</span></div>
+<div class="gap-stat gap-stat-med">MEDIUM bugs <span>0</span></div>
 <div class="gap-stat gap-stat-low">LOW bugs <span>0</span></div>
 <div class="gap-stat gap-stat-feat">Missing features <span>19</span></div>
 <div class="gap-stat gap-stat-partial">Partial impl. <span>7</span></div>
 </div>
 <h2 class="gap-section-h">Critical Bugs — fix before any playtesting</h2>
-<table class="gap-table">
-<thead><tr><th>ID</th><th>Rule violated</th><th>Symptom</th></tr></thead><tbody>
-<tr class="gap-row-high"><td class="gap-id">BUG-028</td><td class="gap-title">U24 Bordeaux: no path edges (city unroutable)</td><td class="gap-sym">U24 is defined as `&#x27;city=revenue:10;icon=image:port,sticky:1&#x27;` — no `path=` at all. A train that enters U24 has nowhere to exit; the city is completely unroutab</td></tr>
-<tr class="gap-row-high"><td class="gap-id">BUG-026</td><td class="gap-title">Final two ORs (abbreviated second OR) not implemented</td><td class="gap-sym">Both final ORs run as normal ORs. Second OR is not abbreviated.</td></tr>
-<tr class="gap-row-high"><td class="gap-id">BUG-020</td><td class="gap-title">Orient Express first-run bonus (§12.2) not implemented</td><td class="gap-sym">No OE marker is awarded, no bonus revenue is calculated, no first-run choice is presented. The OE route runs as a normal train.</td></tr>
-<tr class="gap-row-high"><td class="gap-id">BUG-019</td><td class="gap-title">Force-buy mechanics not implemented (president cash contribution + national conversion)</td><td class="gap-sym">`must_buy_train?` correctly forces the buy but the engine has no mechanism to draw on the president&#x27;s personal cash when the treasury is short. A major or minor</td></tr>
-<tr class="gap-row-high"><td class="gap-id">BUG-011</td><td class="gap-title">Nationals not exempt from terrain costs</td><td class="gap-sym">A national operating in a rough-terrain hex would pay the full terrain cost; no exemption exists in `upgrade_cost` or `Track#lay_tile_action`.</td></tr>
-</tbody></table>
+<p class="gap-none">No HIGH bugs open.</p>
 <h2 class="gap-section-h">Missing Alpha Features — not yet implemented</h2>
 <table class="gap-table">
 <thead><tr><th>Area</th><th>Feature</th></tr></thead><tbody>
@@ -159,12 +152,7 @@
 <tr class="gap-row-partial"><td class="gap-area"></td><td class="gap-feat">Hochberg Mining</td></tr>
 </tbody></table>
 <h2 class="gap-section-h">Medium Bugs — rule violations in specific cases</h2>
-<table class="gap-table">
-<thead><tr><th>ID</th><th>Rule violated</th><th>Symptom</th></tr></thead><tbody>
-<tr class="gap-row-med"><td class="gap-id">BUG-029</td><td class="gap-title">N31 Lille: second path edge missing</td><td class="gap-sym">N31 is defined as `&#x27;city=revenue:10;label=Y;border=edge:2,type:impassable;path=a:1,b:_0&#x27;` — only edge 1 is present. The second edge (0) that connects toward the</td></tr>
-<tr class="gap-row-med"><td class="gap-id">BUG-023</td><td class="gap-title">§11.7 abandoned-minor purchase by major in OR not implemented</td><td class="gap-sym">The `IssueShares` OR step has no mechanism for purchasing an abandoned minor. The action is entirely absent.</td></tr>
-<tr class="gap-row-med"><td class="gap-id">BUG-012</td><td class="gap-title">`close_corporation` skips parred-but-not-floated regionals at phase end</td><td class="gap-sym">When the 18th regional is floated, the cleanup loop skips any regional whose `ipoed` flag is `true`. A regional that was parred during the Concession Phase (pre</td></tr>
-</tbody></table>
+<p class="gap-none">No MEDIUM bugs open.</p>
 <h2 class="gap-section-h">Low Bugs — cosmetic / edge-case</h2>
 <p class="gap-none">No LOW bugs open.</p>
 </article>
