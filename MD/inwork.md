@@ -9,10 +9,9 @@ Branch tag: backtick-wrapped branch name at end of each item line; `?` = branch 
 
 ---
 
-## Sprint 01 — Data skeleton (upstream blocker for 10a/10b)
+## Sprint 01 — Data skeleton ✓ MERGED
 
-PR #12622 open on tobymao/18xx — must merge before 10a/10b can resubmit.
-All review feedback addressed in commit `9cc1888` (`fix(1862gs): address PR #12622 review feedback`). Waiting for reviewer re-approval and merge.
+PR #12622 merged 2026-05-19. Sprint 10a/10b can now be resubmitted.
 
 `1862_usa_canada_p01_data`
 
@@ -60,22 +59,39 @@ Test the full lifecycle of a corporation reaching its connection bonus target fo
 - `[>]` Browser-test: VPSL activation — IRB confirmed (3/3 PASS); full activation visual deferred to first playtest reaching VPSL hex **[browser+IRB]**
 - `[>]` Rule review: confirm bonus amounts and activation conditions from rulebook photos against CORP_BONUSES constants **[rules]** — confirmed all clear by user
 - `[>]` fix(1862gs): Chicago F20 correct exits SW(edge 0→G19) and W(edge 1→F18) — committed 7ae053580 **[L1/map]**
+- `[>]` fix(1862gs): use connection_hexes fallback for deserialized routes in bonus checks — Route#visited_stops always [] for JSON-replayed routes; add route_hex_ids helper falling back to connection_hexes.flatten; spec updated to 2E-train / G19 path (120/120) — committed 35247e40b **[L2]**
 
 `1862_usa_canada_p13_bonus_choice`
 
 ---
 
-## Sprint 14 — Bond mechanic: playtest and rule verification
+## Sprint 14 — Bond + Stock Buyback: full lifecycle implementation and test
 
-Test the full bond (Schuldschein) lifecycle end-to-end in the browser. Adjust implementation if any behaviour deviates from the rules.
+Bond (Schuldschein) is issued as part of the Stock Buyback (Aktienrückkauf): the corporation takes on the debt, director receives a permanent −1 cert-limit marker, and the director is personally liable for any unrepaid bond at game end.
 
-- [ ] Browser-test: director issues bond → cash received, director cannot sell shares while bond outstanding **[browser]**
-- [ ] Browser-test: director repays bond → director sell-block lifted **[browser]**
-- [ ] Browser-test: bond outstanding at game end → deducted from director's personal score **[browser]**
-- [ ] Rule review: confirm bond face value, issue conditions, and repayment rules against rulebook **[rules]**
-- [ ] Adjust `RepayBond` step and game.rb bond logic as needed based on test findings **[L2/L3]**
+Rules confirmed 2026-05-20:
+- Bond and buyback are one combined action (buyback triggers the bond)
+- Director gets a permanent penalty marker: cert limit −1 forever, even after bond is repaid
+- Director cannot sell shares of that corporation while bond is outstanding
+- If bond not repaid by game end: director pays from personal cash; forced end-game share sales do not drop share price
 
-`1862_GS`
+- `[>]` Rule review: buyback amount = 50% market cap (5×price ⌈nearest $100⌉); StockBuyback in early OR slot; RepayBond after Dividend; confirmed 2026-05-20 **[rules]**
+- `[>]` IRB-test: `record_bond!` sets corp debt; `buyback_done?` true; director cert count reflects `@buyback_done` permanent marker (120/0 spec) **[IRB]**
+- `[>]` IRB-test: `bond?` true after `record_bond!`; `bond?` false after `repay_bond!`; `buyback_done?` still true (permanent) **[IRB]**
+- `[>]` IRB-test: `director_bond_blocks_sale?` true for bonded corp director; false after repayment **[IRB]**
+- `[>]` IRB-test: `apply_bond_penalties!` deducts bond amount from director cash at game end **[IRB]**
+- `[>]` Create `step/stock_buyback.rb` — triggers buyback + bond issuance in one action — committed bb4968358 **[L3]**
+- `[>]` Wire `Step::StockBuyback` into `operating_round` step list — committed bb4968358 **[L2]**
+- `[>]` Create `step/repay_bond.rb` — OR action to repay the bond — committed bb4968358 **[L3]**
+- `[>]` Wire `Step::RepayBond` into `operating_round` step list — committed bb4968358 **[L2]**
+- `[>]` Fix `record_bond!` to transfer bond amount from bank to corp treasury — committed bb4968358 **[L2]**
+- `[>]` `execute_buyback_payout!`: pays each shareholder 50% market price per cert, calls `halve_shares!` — committed bb4968358 **[L2]**
+- [ ] Implement end-game forced share sale without share price drop **[L2]**
+- `[>]` Browser-test: phase 3+, corp with market shares → buyback action available in OR; bond issued, cert limit reduced ✓ 2026-05-22 **[browser]**
+- `[>]` Browser-test: corp repays bond → financial debt cleared, cert limit still reduced ✓ 2026-05-22 **[browser]**
+- [ ] Browser-test: game ends with bond outstanding → director score reduced **[browser]**
+
+`1862_usa_canada_p14_bond_buyback`
 
 ---
 
@@ -92,22 +108,7 @@ Implement and test the rule that determines how the stock price moves when a pla
 
 ---
 
-## Sprint 16 — Bond: issue UI step + game-end director liability
-
-The bond (Schuldschein) repay step and director sell-block are implemented. Two pieces are missing: there is no OR step that lets the director trigger bond issuance (`issue_bond!` exists in game.rb but is never called), and outstanding bonds at game end are not deducted from the director's personal score.
-
-- [ ] Rule review: confirm bond issue conditions and face value from rulebook **[rules]**
-- [ ] Implement `Step::IssueBond` (or extend existing OR step) so the director can issue a bond during an OR turn **[L3]**
-- [ ] Wire `issue_bond!` call into the new step **[L2]**
-- [ ] Implement game-end score deduction: outstanding bonds reduce director's personal cash score **[L2]**
-- [ ] Browser-test: director can issue bond during OR → cash received, bond recorded **[browser]**
-- [ ] Browser-test: game ends with bond outstanding → director score reduced by bond face value **[browser]**
-
-`1862_GS`
-
----
-
-## Sprint 17 — Rules verification: amounts and phase counts
+## Sprint 16 — Rules verification: amounts and phase counts
 
 Several constants remain unconfirmed against the physical rulebook.
 
@@ -120,7 +121,7 @@ Several constants remain unconfirmed against the physical rulebook.
 
 ---
 
-## Sprint 18 — Monopoly fee collection
+## Sprint 17 — Monopoly fee collection
 
 Directors owning >60% of a corporation owe a monopoly fee of 20% of face value per share above the 60% threshold. A FIXME exists in `BuySellParShares` but the fee is not collected.
 
@@ -133,14 +134,3 @@ Directors owning >60% of a corporation owe a monopoly fee of 20% of face value p
 
 ---
 
-## Sprint 19 — StockBuyback / Aktienrückkauf step
-
-Corporations in phase 3+ may buy back their own shares from the market at 50% of face value. `buyback_available?` exists in game.rb but there is no `Step::StockBuyback` file; the step is referenced as a FIXME in the `operating_round` step list.
-
-- [ ] Rule review: confirm buyback amount, timing (which OR action slot), and share destination from rulebook **[rules]**
-- [ ] Create `step/stock_buyback.rb` implementing the buyback action **[L3]**
-- [ ] Wire the step into the `operating_round` step list (replace the FIXME placeholder) **[L2]**
-- [ ] Browser-test: phase 3+, corp with market shares → buyback action available in OR **[browser]**
-- [ ] Browser-test: buyback executed → shares moved to treasury, corp cash reduced **[browser]**
-
-`1862_GS`
