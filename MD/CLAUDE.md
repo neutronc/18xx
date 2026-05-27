@@ -261,6 +261,38 @@ When all browser scenarios pass, update item to `[>]` in `MD/inwork.md`.
 
 Do not move the item to done until every scenario has a passing commit.
 
+### 6c — Create PR (when item moves to `[>]`)
+
+Always read `.github/PULL_REQUEST_TEMPLATE.md` before drafting the PR body. Fill every section. Use `gh api` not `gh pr create` for the body to avoid the GraphQL deprecation error:
+
+```bash
+gh pr create --title "[1862 USA & Canada] <description>" --body "$(cat <<'EOF'
+Fixes # (or issue number)
+
+## Before clicking "Create"
+
+- [x] Branch is derived from the latest `master`
+- [ ] Add the `pins` or `archive_alpha_games` label if this change will break existing games
+- [x] Code passes linter with `docker compose exec rack rubocop -a`
+- [x] Tests pass cleanly with `docker compose exec rack rake`
+
+## Implementation Notes
+
+### Explanation of Change
+
+<change summary here>
+
+### Screenshots
+
+N/A  (or attach screenshots for UI changes)
+
+### Any Assumptions / Hacks
+
+None.
+EOF
+)"
+```
+
 ### 7 — Wrap up
 
 All tests committed:
