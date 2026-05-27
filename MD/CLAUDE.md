@@ -108,6 +108,10 @@ L4 — Structural engine divergence (avoid)
 
 ---
 
+## Scope Rule
+
+**Always ask before touching any file outside `lib/engine/game/g_1862_usa_canada/` and `spec/lib/engine/game/g_1862_usa_canada/`.** This includes `scripts/`, `public/`, shared `lib/engine/` code, and root-level files. Stop and confirm with the user first — no exceptions.
+
 ## Coding Rules
 
 Read `~/18xx-docs/htmldoku/coding-guidelines.md` before any code change.
