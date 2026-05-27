@@ -110,7 +110,7 @@ L4 — Structural engine divergence (avoid)
 
 ## Scope Rule
 
-**Always ask before touching any file outside `lib/engine/game/g_1862_usa_canada/` and `spec/lib/engine/game/g_1862_usa_canada/`.** This includes `scripts/`, `public/`, shared `lib/engine/` code, and root-level files. Stop and confirm with the user first — no exceptions.
+**Always ask before creating, modifying, or deleting any file outside `lib/engine/game/g_1862_usa_canada/` and `spec/lib/engine/game/g_1862_usa_canada/`.** Creation counts equally — the question fires before the first `Write` or `git add`, not only before deletion. This includes `scripts/`, `public/`, shared `lib/engine/` code, and root-level files. Stop and confirm with the user first — no exceptions.
 
 ## Coding Rules
 
