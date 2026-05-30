@@ -1,0 +1,26 @@
+# Keeps neutronc/master in sync with tobymao/18xx master.
+# Runs daily and can be triggered manually from the Actions tab.
+name: Sync fork with upstream
+
+on:
+  schedule:
+    - cron: '0 5 * * *'   # 05:00 UTC daily
+  workflow_dispatch:       # manual trigger from Actions tab
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: master
+          fetch-depth: 0
+
+      - name: Fetch upstream and fast-forward master
+        run: |
+          git remote add upstream https://github.com/tobymao/18xx.git
+          git fetch upstream master
+          git reset --hard upstream/master
+          git push origin master
