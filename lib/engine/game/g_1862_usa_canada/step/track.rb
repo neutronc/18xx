@@ -9,10 +9,8 @@ module Engine
         class Track < Engine::Step::Track
           def process_lay_tile(action)
             super
-            return unless action.hex.id == @game.class::SLC_HEX
-            return unless action.tile.color == :yellow
-
-            @game.slc_yellow_placed!(action.entity)
+            @game.slc_yellow_placed!(action.entity) if action.hex.id == @game.class::SLC_HEX && action.tile.color == :yellow
+            @game.check_transcontinental_connection! if @game.class::SLC_CORPS.include?(action.entity.id)
           end
         end
       end
