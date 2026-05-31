@@ -489,17 +489,20 @@ module Engine
         # the bonus target hex in the same OR turn.
         # ---------------------------------------------------------------------------
 
-        # Pure calculation — called by routes_revenue and during route display.
-        def corp_bonus_revenue(corporation, routes)
-          return 0 unless (bonuses = CORP_BONUSES[corporation.id])
+        # Per-route corp-bonus revenue — called from revenue_for.
+        # Uses route_hex_ids so it works with lazy/empty visited_stops (autorouter).
+        def corp_bonus_revenue(route)
+          corp = route.train.owner
+          bonuses = CORP_BONUSES[corp.id]
+          return 0 unless bonuses
 
+          hex_ids = route_hex_ids(route)
           bonuses.each_with_index.sum do |bonus, i|
-            case @bonus_state[[corporation.id, i]]
-            when :permanent
-              permanent_on_route?(corporation.id, i, bonus, routes) ? bonus[:route_bonus] : 0
-            else
-              0 # unactivated or pending choice — ChooseBonus fires before Dividend
-            end
+            next 0 unless @bonus_state[[corp.id, i]] == :permanent
+
+            anchor  = @bonus_hex[[corp.id, i]]
+            targets = anchor ? [anchor] : bonus[:hexes]
+            targets.any? { |hid| hex_ids.include?(hid) } ? bonus[:route_bonus] : 0
           end
         end
 
@@ -550,11 +553,10 @@ module Engine
         # kept so the dividend step call remains valid if the step list is modified.
         def activate_new_bonuses!(_corporation, _routes); end
 
-        def routes_revenue(routes)
-          return super if routes.empty?
-
-          corp = routes.first.train.owner
-          super + corp_bonus_revenue(corp, routes) + slc_route_bonus(corp, routes)
+        # revenue_for is called per-route by route.revenue (display + autorouter).
+        # Bonuses live here so they are visible to both the route table and autoroute.
+        def revenue_for(route, stops)
+          super + corp_bonus_revenue(route) + slc_route_bonus(route)
         end
 
         # ---------------------------------------------------------------------------
@@ -735,12 +737,15 @@ module Engine
 
         private
 
-        def slc_route_bonus(corporation, routes)
-          return 0 unless SLC_CORPS.include?(corporation.id)
+        # Per-route SLC bonus — called from revenue_for.
+        # Uses route_hex_ids so it works with lazy/empty visited_stops (autorouter).
+        def slc_route_bonus(route)
+          corp = route.train.owner
+          return 0 unless SLC_CORPS.include?(corp.id)
           return 0 unless @slc_yellow_corp
-          return 0 unless routes.any? { |r| r.visited_stops.any? { |s| s.hex.id == SLC_HEX } }
+          return 0 unless route_hex_ids(route).include?(SLC_HEX)
 
-          corporation.id == @slc_yellow_corp ? SLC_ROUTE_BONUS_LAYER : SLC_ROUTE_BONUS_OTHER
+          corp.id == @slc_yellow_corp ? SLC_ROUTE_BONUS_LAYER : SLC_ROUTE_BONUS_OTHER
         end
 
         def slc_first_connection_payout!(corporation)
