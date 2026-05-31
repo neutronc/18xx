@@ -25,6 +25,12 @@ module Engine
           def process_buy_shares(action)
             super
             collect_monopoly_fee(action.entity, action.bundle)
+            pass!
+          end
+
+          def process_par(action)
+            super
+            pass!
           end
 
           private
