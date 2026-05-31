@@ -645,6 +645,13 @@ module Engine
           "#{corporation.presidents_percent}% President's Share"
         end
 
+        def status_array(corporation)
+          group = corp_group(corporation)
+          return unless group
+
+          [["Group #{group}", 'bold']]
+        end
+
         # ---------------------------------------------------------------------------
         # Tile-lay budget override.
         # ---------------------------------------------------------------------------
