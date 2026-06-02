@@ -744,6 +744,16 @@ module Engine
           @log << "#{entity.name} builds yellow at Salt Lake City — " \
                   "#{layer_bonus} route bonus for #{entity.name}, #{other_bonus} for the other"
 
+          # Place 4 bonus markers on SLC hex — each corp in its own color
+          hex = hex_by_id(SLC_HEX)
+          if hex
+            SLC_CORPS.each do |corp_id|
+              amount = corp_id == entity.id ? SLC_ROUTE_BONUS_LAYER : SLC_ROUTE_BONUS_OTHER
+              icon = "1862_usa_canada/SLC_#{corp_id}_#{amount}"
+              hex.tile.icons << Part::Icon.new(icon, "slc_bonus_#{corp_id}", true)
+            end
+          end
+
           # First connection payout for the corp that laid the tile
           slc_first_connection_payout!(entity)
           reduce_soc_revenue_on_first_connect!(entity)
