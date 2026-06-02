@@ -620,6 +620,15 @@ module Engine
 
         # TOR is placed on a preprinted gray hex, bypassing normal color progression
         # and phase gating — both overrides apply only to this one special tile.
+        VSPL_GREEN_TILES = %w[V_G P_G L_G S_G].freeze
+
+        def upgrades_to?(from, to, special = false, selected_company: nil)
+          # Individual green V/P/L/S tiles all merge into the combined VSPL brown
+          return true if VSPL_GREEN_TILES.include?(from.name) && to.name == 'VSPL_B'
+
+          super
+        end
+
         def upgrades_to_correct_color?(from, to, selected_company: nil)
           return true if to.name == 'TOR'
 
