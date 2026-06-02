@@ -538,7 +538,8 @@ module Engine
             hex = hex_by_id(hex_id)
             next unless hex
 
-            hex.original_tile.icons.reject! { |i| i.name == icon_name }
+            hex.tile.icons.reject! { |i| i.name == icon_name || i.name == "#{icon_name}_back" }
+            hex.original_tile.icons.reject! { |i| i.name == icon_name || i.name == "#{icon_name}_back" }
           end
           return unless new_state == :permanent
 
@@ -547,6 +548,7 @@ module Engine
           return unless hex
 
           back = "1862_usa_canada/#{corp_id}_#{bonus[:route_bonus]}_back"
+          hex.tile.icons << Part::Icon.new(back, "#{icon_name}_back", true)
           hex.original_tile.icons << Part::Icon.new(back, "#{icon_name}_back", true)
         end
 
