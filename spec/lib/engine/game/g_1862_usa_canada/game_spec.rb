@@ -553,6 +553,7 @@ module Engine
 
       it 'repay_bond! is a no-op when corp cash is insufficient' do
         game.record_bond!(cpr)
+        cpr.instance_variable_set(:@cash, 0) # corp spent bond proceeds; can't repay yet
         game.repay_bond!(cpr)
         expect(game.bond?(cpr)).to be true
       end
@@ -830,7 +831,7 @@ module Engine
         },
         { 'type' => 'pass',                        'entity' => 1, 'entity_type' => 'player',      'id' => 20 },
         { 'type' => 'pass',                        'entity' => 2, 'entity_type' => 'player',      'id' => 21 },
-        { 'type' => 'pass',                        'entity' => 3, 'entity_type' => 'player',      'id' => 22 },
+        # SR1 ends automatically — Bob has no cash for more shares after monopoly fee; no explicit pass needed
         # OR1: lay F26 (tile9 rot1 — W↔E straight, hill $40)
         {
           'type' => 'lay_tile',
