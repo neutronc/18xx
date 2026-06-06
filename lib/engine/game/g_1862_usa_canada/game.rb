@@ -72,10 +72,6 @@ module Engine
             { hexes: %w[F20],          cash: 100, route_bonus: 30,  name: 'Chicago'     },
             { hexes: %w[B2 D2 G3 I5], cash: 200, route_bonus: 60, name: 'V/P/S/L' },
           ],
-          'TP' => [
-            { hexes: %w[J10], cash: 100, route_bonus: 30, name: 'El Paso' },
-            { hexes: %w[B2 D2 G3 I5], cash: 200, route_bonus: 60, name: 'V/P/S/L' },
-          ],
           'CN' => [
             { hexes: %w[B10], cash: 100, route_bonus: 30, name: 'Regina' },
             { hexes: %w[B2 D2 G3 I5], cash: 200, route_bonus: 60, name: 'V/P/S/L' },
@@ -176,15 +172,14 @@ module Engine
         ).freeze
 
         # ---------------------------------------------------------------------------
-        # Phases
-        # FIXME: verify exact operating_rounds count per phase from rulebook.
+        # Phases — 2 operating rounds per SR throughout.
         # ---------------------------------------------------------------------------
         PHASES = [
           {
             name: '2',
             train_limit: 4,
             tiles: [:yellow],
-            operating_rounds: 1,
+            operating_rounds: 2,
           },
           {
             name: '3',
@@ -207,7 +202,7 @@ module Engine
             on: '5',
             train_limit: 2,
             tiles: %i[yellow green brown],
-            operating_rounds: 3,
+            operating_rounds: 2,
             status: ['two_tile_lays'],
           },
           {
@@ -215,7 +210,7 @@ module Engine
             on: '6',
             train_limit: 2,
             tiles: %i[yellow green brown],
-            operating_rounds: 3,
+            operating_rounds: 2,
             status: ['two_tile_lays'],
           },
           {
@@ -223,7 +218,7 @@ module Engine
             on: '7',
             train_limit: 2,
             tiles: %i[yellow green brown gray],
-            operating_rounds: 3,
+            operating_rounds: 2,
             status: ['two_tile_lays'],
           },
           {
@@ -231,7 +226,7 @@ module Engine
             on: '8',
             train_limit: 2,
             tiles: %i[yellow green brown gray],
-            operating_rounds: 3,
+            operating_rounds: 2,
             status: ['two_tile_lays'],
           },
         ].freeze
@@ -649,6 +644,24 @@ module Engine
           @log << "#{company.name} closes (#{reason})"
         end
 
+        # TOR is placed on a preprinted gray hex, bypassing normal color progression
+        # and phase gating — both overrides apply only to this one special tile.
+        def upgrades_to_correct_color?(from, to, selected_company: nil)
+          return true if to.name == 'TOR'
+
+          super
+        end
+
+        def tile_valid_for_phase?(tile, hex: nil, phase_color_cache: nil)
+          return true if tile.name == 'TOR'
+
+          super
+        end
+
+        def status_str(corporation)
+          "#{corporation.presidents_percent}% President's Share"
+        end
+
         # ---------------------------------------------------------------------------
         # Tile-lay budget override.
         # ---------------------------------------------------------------------------
@@ -758,6 +771,14 @@ module Engine
           @log << "Salt Lake City route bonus increases to #{format_currency(SLC_ROUTE_BONUS_SPIKE)} per OR"
         end
 
+        # V/P/S/L bonus hexes (B2, D2, G3, I5) each receive icons from 6 corps.
+        # Six icons in one row overflows the hex or lands on adjacent-hex boundaries.
+        # Fix: split into two groups of 3 pinned to the right side of the hex.
+        #   Upper group (CP/NYH/NYC): '3.5' → PP_WIDE_UPPER_RIGHT_CORNER (x:52, y:-25)
+        #   Lower group (SP/NP/CN):   '4.5' → PP_WIDE_BOTTOM_RIGHT_CORNER (x:52, y:+25)
+        VPSL_HEXES        = %w[B2 D2 G3 I5].freeze
+        VPSL_UPPER_CORPS  = %w[CP NYH NYC].freeze
+
         def place_bonus_icons
           CORP_BONUSES.each do |corp_id, bonuses|
             bonuses.each_with_index do |bonus, idx|
@@ -766,10 +787,17 @@ module Engine
                 hex = hex_by_id(hex_id)
                 next unless hex
 
-                hex.original_tile.icons << Part::Icon.new(icon, "bonus_#{corp_id}_#{idx}", true)
+                loc = vpsl_bonus_icon_loc(hex_id, corp_id)
+                hex.original_tile.icons << Part::Icon.new(icon, "bonus_#{corp_id}_#{idx}", true, nil, true, loc: loc)
               end
             end
           end
+        end
+
+        def vpsl_bonus_icon_loc(hex_id, corp_id)
+          return unless self.class::VPSL_HEXES.include?(hex_id)
+
+          self.class::VPSL_UPPER_CORPS.include?(corp_id) ? '3.5' : '4.5'
         end
 
         def would_activate?(bonus, routes, home)
