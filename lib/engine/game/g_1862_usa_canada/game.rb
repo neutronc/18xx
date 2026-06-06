@@ -10,8 +10,10 @@ require_relative 'step/buy_sell_par_shares'
 require_relative 'step/choose_bonus'
 require_relative 'step/dividend'
 require_relative 'step/repay_bond'
+require_relative 'step/route'
 require_relative 'step/stock_buyback'
 require_relative 'step/token'
+require_relative 'step/track'
 
 module Engine
   module Game
@@ -81,28 +83,30 @@ module Engine
         # ---------------------------------------------------------------------------
         # SLC (Salt Lake City) transcontinental bonus — CPR and UP only.
         #
+        # Yellow tile at SLC (G9):
+        #   The corporation that lays the first yellow tile at G9 receives
+        #   SLC_ROUTE_BONUS_LAYER per route visit; the other SLC corp receives
+        #   SLC_ROUTE_BONUS_OTHER.  No bonus until yellow is placed.
+        #
         # First SLC connection (per company, one-time):
         #   When CPR or UP first runs a route through G9, every 10% share pays
         #   SLC_FIRST_CONNECTION_BONUS from the bank to its holder.
+        #   The first connection also reduces SOC private revenue to SOC_REVENUE_CONNECTED.
         #
         # Golden Spike (once, when both have connected through SLC):
-        #   Per-OR route bonus increases from SLC_ROUTE_BONUS to SLC_ROUTE_BONUS_SPIKE.
+        #   Both CPR and UP stock prices move one step right simultaneously.
+        #   SOC private company closes.
         #
-        # Transcontinental route (per company, one-time):
-        #   First time CPR or UP runs a route visiting BOTH G3 (Sacramento) and F14
-        #   (Omaha) in a single route, that corporation's stock moves one step right.
-        #
-        # First permanent train from bank (per company, one-time):
-        #   First purchase of a non-rusting train (5/5E/6/6E/7/7E/8) from the bank
+        # Every permanent train from bank:
+        #   Each purchase of a non-rusting train (5/5E/6/6E/7/7E/8) from the bank
         #   moves that corporation's stock one step right.
         # ---------------------------------------------------------------------------
-        SLC_HEX                        = 'G9'.freeze
-        SLC_CORPS                      = %w[CPR UP].freeze
-        SLC_ROUTE_BONUS                = 30
-        SLC_ROUTE_BONUS_SOC            = 15
-        SLC_ROUTE_BONUS_SPIKE          = 50
-        SLC_FIRST_CONNECTION_BONUS     = 20
-        SLC_TRANSCONTINENTAL_ENDPOINTS = %w[G3 F14].freeze
+        SLC_HEX                    = 'G9'.freeze
+        SLC_CORPS                  = %w[CPR UP].freeze
+        SLC_ROUTE_BONUS_LAYER      = 50
+        SLC_ROUTE_BONUS_OTHER      = 30
+        SLC_FIRST_CONNECTION_BONUS = 20
+        SOC_REVENUE_CONNECTED      = 15
 
         CURRENCY_FORMAT_STR = '$%s'
 
@@ -319,9 +323,9 @@ module Engine
             bonuses.each_index { |i| @bonus_state[[sym, i]] = :unactivated }
           end
           @slc_connected        = {}
+          @slc_transcontinental = {}
           @slc_bonus_paid       = false
-          @transcontinental_done = {}
-          @first_perm_train_done = {}
+          @slc_yellow_corp = nil
           @corp_bonds    = {}  # corp_id => Integer (outstanding bond amount)
           @buyback_done  = {}  # corp_id => player entity (director who triggered buyback)
           place_bonus_icons
@@ -342,6 +346,11 @@ module Engine
 
         def bond_amount(corporation)
           @corp_bonds[corporation.id] || 0
+        end
+
+        def share_flags(shares)
+          count = shares.count { |s| s.percent == 5 }
+          'h' * count if count.positive?
         end
 
         def buyback_done?(corporation)
@@ -487,17 +496,19 @@ module Engine
         # the bonus target hex in the same OR turn.
         # ---------------------------------------------------------------------------
 
-        # Pure calculation — called by routes_revenue and during route display.
-        def corp_bonus_revenue(corporation, routes)
-          return 0 unless (bonuses = CORP_BONUSES[corporation.id])
+        # Corp-bonus revenue across one or more routes — called from revenue_for and specs.
+        # Uses route_hex_ids so it works with lazy/empty visited_stops (autorouter).
+        def corp_bonus_revenue(entity, routes)
+          bonuses = CORP_BONUSES[entity.id]
+          return 0 unless bonuses
+          return 0 if routes.empty?
 
           bonuses.each_with_index.sum do |bonus, i|
-            case @bonus_state[[corporation.id, i]]
-            when :permanent
-              permanent_on_route?(corporation.id, i, bonus, routes) ? bonus[:route_bonus] : 0
-            else
-              0 # unactivated or pending choice — ChooseBonus fires before Dividend
-            end
+            next 0 unless @bonus_state[[entity.id, i]] == :permanent
+
+            anchor  = @bonus_hex[[entity.id, i]]
+            targets = anchor ? [anchor] : bonus[:hexes]
+            routes.any? { |r| targets.any? { |hid| route_hex_ids(r).include?(hid) } } ? bonus[:route_bonus] : 0
           end
         end
 
@@ -531,7 +542,8 @@ module Engine
             hex = hex_by_id(hex_id)
             next unless hex
 
-            hex.original_tile.icons.reject! { |i| i.name == icon_name }
+            hex.tile.icons.reject! { |i| i.name == icon_name || i.name == "#{icon_name}_back" }
+            hex.original_tile.icons.reject! { |i| i.name == icon_name || i.name == "#{icon_name}_back" }
           end
           return unless new_state == :permanent
 
@@ -540,6 +552,7 @@ module Engine
           return unless hex
 
           back = "1862_usa_canada/#{corp_id}_#{bonus[:route_bonus]}_back"
+          hex.tile.icons << Part::Icon.new(back, "#{icon_name}_back", true)
           hex.original_tile.icons << Part::Icon.new(back, "#{icon_name}_back", true)
         end
 
@@ -548,48 +561,18 @@ module Engine
         # kept so the dividend step call remains valid if the step list is modified.
         def activate_new_bonuses!(_corporation, _routes); end
 
-        def routes_revenue(routes)
-          return super if routes.empty?
-
-          corp = routes.first.train.owner
-          super + corp_bonus_revenue(corp, routes) + slc_route_bonus(corp, routes)
+        # revenue_for is called per-route by route.revenue (display + autorouter).
+        # Bonuses live here so they are visible to both the route table and autoroute.
+        def revenue_for(route, stops)
+          super + corp_bonus_revenue(route.train.owner, [route]) + slc_route_bonus(route.train.owner, [route])
         end
 
         # ---------------------------------------------------------------------------
-        # SLC transcontinental bonus + Golden Spike event.
+        # SLC connection tracking + Golden Spike event.
         # Called from Step::Dividend before super each time a corporation runs routes.
         # ---------------------------------------------------------------------------
-        def check_golden_spike!(corporation, routes)
-          return unless SLC_CORPS.include?(corporation.id)
-          return unless routes.any? { |r| r.visited_stops.any? { |s| s.hex.id == SLC_HEX } }
-
-          unless @slc_connected[corporation.id]
-            @slc_connected[corporation.id] = true
-            slc_first_connection_payout!(corporation)
-          end
-
-          return if @slc_bonus_paid
-          return unless SLC_CORPS.all? { |sym| @slc_connected[sym] }
-
-          @slc_bonus_paid = true
-          golden_spike_event!
-        end
-
-        def check_transcontinental_route!(corporation, routes)
-          return unless SLC_CORPS.include?(corporation.id)
-          return if @transcontinental_done[corporation.id]
-
-          endpoints = self.class::SLC_TRANSCONTINENTAL_ENDPOINTS
-          return unless routes.any? do |r|
-            visited = r.visited_stops.map { |s| s.hex.id }
-            endpoints.all? { |hex| visited.include?(hex) }
-          end
-
-          @transcontinental_done[corporation.id] = true
-          @stock_market.move_right(corporation)
-          @log << "#{corporation.name} completes Sacramento–Omaha route — " \
-                  "stock advances to #{format_currency(corporation.share_price.price)}"
-        end
+        # No-op: first connection payout and Golden Spike are triggered by tile lay.
+        def check_golden_spike!(_corporation, _routes); end
 
         def buy_train(operator, train, price = nil)
           from_bank = train.owner.is_a?(Engine::Depot)
@@ -597,17 +580,16 @@ module Engine
           return unless SLC_CORPS.include?(operator.id)
           return unless from_bank
           return unless train.rusts_on.nil?
-          return if @first_perm_train_done[operator.id]
 
-          @first_perm_train_done[operator.id] = true
           @stock_market.move_right(operator)
-          @log << "#{operator.name} buys first permanent train — " \
+          @log << "#{operator.name} buys permanent train — " \
                   "stock advances to #{format_currency(operator.share_price.price)}"
         end
 
         # ---------------------------------------------------------------------------
         # Private company close triggers.
-        # SOC closes when CPR or UP floats.
+        # SOC revenue drops to SOC_REVENUE_CONNECTED when first of CPR/UP connects to SLC;
+        #   closes when both connect (Golden Spike) — handled in golden_spike_event!.
         # NHSC closes when NYH floats.
         # PSC closes when WP pays its first dividend (via on_first_payout!).
         # FNY closes when NYC pays its first dividend (via on_first_payout!).
@@ -616,15 +598,13 @@ module Engine
         def float_corporation(corporation)
           super
           on_corporation_floated!(corporation)
+          check_transcontinental_connection! if SLC_CORPS.include?(corporation.id)
         end
 
         def on_corporation_floated!(corporation)
-          case corporation.id
-          when 'CPR', 'UP'
-            close_private_if_open!('SOC', "#{corporation.name} floats")
-          when 'NYH'
-            close_private_if_open!('NHSC', "#{corporation.name} floats")
-          end
+          return unless corporation.id == 'NYH'
+
+          close_private_if_open!('NHSC', "#{corporation.name} floats")
         end
 
         def on_first_payout!(corporation)
@@ -646,6 +626,15 @@ module Engine
 
         # TOR is placed on a preprinted gray hex, bypassing normal color progression
         # and phase gating — both overrides apply only to this one special tile.
+        VSPL_GREEN_TILES = %w[V_G P_G L_G S_G].freeze
+
+        def upgrades_to?(from, to, special = false, selected_company: nil)
+          # Individual green V/P/L/S tiles all merge into the combined VSPL brown
+          return true if VSPL_GREEN_TILES.include?(from.name) && to.name == 'VSPL_B'
+
+          super
+        end
+
         def upgrades_to_correct_color?(from, to, selected_company: nil)
           return true if to.name == 'TOR'
 
@@ -660,6 +649,13 @@ module Engine
 
         def status_str(corporation)
           "#{corporation.presidents_percent}% President's Share"
+        end
+
+        def status_array(corporation)
+          group = corp_group(corporation)
+          return unless group
+
+          [["Group #{group}", 'bold']]
         end
 
         # ---------------------------------------------------------------------------
@@ -732,9 +728,9 @@ module Engine
             G1862UsaCanada::Step::StockBuyback,
             Engine::Step::SpecialTrack,
             Engine::Step::HomeToken,
-            Engine::Step::Track,
+            G1862UsaCanada::Step::Track,
             G1862UsaCanada::Step::Token,
-            Engine::Step::Route,
+            G1862UsaCanada::Step::Route,
             G1862UsaCanada::Step::ChooseBonus,
             G1862UsaCanada::Step::Dividend,
             G1862UsaCanada::Step::RepayBond,
@@ -743,16 +739,43 @@ module Engine
           ], round_num: round_num)
         end
 
-        private
+        def slc_yellow_placed!(entity)
+          return unless SLC_CORPS.include?(entity.id)
 
-        def slc_route_bonus(corporation, routes)
-          return 0 unless SLC_CORPS.include?(corporation.id)
-          return 0 unless routes.any? { |r| r.visited_stops.any? { |s| s.hex.id == SLC_HEX } }
-          return SLC_ROUTE_BONUS_SPIKE if @slc_bonus_paid
+          @slc_yellow_corp = entity.id
+          other_bonus = format_currency(SLC_ROUTE_BONUS_OTHER)
+          layer_bonus = format_currency(SLC_ROUTE_BONUS_LAYER)
+          @log << "#{entity.name} builds yellow at Salt Lake City — " \
+                  "#{layer_bonus} route bonus for #{entity.name}, #{other_bonus} for the other"
 
-          soc = company_by_id('SOC')
-          soc && !soc.closed? ? SLC_ROUTE_BONUS_SOC : SLC_ROUTE_BONUS
+          # Place 4 bonus markers on SLC hex — each corp in its own color
+          hex = hex_by_id(SLC_HEX)
+          if hex
+            SLC_CORPS.each do |corp_id|
+              amount = corp_id == entity.id ? SLC_ROUTE_BONUS_LAYER : SLC_ROUTE_BONUS_OTHER
+              icon = "1862_usa_canada/SLC_#{corp_id}_#{amount}"
+              hex.tile.icons << Part::Icon.new(icon, "slc_bonus_#{corp_id}", true)
+            end
+          end
+
+          # First connection payout for the corp that laid the tile
+          slc_first_connection_payout!(entity)
+          reduce_soc_revenue_on_first_connect!(entity)
+          @slc_connected[entity.id] = true
         end
+
+        # SLC bonus across one or more routes — called from revenue_for and specs.
+        # Uses route_hex_ids so it works with lazy/empty visited_stops (autorouter).
+        def slc_route_bonus(entity, routes)
+          return 0 unless SLC_CORPS.include?(entity.id)
+          return 0 unless @slc_yellow_corp
+          return 0 if routes.empty?
+          return 0 unless routes.any? { |r| route_hex_ids(r).include?(SLC_HEX) }
+
+          entity.id == @slc_yellow_corp ? SLC_ROUTE_BONUS_LAYER : SLC_ROUTE_BONUS_OTHER
+        end
+
+        private
 
         def slc_first_connection_payout!(corporation)
           @log << "#{corporation.name} reaches Salt Lake City for the first time!"
@@ -766,9 +789,58 @@ module Engine
           end
         end
 
+        def transcontinental_route?(route)
+          hex_ids = route_hex_ids(route)
+          hex_ids.include?(SLC_HEX) && hex_ids.include?('F14') && hex_ids.include?('G3')
+        end
+
+        # Checks if CPR or UP now has a physical rail connection F14↔G9↔G3.
+        # Called when CPR/UP lays a tile or floats.
+        def check_transcontinental_connection!
+          SLC_CORPS.each do |corp_id|
+            next if @slc_transcontinental[corp_id]
+
+            corp = corporation_by_id(corp_id)
+            next unless corp.floated?
+
+            reachable = graph.reachable_hexes(corp).keys.map(&:id)
+            next if !reachable.include?('F14') || !reachable.include?(SLC_HEX) || !reachable.include?('G3')
+
+            @slc_transcontinental[corp_id] = true
+
+            next if @slc_connected[corp_id]
+
+            @slc_connected[corp_id] = true
+            slc_first_connection_payout!(corp)
+            reduce_soc_revenue_on_first_connect!(corp)
+          end
+
+          return if @slc_bonus_paid
+          return unless SLC_CORPS.all? { |sym| @slc_transcontinental[sym] }
+
+          @slc_bonus_paid = true
+          golden_spike_event!
+        end
+
         def golden_spike_event!
-          @log << '-- GOLDEN SPIKE! Both transcontinental routes complete --'
-          @log << "Salt Lake City route bonus increases to #{format_currency(SLC_ROUTE_BONUS_SPIKE)} per OR"
+          @log << '-- GOLDEN SPIKE! Both CPR and UP have reached Salt Lake City --'
+          SLC_CORPS.each do |id|
+            corp = corporation_by_id(id)
+            @stock_market.move_right(corp)
+            @log << "#{corp.name} stock advances to #{format_currency(corp.share_price.price)}"
+          end
+          close_private_if_open!('SOC', 'Both CPR and UP have reached Salt Lake City')
+        end
+
+        def reduce_soc_revenue_on_first_connect!(corporation)
+          return if SLC_CORPS.all? { |id| @slc_connected[id] }
+
+          soc = company_by_id('SOC')
+          return if !soc || soc.closed?
+
+          soc.revenue = SOC_REVENUE_CONNECTED
+          @log << "#{corporation.name} reaches Salt Lake City — " \
+                  "SOC revenue reduces to #{format_currency(SOC_REVENUE_CONNECTED)}"
         end
 
         # V/P/S/L bonus hexes (B2, D2, G3, I5) each receive icons from 6 corps.
@@ -825,12 +897,12 @@ module Engine
 
         # visited_stops is lazy and never computed for deserialized routes
         # (Route#revenue short-circuits when @revenue is pre-set from JSON).
-        # Fall back to connection_hexes which is always populated from the action.
+        # Fall back to extracting hexes from the route's paths.
         def route_hex_ids(route)
           stops = route.visited_stops
           return stops.map { |s| s.hex.id } unless stops.empty?
 
-          route.connection_hexes&.flatten || []
+          route.all_hexes.map(&:id)
         end
       end
     end

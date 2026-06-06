@@ -110,12 +110,12 @@ module Engine
             sym: 'SOC',
             value: 220,
             revenue: 35,
-            desc: 'The initial purchaser immediately receives a 10% share of CPR and '\
-                  'a 10% share of UP. Closes when either CPR or UP floats. '\
-                  'While open, reduces the UP/CPR Salt Lake City route bonus payout to $15.',
+            desc: 'The initial purchaser immediately receives a 10% share of CPR and a 10% share of UP. '\
+                  'Revenue starts at $35. Drops to $15 when the first of CPR or UP connects to '\
+                  'Salt Lake City. Closes when both CPR and UP have connected (Golden Spike).',
             abilities: [
               { type: 'shares', shares: %w[CPR_1 UP_1] },
-              # Custom close trigger: when CPR or UP floats — handled in game.rb
+              # Close trigger: Golden Spike (both CPR and UP reach SLC) — handled in game.rb
             ],
             color: nil,
           },
