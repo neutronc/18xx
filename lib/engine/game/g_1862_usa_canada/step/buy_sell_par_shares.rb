@@ -18,7 +18,7 @@ module Engine
           private
 
           def nyh_par_prices
-            @game.stock_market.par_prices.select { |p| p.price == 100 }
+            [@game.stock_market.par_prices.find { |p| p.price == 100 }].compact
           end
         end
       end
