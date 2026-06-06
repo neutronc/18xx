@@ -27,8 +27,8 @@ module Engine
             unless self.class::DIVIDEND_TYPES.include?(kind)
               routes_to_log = @dividend_routes || []
               base_rev = @game.routes_revenue(routes_to_log)
-              corp_bonus = routes_to_log.sum { |r| @game.corp_bonus_revenue(r) }
-              slc_bonus = routes_to_log.sum { |r| @game.slc_route_bonus(r) }
+              corp_bonus = @game.corp_bonus_revenue(entity, routes_to_log)
+              slc_bonus = @game.slc_route_bonus(entity, routes_to_log)
 
               components = [base_rev]
               components << corp_bonus if corp_bonus.positive?

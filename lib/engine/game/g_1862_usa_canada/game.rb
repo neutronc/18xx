@@ -491,20 +491,19 @@ module Engine
         # the bonus target hex in the same OR turn.
         # ---------------------------------------------------------------------------
 
-        # Per-route corp-bonus revenue — called from revenue_for.
+        # Corp-bonus revenue across one or more routes — called from revenue_for and specs.
         # Uses route_hex_ids so it works with lazy/empty visited_stops (autorouter).
-        def corp_bonus_revenue(route)
-          corp = route.train.owner
-          bonuses = CORP_BONUSES[corp.id]
+        def corp_bonus_revenue(entity, routes)
+          bonuses = CORP_BONUSES[entity.id]
           return 0 unless bonuses
+          return 0 if routes.empty?
 
-          hex_ids = route_hex_ids(route)
           bonuses.each_with_index.sum do |bonus, i|
-            next 0 unless @bonus_state[[corp.id, i]] == :permanent
+            next 0 unless @bonus_state[[entity.id, i]] == :permanent
 
-            anchor  = @bonus_hex[[corp.id, i]]
+            anchor  = @bonus_hex[[entity.id, i]]
             targets = anchor ? [anchor] : bonus[:hexes]
-            targets.any? { |hid| hex_ids.include?(hid) } ? bonus[:route_bonus] : 0
+            routes.any? { |r| targets.any? { |hid| route_hex_ids(r).include?(hid) } } ? bonus[:route_bonus] : 0
           end
         end
 
@@ -560,7 +559,7 @@ module Engine
         # revenue_for is called per-route by route.revenue (display + autorouter).
         # Bonuses live here so they are visible to both the route table and autoroute.
         def revenue_for(route, stops)
-          super + corp_bonus_revenue(route) + slc_route_bonus(route)
+          super + corp_bonus_revenue(route.train.owner, [route]) + slc_route_bonus(route.train.owner, [route])
         end
 
         # ---------------------------------------------------------------------------
@@ -760,15 +759,15 @@ module Engine
           @slc_connected[entity.id] = true
         end
 
-        # Per-route SLC bonus — called from revenue_for and Route step log.
+        # SLC bonus across one or more routes — called from revenue_for and specs.
         # Uses route_hex_ids so it works with lazy/empty visited_stops (autorouter).
-        def slc_route_bonus(route)
-          corp = route.train.owner
-          return 0 unless SLC_CORPS.include?(corp.id)
+        def slc_route_bonus(entity, routes)
+          return 0 unless SLC_CORPS.include?(entity.id)
           return 0 unless @slc_yellow_corp
-          return 0 unless route_hex_ids(route).include?(SLC_HEX)
+          return 0 if routes.empty?
+          return 0 unless routes.any? { |r| route_hex_ids(r).include?(SLC_HEX) }
 
-          corp.id == @slc_yellow_corp ? SLC_ROUTE_BONUS_LAYER : SLC_ROUTE_BONUS_OTHER
+          entity.id == @slc_yellow_corp ? SLC_ROUTE_BONUS_LAYER : SLC_ROUTE_BONUS_OTHER
         end
 
         private

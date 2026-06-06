@@ -25,8 +25,8 @@ module Engine
 
               trains[train] = true
               revenue = @game.format_revenue_currency(route.revenue)
-              corp_bonus = @game.corp_bonus_revenue(route)
-              slc_bonus = @game.slc_route_bonus(route)
+              corp_bonus = @game.corp_bonus_revenue(entity, [route])
+              slc_bonus = @game.slc_route_bonus(entity, [route])
 
               bonus_str = ''
               bonus_str += " (+#{@game.format_currency(corp_bonus)} Bonus)" if corp_bonus.positive?
