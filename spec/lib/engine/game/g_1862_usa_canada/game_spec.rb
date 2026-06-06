@@ -201,34 +201,73 @@ module Engine
         expect(game.corp_bonus_revenue(nyc, [])).to eq(0)
       end
 
-      it 'corp_bonus_revenue includes bonus when route visits home AND bonus hex' do
+      it 'corp_bonus_revenue returns 0 for :unactivated bonus (ChooseBonus pending)' do
+        route = stub_route(cp.coordinates, 'E25')
+        expect(game.corp_bonus_revenue(cp, [route])).to eq(0)
+      end
+
+      it 'corp_bonus_revenue returns 0 when route misses bonus hex' do
+        game.instance_variable_get(:@bonus_state)[['CP', 0]] = :permanent
+        route = stub_route('F28', 'F20')
+        expect(game.corp_bonus_revenue(cp, [route])).to eq(0)
+      end
+
+      it 'corp_bonus_revenue includes bonus after state is set to :permanent' do
+        game.instance_variable_get(:@bonus_state)[['CP', 0]] = :permanent
         route = stub_route(cp.coordinates, 'E25')
         expect(game.corp_bonus_revenue(cp, [route])).to eq(30)
       end
 
-      it 'corp_bonus_revenue returns 0 when route misses home hex' do
+      it 'permanent bonus applies without home hex on route' do
+        game.instance_variable_get(:@bonus_state)[['CP', 0]] = :permanent
         route = stub_route('E25', 'F20')
+        expect(game.corp_bonus_revenue(cp, [route])).to eq(30)
+      end
+
+      it 'corp_bonus_revenue returns 0 for :cash bonus state' do
+        game.instance_variable_get(:@bonus_state)[['CP', 0]] = :cash
+        route = stub_route(cp.coordinates, 'E25')
         expect(game.corp_bonus_revenue(cp, [route])).to eq(0)
       end
 
-      it 'activate_new_bonuses! transitions state to :permanent' do
-        route = stub_route(cp.coordinates, 'E25')
-        game.activate_new_bonuses!(cp, [route])
-        expect(game.instance_variable_get(:@bonus_state)[['CP', 0]]).to eq(:permanent)
-      end
+      describe 'update_bonus_icon! — VPSL multi-hex (B2/D2/G3/I5)' do
+        let(:vpsl_hexes) { %w[B2 D2 G3 I5].to_h { |id| [id, game.hex_by_id(id)] } }
+        let(:nyc_icon)   { 'bonus_NYC_2' }
 
-      it 'permanent bonus applies without home hex on route' do
-        route = stub_route(cp.coordinates, 'E25')
-        game.activate_new_bonuses!(cp, [route])
-        route2 = stub_route('E25', 'F20')
-        expect(game.corp_bonus_revenue(cp, [route2])).to eq(30)
-      end
+        it 'front-side icons present on all 4 VPSL hexes initially' do
+          vpsl_hexes.each do |id, hex|
+            expect(hex.original_tile.icons.map(&:name)).to include(nyc_icon),
+                                                           "expected #{nyc_icon} on #{id}"
+          end
+        end
 
-      it 'activate_new_bonuses! is idempotent — does not re-activate' do
-        route = stub_route(cp.coordinates, 'E25')
-        game.activate_new_bonuses!(cp, [route])
-        game.activate_new_bonuses!(cp, [route])
-        expect(game.instance_variable_get(:@bonus_state)[['CP', 0]]).to eq(:permanent)
+        it ':permanent at G3 — removes front from all 4, places back on G3 only' do
+          game.update_bonus_icon!('NYC', 2, :permanent, 'G3')
+          expect(vpsl_hexes['G3'].original_tile.icons.map(&:name)).to include('bonus_NYC_2_back')
+          %w[B2 D2 I5].each do |id|
+            expect(vpsl_hexes[id].original_tile.icons.map(&:name)).not_to include(nyc_icon),
+                                                                          "expected no front icon on #{id}"
+            expect(vpsl_hexes[id].original_tile.icons.map(&:name)).not_to include('bonus_NYC_2_back')
+          end
+        end
+
+        it ':permanent at B2 — removes front from all 4, places back on B2 only' do
+          game.update_bonus_icon!('NYC', 2, :permanent, 'B2')
+          expect(vpsl_hexes['B2'].original_tile.icons.map(&:name)).to include('bonus_NYC_2_back')
+          %w[D2 G3 I5].each do |id|
+            expect(vpsl_hexes[id].original_tile.icons.map(&:name)).not_to include(nyc_icon)
+            expect(vpsl_hexes[id].original_tile.icons.map(&:name)).not_to include('bonus_NYC_2_back')
+          end
+        end
+
+        it ':cash removes front-side icons from all 4 VPSL hexes, no back icon placed' do
+          game.update_bonus_icon!('NYC', 2, :cash)
+          vpsl_hexes.each do |id, hex|
+            expect(hex.original_tile.icons.map(&:name)).not_to include(nyc_icon),
+                                                               "expected no front icon on #{id} after :cash"
+            expect(hex.original_tile.icons.map(&:name)).not_to include('bonus_NYC_2_back')
+          end
+        end
       end
     end
 
@@ -300,6 +339,155 @@ module Engine
       it 'non-SLC corp does not mark connection' do
         game.check_golden_spike!(nyc, [stub_route(slc_hex)])
         expect(game.instance_variable_get(:@slc_connected)).to eq({})
+      end
+
+      it 'SLC route bonus is 50 after Golden Spike fires' do
+        game.instance_variable_set(:@slc_bonus_paid, true)
+        soc.close!
+        route = stub_route(slc_hex)
+        expect(game.send(:slc_route_bonus, cpr, [route])).to eq(50)
+      end
+
+      it 'SLC route bonus spike overrides SOC reduction' do
+        game.instance_variable_set(:@slc_bonus_paid, true)
+        route = stub_route(slc_hex)
+        expect(game.send(:slc_route_bonus, cpr, [route])).to eq(50)
+      end
+
+      it 'initialises @transcontinental_done as empty hash' do
+        expect(game.instance_variable_get(:@transcontinental_done)).to eq({})
+      end
+
+      it 'initialises @first_perm_train_done as empty hash' do
+        expect(game.instance_variable_get(:@first_perm_train_done)).to eq({})
+      end
+    end
+
+    describe 'SLC first-connection payout' do
+      let(:cpr)   { game.corporation_by_id('CPR') }
+      let(:alice) { game.players[0] }
+      let(:bob)   { game.players[1] }
+
+      before do
+        allow(cpr).to receive(:share_holders).and_return({ alice => 20, bob => 10 })
+      end
+
+      it 'pays $40 to a 20% shareholder and $20 to a 10% shareholder' do
+        alice_before = alice.cash
+        bob_before   = bob.cash
+        game.send(:slc_first_connection_payout!, cpr)
+        expect(alice.cash).to eq(alice_before + 40)
+        expect(bob.cash).to eq(bob_before + 20)
+      end
+
+      it 'deducts total payout from bank' do
+        bank_before = game.bank.cash
+        game.send(:slc_first_connection_payout!, cpr)
+        expect(game.bank.cash).to eq(bank_before - 60)
+      end
+
+      it 'logs a message for each paying shareholder' do
+        game.send(:slc_first_connection_payout!, cpr)
+        combined = game.log.last(3).map(&:message).join(' ')
+        expect(combined).to include('Alice')
+        expect(combined).to include('Bob')
+      end
+    end
+
+    describe 'transcontinental route stock move' do
+      let(:cpr) { game.corporation_by_id('CPR') }
+      let(:up)  { game.corporation_by_id('UP') }
+      let(:nyc) { game.corporation_by_id('NYC') }
+
+      before do
+        cpr.share_price = game.stock_market.par_prices.first
+        up.share_price  = game.stock_market.par_prices.first
+        allow(game.stock_market).to receive(:move_right)
+      end
+
+      it 'marks CPR done when route visits both G3 and F14' do
+        game.check_transcontinental_route!(cpr, [stub_route('G3', 'F14')])
+        expect(game.instance_variable_get(:@transcontinental_done)['CPR']).to be true
+      end
+
+      it 'marks UP done when route visits both G3 and F14' do
+        game.check_transcontinental_route!(up, [stub_route('G3', 'F14')])
+        expect(game.instance_variable_get(:@transcontinental_done)['UP']).to be true
+      end
+
+      it 'moves CPR stock right on first transcontinental run' do
+        expect(game.stock_market).to receive(:move_right).with(cpr)
+        game.check_transcontinental_route!(cpr, [stub_route('G3', 'F14')])
+      end
+
+      it 'does not trigger when only Sacramento is on route' do
+        game.check_transcontinental_route!(cpr, [stub_route('G3', 'G9')])
+        expect(game.instance_variable_get(:@transcontinental_done)['CPR']).to be_nil
+      end
+
+      it 'does not trigger when only Omaha is on route' do
+        game.check_transcontinental_route!(cpr, [stub_route('F14', 'G9')])
+        expect(game.instance_variable_get(:@transcontinental_done)['CPR']).to be_nil
+      end
+
+      it 'is idempotent — second qualifying route does not move stock again' do
+        game.check_transcontinental_route!(cpr, [stub_route('G3', 'F14')])
+        expect(game.stock_market).not_to receive(:move_right).with(cpr)
+        game.check_transcontinental_route!(cpr, [stub_route('G3', 'F14')])
+      end
+
+      it 'does nothing for non-SLC corp' do
+        game.check_transcontinental_route!(nyc, [stub_route('G3', 'F14')])
+        expect(game.instance_variable_get(:@transcontinental_done)['NYC']).to be_nil
+      end
+    end
+
+    describe 'first permanent train stock move' do
+      let(:cpr) { game.corporation_by_id('CPR') }
+      let(:up)  { game.corporation_by_id('UP') }
+      let(:nyc) { game.corporation_by_id('NYC') }
+      let(:perm_trains) { game.depot.trains.select { |t| t.rusts_on.nil? } }
+      let(:rust_train)  { game.depot.trains.find(&:rusts_on) }
+
+      before do
+        cpr.share_price = game.stock_market.par_prices.first
+        up.share_price  = game.stock_market.par_prices.first
+        nyc.share_price = game.stock_market.par_prices.first
+        allow(game.stock_market).to receive(:move_right)
+      end
+
+      it 'sets @first_perm_train_done for CPR after first permanent train from bank' do
+        game.buy_train(cpr, perm_trains.first, :free)
+        expect(game.instance_variable_get(:@first_perm_train_done)['CPR']).to be true
+      end
+
+      it 'moves CPR stock right on first permanent train purchase from bank' do
+        expect(game.stock_market).to receive(:move_right).with(cpr)
+        game.buy_train(cpr, perm_trains.first, :free)
+      end
+
+      it 'is idempotent — second permanent train does not move stock again' do
+        skip 'need at least two permanent trains in depot' if perm_trains.size < 2
+        game.buy_train(cpr, perm_trains[0], :free)
+        expect(game.stock_market).not_to receive(:move_right).with(cpr)
+        game.buy_train(cpr, perm_trains[1], :free)
+      end
+
+      it 'does not move stock for non-SLC corp buying permanent train' do
+        expect(game.stock_market).not_to receive(:move_right).with(nyc)
+        game.buy_train(nyc, perm_trains.first, :free)
+      end
+
+      it 'does not move stock when CPR buys a rusting train from bank' do
+        expect(game.stock_market).not_to receive(:move_right).with(cpr)
+        game.buy_train(cpr, rust_train, :free)
+      end
+
+      it 'does not move stock when CPR buys permanent train from another corp' do
+        game.buy_train(up, perm_trains.first, :free)
+        game.instance_variable_set(:@first_perm_train_done, {})
+        expect(game.stock_market).not_to receive(:move_right).with(cpr)
+        game.buy_train(cpr, perm_trains.first, :free)
       end
     end
 
@@ -568,6 +756,320 @@ module Engine
           game.repay_bond!(cpr)
           game.apply_bond_penalties!
           expect(player.penalty).to eq(0)
+        end
+      end
+    end
+
+    # ── Step::ChooseBonus ──────────────────────────────────────────────────────
+    # Verified via browser test 2026-05-19: NYC connects to Chicago (F20) for
+    # the first time in OR7. Route shows base revenue only ($90, no pre-empted
+    # bonus). ChooseBonus prompt appears after confirming route.
+    # Choosing 'permanent' sets bonus to :permanent and adds $60 to OR revenue.
+    # Choosing 'cash' sets bonus to :cash and pays $200 cash to NYC immediately.
+    #
+    # Action sequence reproduced from local game #21 (seed 42, 3 players).
+    # OR1–OR5: NYC lays track F26/F24/F22/G21/G19. OR6: buys 2E-train.
+    # OR7: runs F28→F26→F24→F22→G21→G19→F20 (2E pays F28+F20=$90), then chooses bonus.
+    # Chicago F20 exits SW(→G19) and W(→F18) only; route must pass through G19.
+    describe 'Step::ChooseBonus — NYC first connection to Chicago' do
+      def choose_bonus_actions
+        [
+        { 'type' => 'bid',        'price' => 20,  'entity' => 1, 'company' => 'BOM',  'entity_type' => 'player',      'id' => 1 },
+        { 'type' => 'bid',        'price' => 50,  'entity' => 2, 'company' => 'TOR',  'entity_type' => 'player',      'id' => 2 },
+        { 'type' => 'bid',        'price' => 75,  'entity' => 3, 'company' => 'GHU',  'entity_type' => 'player',      'id' => 3 },
+        { 'type' => 'bid',        'price' => 100, 'entity' => 1, 'company' => 'RMC',  'entity_type' => 'player',      'id' => 4 },
+        { 'type' => 'bid',        'price' => 140, 'entity' => 2, 'company' => 'PSC',  'entity_type' => 'player',      'id' => 5 },
+        { 'type' => 'bid',        'price' => 180, 'entity' => 3, 'company' => 'FNY',  'entity_type' => 'player',      'id' => 6 },
+        { 'type' => 'bid',        'price' => 220, 'entity' => 1, 'company' => 'SOC',  'entity_type' => 'player',      'id' => 7 },
+        { 'type' => 'bid',        'price' => 270, 'entity' => 2, 'company' => 'NHSC', 'entity_type' => 'player',      'id' => 8 },
+        {
+          'type' => 'par',
+          'entity' => 2,
+          'corporation' => 'NYH',
+          'entity_type' => 'player',
+          'share_price' => '100,0,4',
+          'id' => 9,
+        },
+        {
+          'type' => 'par',
+          'entity' => 3,
+          'corporation' => 'NYC',
+          'entity_type' => 'player',
+          'share_price' => '70,5,4',
+          'id' => 10,
+        },
+        { 'type' => 'pass',                        'entity' => 1, 'entity_type' => 'player',      'id' => 11 },
+        { 'type' => 'pass',                        'entity' => 2, 'entity_type' => 'player',      'id' => 12 },
+        {
+          'type' => 'buy_shares',
+          'entity' => 3,
+          'shares' => ['NYC_2'],
+          'percent' => 10,
+          'entity_type' => 'player',
+          'id' => 13,
+        },
+        { 'type' => 'pass',                        'entity' => 1, 'entity_type' => 'player',      'id' => 14 },
+        { 'type' => 'pass',                        'entity' => 2, 'entity_type' => 'player',      'id' => 15 },
+        {
+          'type' => 'buy_shares',
+          'entity' => 3,
+          'shares' => ['NYC_3'],
+          'percent' => 10,
+          'entity_type' => 'player',
+          'id' => 16,
+        },
+        { 'type' => 'pass',                        'entity' => 1, 'entity_type' => 'player',      'id' => 17 },
+        { 'type' => 'pass',                        'entity' => 2, 'entity_type' => 'player',      'id' => 18 },
+        {
+          'type' => 'buy_shares',
+          'entity' => 3,
+          'shares' => ['NYC_4'],
+          'percent' => 10,
+          'entity_type' => 'player',
+          'id' => 19,
+        },
+        { 'type' => 'pass',                        'entity' => 1, 'entity_type' => 'player',      'id' => 20 },
+        { 'type' => 'pass',                        'entity' => 2, 'entity_type' => 'player',      'id' => 21 },
+        { 'type' => 'pass',                        'entity' => 3, 'entity_type' => 'player',      'id' => 22 },
+        # OR1: lay F26 (tile9 rot1 — W↔E straight, hill $40)
+        {
+          'type' => 'lay_tile',
+          'hex' => 'F26',
+          'tile' => '9-0',
+          'rotation' => 1,
+          'entity' => 'NYC',
+          'entity_type' => 'corporation',
+          'id' => 23,
+        },
+        { 'type' => 'pass',                        'entity' => 'NYC', 'entity_type' => 'corporation', 'id' => 24 },
+        { 'type' => 'pass',                        'entity' => 1,     'entity_type' => 'player',      'id' => 25 },
+        { 'type' => 'pass',                        'entity' => 2,     'entity_type' => 'player',      'id' => 26 },
+        { 'type' => 'pass',                        'entity' => 3,     'entity_type' => 'player',      'id' => 27 },
+        # OR2: lay F24 (tile9 rot1 — W↔E straight)
+        {
+          'type' => 'lay_tile',
+          'hex' => 'F24',
+          'tile' => '9-1',
+          'rotation' => 1,
+          'entity' => 'NYC',
+          'entity_type' => 'corporation',
+          'id' => 28,
+        },
+        { 'type' => 'pass',                        'entity' => 'NYC', 'entity_type' => 'corporation', 'id' => 29 },
+        { 'type' => 'pass',                        'entity' => 1,     'entity_type' => 'player',      'id' => 30 },
+        { 'type' => 'pass',                        'entity' => 2,     'entity_type' => 'player',      'id' => 31 },
+        { 'type' => 'pass',                        'entity' => 3,     'entity_type' => 'player',      'id' => 32 },
+        # OR3: lay F22 (tile8 rot4 — SW↔E medium curve)
+        {
+          'type' => 'lay_tile',
+          'hex' => 'F22',
+          'tile' => '8-0',
+          'rotation' => 4,
+          'entity' => 'NYC',
+          'entity_type' => 'corporation',
+          'id' => 33,
+        },
+        { 'type' => 'pass',                        'entity' => 'NYC', 'entity_type' => 'corporation', 'id' => 34 },
+        { 'type' => 'pass',                        'entity' => 1,     'entity_type' => 'player',      'id' => 35 },
+        { 'type' => 'pass',                        'entity' => 2,     'entity_type' => 'player',      'id' => 36 },
+        { 'type' => 'pass',                        'entity' => 3,     'entity_type' => 'player',      'id' => 37 },
+        # OR4: lay G21 (tile8 rot1 — W↔NE medium curve)
+        {
+          'type' => 'lay_tile',
+          'hex' => 'G21',
+          'tile' => '8-1',
+          'rotation' => 1,
+          'entity' => 'NYC',
+          'entity_type' => 'corporation',
+          'id' => 38,
+        },
+        { 'type' => 'pass',                        'entity' => 'NYC', 'entity_type' => 'corporation', 'id' => 39 },
+        { 'type' => 'pass',                        'entity' => 1,     'entity_type' => 'player',      'id' => 40 },
+        { 'type' => 'pass',                        'entity' => 2,     'entity_type' => 'player',      'id' => 41 },
+        { 'type' => 'pass',                        'entity' => 3,     'entity_type' => 'player',      'id' => 42 },
+        # OR5: lay G19 (tile3 rot3 — NE↔E sharp town curve, river $40)
+        {
+          'type' => 'lay_tile',
+          'hex' => 'G19',
+          'tile' => '3-0',
+          'rotation' => 3,
+          'entity' => 'NYC',
+          'entity_type' => 'corporation',
+          'id' => 43,
+        },
+        { 'type' => 'pass',                        'entity' => 'NYC', 'entity_type' => 'corporation', 'id' => 44 },
+        { 'type' => 'pass',                        'entity' => 1,     'entity_type' => 'player',      'id' => 45 },
+        { 'type' => 'pass',                        'entity' => 2,     'entity_type' => 'player',      'id' => 46 },
+        { 'type' => 'pass',                        'entity' => 3,     'entity_type' => 'player',      'id' => 47 },
+        # OR6: buy 2E-train ($150; visits unlimited, pays top 2 nodes)
+        { 'type' => 'pass',                        'entity' => 'NYC', 'entity_type' => 'corporation', 'id' => 48 },
+        {
+          'type' => 'buy_train',
+          'price' => 150,
+          'train' => '2-0',
+          'variant' => '2E',
+          'entity' => 'NYC',
+          'entity_type' => 'corporation',
+          'id' => 49,
+        },
+        { 'type' => 'pass',                        'entity' => 'NYC', 'entity_type' => 'corporation', 'id' => 50 },
+        { 'type' => 'pass',                        'entity' => 1,     'entity_type' => 'player',      'id' => 51 },
+        { 'type' => 'pass',                        'entity' => 2,     'entity_type' => 'player',      'id' => 52 },
+        { 'type' => 'pass',                        'entity' => 3,     'entity_type' => 'player',      'id' => 53 },
+        # OR7: pass Track step — NYC proceeds to Route step
+        { 'type' => 'pass',                        'entity' => 'NYC', 'entity_type' => 'corporation', 'id' => 54 },
+        ].freeze
+      end
+
+      def route_action
+        {
+          'type' => 'run_routes',
+          'entity' => 'NYC',
+          'entity_type' => 'corporation',
+          'subsidy' => 0,
+          'extra_revenue' => 0,
+          'routes' => [{
+            'hexes' => %w[F20 G19 F28],
+            'nodes' => %w[F28-0 G19-0 F20-0],
+            'train' => '2-0',
+            'revenue' => 90,
+            'connections' => [%w[F28 F26 F24 F22 G21 G19 F20]],
+            'revenue_str' => 'F20(20)-G19(10)-F28(70)',
+          }],
+          'id' => 55,
+        }.freeze
+      end
+
+      def load_game_to(n_actions)
+        g = Game::G1862UsaCanada::Game.new({ 1 => 'Player 1', 2 => 'Player 2', 3 => 'Player 3' }, id: 21, actions: [])
+        choose_bonus_actions.first(n_actions).each { |a| g.process_action(a) }
+        g
+      end
+
+      context 'before NYC runs routes (OR7, Track step passed)' do
+        subject(:g) { load_game_to(54) }
+
+        it 'NYC has a 2E-train' do
+          expect(g.corporation_by_id('NYC').trains.map(&:name)).to eq(['2E'])
+        end
+
+        it 'Chicago (F20) is reachable from NYC network' do
+          nyc = g.corporation_by_id('NYC')
+          expect(g.graph_for_entity(nyc).connected_hexes(nyc)).to include(g.hex_by_id('F20'))
+        end
+
+        it 'Chicago bonus is still unactivated' do
+          expect(g.bonus_state[['NYC', 1]]).to eq(:unactivated)
+        end
+
+        it 'no pending bonus activations without routes' do
+          nyc = g.corporation_by_id('NYC')
+          expect(g.pending_bonus_activations(nyc, [])).to be_empty
+        end
+
+        it 'corp_bonus_revenue is 0 for unactivated Chicago bonus (no pre-empted bonus)' do
+          nyc = g.corporation_by_id('NYC')
+          route = stub_route('F28', 'F20')
+          expect(g.corp_bonus_revenue(nyc, [route])).to eq(0)
+        end
+      end
+
+      context 'after NYC runs F28→F20 (ChooseBonus pending)' do
+        subject(:g) do
+          gg = load_game_to(54)
+          gg.process_action(route_action)
+          gg
+        end
+
+        it 'Chicago bonus activation is pending' do
+          nyc = g.corporation_by_id('NYC')
+          activations = g.pending_bonus_activations(nyc, g.round.routes)
+          expect(activations).not_to be_empty
+          expect(activations.first[0][:name]).to eq('Chicago')
+        end
+
+        it 'ChooseBonus step is active' do
+          choose_step = g.round.steps.find { |s| s.is_a?(Game::G1862UsaCanada::Step::ChooseBonus) }
+          nyc = g.corporation_by_id('NYC')
+          expect(choose_step.actions(nyc)).to include('choose')
+        end
+
+        it 'choice offers cash ($200) and permanent (+$60/OR)' do
+          choose_step = g.round.steps.find { |s| s.is_a?(Game::G1862UsaCanada::Step::ChooseBonus) }
+          choices = choose_step.choices
+          expect(choices.keys).to contain_exactly('cash', 'permanent')
+          expect(choices['cash']).to include('200')
+          expect(choices['permanent']).to include('60')
+        end
+      end
+
+      context 'choosing permanent' do
+        subject(:g) do
+          gg = load_game_to(54)
+          gg.process_action(route_action)
+          gg.process_action({
+                              'type' => 'choose',
+                              'choice' => 'permanent',
+                              'entity' => 'NYC',
+                              'entity_type' => 'corporation',
+                              'id' => 56,
+                            })
+          gg
+        end
+
+        it 'bonus state is :permanent' do
+          expect(g.bonus_state[['NYC', 1]]).to eq(:permanent)
+        end
+
+        it 'subsequent corp_bonus_revenue is +$60 from Chicago bonus' do
+          nyc = g.corporation_by_id('NYC')
+          route = stub_route('F28', 'F20')
+          expect(g.corp_bonus_revenue(nyc, [route])).to eq(60)
+        end
+      end
+
+      context 'choosing cash' do
+        subject(:g) do
+          gg = load_game_to(54)
+          gg.process_action(route_action)
+          gg
+        end
+
+        it 'pays $200 cash to NYC treasury immediately' do
+          nyc = g.corporation_by_id('NYC')
+          cash_before = nyc.cash
+          g.process_action({
+                             'type' => 'choose',
+                             'choice' => 'cash',
+                             'entity' => 'NYC',
+                             'entity_type' => 'corporation',
+                             'id' => 56,
+                           })
+          expect(nyc.cash).to eq(cash_before + 200)
+        end
+
+        it 'bonus state is :cash (no further route bonus)' do
+          g.process_action({
+                             'type' => 'choose',
+                             'choice' => 'cash',
+                             'entity' => 'NYC',
+                             'entity_type' => 'corporation',
+                             'id' => 56,
+                           })
+          expect(g.bonus_state[['NYC', 1]]).to eq(:cash)
+        end
+
+        it 'subsequent corp_bonus_revenue is 0 after cash choice' do
+          nyc = g.corporation_by_id('NYC')
+          g.process_action({
+                             'type' => 'choose',
+                             'choice' => 'cash',
+                             'entity' => 'NYC',
+                             'entity_type' => 'corporation',
+                             'id' => 56,
+                           })
+          route = stub_route('F28', 'F20')
+          expect(g.corp_bonus_revenue(nyc, [route])).to eq(0)
         end
       end
     end
