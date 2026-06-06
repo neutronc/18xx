@@ -348,6 +348,11 @@ module Engine
           @corp_bonds[corporation.id] || 0
         end
 
+        def share_flags(shares)
+          count = shares.count { |s| s.percent == 5 }
+          'h' * count if count.positive?
+        end
+
         def buyback_done?(corporation)
           @buyback_done.key?(corporation.id)
         end
