@@ -188,6 +188,11 @@ module Engine
 
       CAPITALIZATION = :full
 
+      # In some games, it's relevant to know the par price of a corporation even after the IPO sells out.
+      # Setting this to true will make the IPO row always appear on the corporation charter.
+      # If false then this row will be omitted when there are no IPO shares remaining.
+      ALWAYS_SHOW_PAR_PRICE = false
+
       # Must sell all shares of a company in one action per turn
       MUST_SELL_IN_BLOCKS = false
 
@@ -1748,9 +1753,11 @@ module Engine
         end
 
         discount = abilities.sum { |a| a.discounts_tile?(tile) ? a.discount : 0 }
+        sum_cost = tile.upgrades.sum(&:cost)
+        discount = [sum_cost, discount].min # In case discount exceeds total cost
         log_cost_discount(spender, abilities, discount)
 
-        tile.upgrades.sum(&:cost) - discount
+        sum_cost - discount
       end
 
       def tile_cost_with_discount(_tile, hex, entity, spender, cost)
