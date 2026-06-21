@@ -45,7 +45,7 @@ module Engine
             sym: 'GHU',
             value: 75,
             revenue: 15,
-            desc: 'The owning corporation\'s director may place a station token for $80 '\
+            desc: 'The owning corporation may place a station token for $80 '\
                   'less than the normal cost (minimum $0).',
             abilities: [
               {

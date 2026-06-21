@@ -5,13 +5,12 @@ module Engine
     module G1862UsaCanada
       module Step
         class BuySellParShares < Engine::Step::BuySellParShares
-          # Restrict NYH par to exactly $100 while NHSC is open and unparred
+          # Restrict NYH par to exactly $100 while NHSC is open
           def get_par_prices(entity, corp)
-            prices = super
             nhsc = @game.company_by_id('NHSC')
-            return prices if corp&.id != 'NYH' || !nhsc || nhsc.closed?
+            return super if corp&.id != 'NYH' || !nhsc || nhsc.closed?
 
-            prices.select { |p| p.price == 100 }
+            super.select { |p| p.price == 100 && entity.cash >= p.price * 2 }
           end
 
           def can_sell?(entity, bundle)

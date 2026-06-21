@@ -295,6 +295,9 @@ module Engine
         # ---------------------------------------------------------------------------
         GAME_END_CHECK = { bank: :current_round, stock_market: :current_round }.freeze
 
+        # Maps floating corporation to the private company it closes.
+        CLOSE_ON_FLOATED = { 'CPR' => 'SOC', 'UP' => 'SOC', 'NYH' => 'NHSC' }.freeze
+
         # ---------------------------------------------------------------------------
         # Setup
         # ---------------------------------------------------------------------------
@@ -527,22 +530,15 @@ module Engine
           nil
         end
 
-        # SOC (P7) closes when CPR or UP floats
         def close_private_on_float!(corporation)
-          return unless %w[CPR UP NYH].include?(corporation.id)
+          sym = CLOSE_ON_FLOATED[corporation.id]
+          return unless sym
 
-          soc  = company_by_id('SOC')
-          nhsc = company_by_id('NHSC')
+          company = company_by_id(sym)
+          return if !company || company.closed?
 
-          if soc && !soc.closed? && %w[CPR UP].include?(corporation.id)
-            soc.close!
-            @log << "#{soc.name} closes as #{corporation.name} has floated"
-          end
-
-          return if !nhsc || nhsc.closed? || corporation.id != 'NYH'
-
-          nhsc.close!
-          @log << "#{nhsc.name} closes as #{corporation.name} has floated"
+          company.close!
+          @log << "#{company.name} closes as #{corporation.name} has floated"
         end
 
         # ---------------------------------------------------------------------------
