@@ -354,5 +354,52 @@ module Engine
         expect(game.can_par?(np, nil)).to be false
       end
     end
+
+    describe 'operating rounds per phase' do
+      it 'every phase has 2 operating rounds' do
+        described_class::PHASES.each do |phase|
+          expect(phase[:operating_rounds]).to eq(2)
+        end
+      end
+    end
+
+    describe 'VSPL green-to-brown tile merge' do
+      let(:v_g)    { game.tiles.find { |t| t.name == 'V_G' } }
+      let(:vspl_b) { game.tiles.find { |t| t.name == 'VSPL_B' } }
+
+      it 'V_G upgrades to VSPL_B' do
+        expect(game.upgrades_to?(v_g, vspl_b)).to be true
+      end
+
+      it 'unrelated green tiles do not upgrade to VSPL_B' do
+        other_green = game.tiles.find { |t| t.color == :green && !described_class::VSPL_GREEN_TILES.include?(t.name) }
+        expect(game.upgrades_to?(other_green, vspl_b)).to be false
+      end
+    end
+
+    describe 'TOR special tile' do
+      let(:tor) { game.tiles.find { |t| t.name == 'TOR' } }
+      let(:gray_hex_tile) { game.tiles.find { |t| t.color == :gray && t.name != 'TOR' } }
+
+      it 'TOR bypasses normal color progression' do
+        expect(game.upgrades_to_correct_color?(gray_hex_tile, tor)).to be true
+      end
+
+      it 'TOR is valid in any phase' do
+        expect(game.tile_valid_for_phase?(tor)).to be true
+      end
+    end
+
+    describe 'status display' do
+      let(:cpr) { game.corporation_by_id('CPR') }
+
+      it "status_str shows the president's share percentage" do
+        expect(game.status_str(cpr)).to eq("#{cpr.presidents_percent}% President's Share")
+      end
+
+      it 'status_array shows the corp group' do
+        expect(game.status_array(cpr)).to eq([['Group 2', 'bold']])
+      end
+    end
   end
 end

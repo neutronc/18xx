@@ -153,15 +153,14 @@ module Engine
         ).freeze
 
         # ---------------------------------------------------------------------------
-        # Phases
-        # FIXME: verify exact operating_rounds count per phase from rulebook.
+        # Phases — 2 operating rounds per stock round throughout.
         # ---------------------------------------------------------------------------
         PHASES = [
           {
             name: '2',
             train_limit: 4,
             tiles: [:yellow],
-            operating_rounds: 1,
+            operating_rounds: 2,
           },
           {
             name: '3',
@@ -184,7 +183,7 @@ module Engine
             on: '5',
             train_limit: 2,
             tiles: %i[yellow green brown],
-            operating_rounds: 3,
+            operating_rounds: 2,
             status: ['two_tile_lays'],
           },
           {
@@ -192,7 +191,7 @@ module Engine
             on: '6',
             train_limit: 2,
             tiles: %i[yellow green brown],
-            operating_rounds: 3,
+            operating_rounds: 2,
             status: ['two_tile_lays'],
           },
           {
@@ -200,7 +199,7 @@ module Engine
             on: '7',
             train_limit: 2,
             tiles: %i[yellow green brown gray],
-            operating_rounds: 3,
+            operating_rounds: 2,
             status: ['two_tile_lays'],
           },
           {
@@ -208,7 +207,7 @@ module Engine
             on: '8',
             train_limit: 2,
             tiles: %i[yellow green brown gray],
-            operating_rounds: 3,
+            operating_rounds: 2,
             status: ['two_tile_lays'],
           },
         ].freeze
@@ -404,6 +403,45 @@ module Engine
 
           company.close!
           @log << "#{company.name} closes (#{reason})"
+        end
+
+        # The 4 single-city green V/P/L/S tiles (Vancouver/Portland/Los Angeles/
+        # Sacramento) each merge into the combined VSPL_B brown tile, which
+        # stacks all 4 labels (V;S;P;L) on a single city. The base engine's
+        # label check only compares future_label against to.label's first
+        # entry, so it always fails for this multi-label merge without
+        # the override below.
+        VSPL_GREEN_TILES = %w[V_G P_G L_G S_G].freeze
+
+        def upgrades_to?(from, to, special = false, selected_company: nil)
+          return true if VSPL_GREEN_TILES.include?(from.name) && to.name == 'VSPL_B'
+
+          super
+        end
+
+        # TOR is placed on a preprinted gray hex, bypassing normal color
+        # progression and phase gating — both overrides apply only to this tile.
+        def upgrades_to_correct_color?(from, to, selected_company: nil)
+          return true if to.name == 'TOR'
+
+          super
+        end
+
+        def tile_valid_for_phase?(tile, hex: nil, phase_color_cache: nil)
+          return true if tile.name == 'TOR'
+
+          super
+        end
+
+        def status_str(corporation)
+          "#{corporation.presidents_percent}% President's Share"
+        end
+
+        def status_array(corporation)
+          group = corp_group(corporation)
+          return unless group
+
+          [["Group #{group}", 'bold']]
         end
 
         # ---------------------------------------------------------------------------

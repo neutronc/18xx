@@ -202,22 +202,26 @@ module Engine
           'P_G' => {
             'count' => 1,
             'color' => 'green',
-            'code' => 'city=revenue:40,slots:2;path=a:0,b:_0;path=a:3,b:_0;path=a:4,b:_0;label=P',
+            'code' => 'city=revenue:40,slots:2;path=a:0,b:_0;path=a:3,b:_0;path=a:4,b:_0;label=P;' \
+                      'future_label=label:VSPL,color:brown',
           },
           'V_G' => {
             'count' => 1,
             'color' => 'green',
-            'code' => 'city=revenue:40,slots:2;path=a:0,b:_0;path=a:3,b:_0;path=a:4,b:_0;path=a:5,b:_0;label=V',
+            'code' => 'city=revenue:40,slots:2;path=a:0,b:_0;path=a:3,b:_0;path=a:4,b:_0;path=a:5,b:_0;label=V;' \
+                      'future_label=label:VSPL,color:brown',
           },
           'L_G' => {
             'count' => 1,
             'color' => 'green',
-            'code' => 'city=revenue:40,slots:2;path=a:5,b:_0;path=a:2,b:_0;path=a:4,b:_0;label=L',
+            'code' => 'city=revenue:40,slots:2;path=a:5,b:_0;path=a:2,b:_0;path=a:4,b:_0;label=L;' \
+                      'future_label=label:VSPL,color:brown',
           },
           'S_G' => {
             'count' => 1,
             'color' => 'green',
-            'code' => 'city=revenue:40;city=revenue:40;path=a:5,b:_0;path=a:2,b:_1;path=a:4,b:_1;label=S',
+            'code' => 'city=revenue:40;city=revenue:40;path=a:5,b:_0;path=a:2,b:_1;path=a:4,b:_1;label=S;' \
+                      'future_label=label:VSPL,color:brown',
           },
           'VSPL_B' => {
             'count' => 2,
